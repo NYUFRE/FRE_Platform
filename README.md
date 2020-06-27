@@ -1,6 +1,6 @@
 # FRE Platform #
 * *Established connection by* [FIX protocol](https://www.fixtrading.org/standards/)  
-* *Author:* Song Tang <rinle.it@gmail.com>.  
+* *Author:* Song Tang <st290@nyu.edu>.  
 * *Details:* [Configuration for quickfix](http://www.quickfixengine.org/quickfix/doc/html/configuration.html)  
 
 ## Requirements
