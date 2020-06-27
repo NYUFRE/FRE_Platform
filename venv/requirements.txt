@@ -1,0 +1,7 @@
+click==7.1.2
+Flask==1.1.2
+itsdangerous==1.1.0
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+quickfix @ file:///D:/stang/Dropbox/PolyNYU/FRE_Platform/quickfix-1.15.1-cp37-cp37m-win_amd64.whl
+Werkzeug==1.0.1

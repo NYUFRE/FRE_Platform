@@ -1,6 +1,6 @@
-# QuickFIX Python Samples #
+# FRE Platform #
 * *Established connection by* [FIX protocol](https://www.fixtrading.org/standards/)  
-* *Author:* Rin Le <rinle.it@gmail.com>.  
+* *Author:* Song Tang <rinle.it@gmail.com>.  
 * *Details:* [Configuration for quickfix](http://www.quickfixengine.org/quickfix/doc/html/configuration.html)  
 
 ## Requirements
@@ -21,15 +21,15 @@ docker-compose up --build
 
 ### Without Docker
 ```sh
-Please modify file path in initiator/client.cfg from SocketConnectHost=acceptor to SocketConnectHost=127.0.0.1
+Please modify file path in fre_client/client.cfg from SocketConnectHost=acceptor to SocketConnectHost=<Your IP>
 ```
 ```sh
-cd ./acceptor
-python server.py server.cfg
+cd ./fre_server
+python server.py -cfg server.cfg
 ```
 ```sh
-cd ./initiator
-python client.py client.cfg
+cd ./fre_client
+python client.py -cfg client.cfg
 ```
 
 
