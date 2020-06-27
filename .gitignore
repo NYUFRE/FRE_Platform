@@ -1,0 +1,9 @@
+*.cpython-37.pyc
+*.pyc
+*.log
+*.whl
+/fre_server/logs/*
+/fre_server/sessions/*
+/fre_client/logs/*
+/fre_client/sessions/*
+Notes.*
