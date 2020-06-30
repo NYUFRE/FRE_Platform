@@ -4,8 +4,8 @@
 *.whl
 /fre_server/logs/*
 /fre_server/sessions/*
-/fre_client/logs/*
-/fre_client/sessions/*
+/fix_engine/fre_client/logs/*
+/fix_engine/fre_client/sessions/*
 /venv/Include/*
 /venv/Lib/*
 /venv/Scripts/*
