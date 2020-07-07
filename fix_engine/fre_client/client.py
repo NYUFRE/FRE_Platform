@@ -1,23 +1,22 @@
 import sys
 import argparse
 import quickfix
-from application import Application
+import application
 
 def main(config_file):
     try:
         settings = quickfix.SessionSettings(config_file)
-        application = Application()
+        app = application.Application(quickfix.Session)
         storefactory = quickfix.FileStoreFactory(settings)
         logfactory = quickfix.FileLogFactory(settings)
-        initiator = quickfix.SocketInitiator(application, storefactory, settings, logfactory)
+        initiator = quickfix.SocketInitiator(app, storefactory, settings, logfactory)
 
         initiator.start()
-        application.run()
+        app.run()
         initiator.stop()
 
     except (KeyError, KeyboardInterrupt, quickfix.ConfigError, quickfix.RuntimeError) as e:
         print(e)
-        initiator.stop()
         sys.exit(-1)
 
 if __name__=='__main__':

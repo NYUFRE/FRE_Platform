@@ -182,8 +182,8 @@
    <field name='TradingSessionSubID' required='N' />
    <field name='LastCapacity' required='N' />
    <field name='LeavesQty' required='Y' />
-   <field name='CumQty' required='Y' />
-   <field name='AvgPx' required='Y' />
+   <field name='CumQty' required='N' />
+   <field name='AvgPx' required='N' />
    <field name='DayOrderQty' required='N' />
    <field name='DayCumQty' required='N' />
    <field name='DayAvgPx' required='N' />
@@ -351,7 +351,7 @@
    <field name='FutSettDate' required='N' />
    <field name='CashMargin' required='N' />
    <field name='ClearingFeeIndicator' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
@@ -555,7 +555,7 @@
    <field name='FutSettDate' required='N' />
    <field name='CashMargin' required='N' />
    <field name='ClearingFeeIndicator' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
@@ -1450,7 +1450,7 @@
    <component name='Instrument' required='Y' />
    <field name='SettlmntTyp' required='N' />
    <field name='FutSettDate' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
@@ -1562,7 +1562,7 @@
    <component name='Instrument' required='Y' />
    <field name='SettlmntTyp' required='N' />
    <field name='FutSettDate' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
@@ -1712,7 +1712,7 @@
    <field name='FutSettDate' required='N' />
    <field name='CashMargin' required='N' />
    <field name='ClearingFeeIndicator' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
@@ -1797,7 +1797,7 @@
    <field name='FutSettDate' required='N' />
    <field name='CashMargin' required='N' />
    <field name='ClearingFeeIndicator' required='N' />
-   <field name='HandlInst' required='Y' />
+   <field name='HandlInst' required='N' />
    <field name='ExecInst' required='N' />
    <field name='MinQty' required='N' />
    <field name='MaxFloor' required='N' />
