@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+
+    <head>
+        <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+        <script>
+
+            // if (!(+ document.getElementById('symbol').value))
+            // {
+            //     alert('Symbol does not exist!!')
+            //     return false 
+            // }
+            
+            function quote()
+            {
+                var url = '/get_quote?symbol=' + document.getElementById('symbol').value;
+                $.getJSON(url, function(data) {
+                    $('#quote').html('A share of ' + data.name + ' costs $' + data.price + '.');
+                    $('#symbol').val('');
+                });
+            }
+            
+            
+        </script>
+        <title>ajax2</title>
+    </head>
+    <body>
+            <!--why does the location of this line matters?-->
+            <form onsubmit="quote(); return false;">
+            <!--ask the user to input the symbol-->
+            <input autocomplete="off" autofocus id="symbol" placeholder="Symbol" type="text"/>
+            
+            <!--the get quote button-->
+            <input type="submit" value="Get Quote"/>
+            <!--return false--we don't want to submit the page, otherwiser, we will be directed to another page-->
+            
+
+        </form>
+        <p id="quote"></p>
+    </body>
+
+{%endblock%}

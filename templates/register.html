@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+<!--form.action--the action attribute allows the data to be sent as soon as the submit button is pressed -->
+     <form action="/register" method="post">
+        <fieldset>
+        <!--the class is one/multiple name(s) assigned to one element.  class enables us to call one element with differnt names-->
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text"/>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="password" placeholder="Password" type="password"/>
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="confirmation" placeholder="Password (again)" type="password"/>
+            </div>
+            <div class="form-group">
+                <!--the button-->
+                <button class="btn btn-default" type="submit">Register</button>
+            </div>
+        </fieldset>
+    </form>
+
+{% endblock %}

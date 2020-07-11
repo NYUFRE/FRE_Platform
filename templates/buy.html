@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Buy
+{% endblock %}
+
+{% block main %}
+
+        
+            
+        <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+        
+        <script>
+         $(document).ready(function() {
+
+                $('#buy').submit(function() {
+
+                    if ($('#buy input[name=symbol]').val() == '')
+                    {
+                        alert('Missing symbol');
+                        return false;
+                    }
+                    else if ($('#buy input[name=shares]').val() == '')
+                    {
+                        alert('Missing shares');
+                        return false;
+                    }
+                    else if (isNaN($('#buy input[name=shares]').val())) 
+                    {
+                        alert('Shares must be a number');
+                        return false;
+                    }
+                    // the input data type is text, but how to fix this?
+                    else if (+$('#buy input[name=shares]').val() != parseInt($('#buy input[name=shares]').val())) 
+                    {
+                        alert('Sahres must be an integer');
+                        return false;
+                    }
+                    else if ($('#buy input[name=shares]').val()<=0) 
+                    {
+                        alert('Shares must be positive');
+                        return false;
+                    }
+                    return true;
+
+                });
+
+            });
+
+        </script>
+        
+     
+    
+    
+    <body>
+       <form action="/buy" id="buy" method="post">
+            <input id="symbol" name="symbol" placeholder="Symbol" type="text"/>
+            <input id="shares" name="shares" placeholder="Shares" type="text"/>
+			<input id="price" name="price" placeholder="Price" type="text"/>
+            <input type="submit" value="Buy"/>
+        </form>
+    </body>    
+    
+    
+{%endblock%}

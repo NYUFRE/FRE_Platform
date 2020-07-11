@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+<table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Shares</th>
+                <th>Price</th>
+                <th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+        
+            {% for i in range(length) %}
+            
+                <tr>
+                    <!--call the value from the dictionary-->
+                    <!--the double curly parentheses are for jinja-->
+                    <td>{{dict['Symbol'][i]}}</td>
+                    <td>{{dict['Name'][i]}}</td>
+                    <td>{{dict['Shares'][i]}}</td>
+                    <td>{{dict['Price'][i]}}</td>
+                    <td>{{dict['Total'][i]}}</td>
+                </tr>
+                <tr>
+                    <!--;,is a place holer-->
+                
+                </tr>
+            {%endfor%}
+            
+            <tr>
+                <td colspan="4">CASH</td>
+                <td>{{ cash|usd }}</td>
+            </tr>
+        </tbody>
+		<tfoot>
+            <tr>
+                <td colspan="4"></td>
+                <td>{{t|usd}}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}

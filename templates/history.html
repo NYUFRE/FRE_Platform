@@ -1,0 +1,33 @@
+{%extends"layout.html"%}
+
+{%block title%}
+    History
+{%endblock%}
+
+{%block main%}
+    <table class="table table-striped">
+        <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Shares</th>
+                    <th>Price</th>
+                    <th>Transacted</th>
+                </tr>
+        </thead>
+        
+        <tbody>
+    {% for i in range(length) %}
+            
+                <tr>
+                    <!--call the value from the dictionary-->
+                    <td>{{dict['Symbol'][i]}}</td>
+                    <td>{{dict['Shares'][i]}}</td>
+                    <td>{{dict['Price'][i]}}</td>
+                    <td>{{dict['transacted'][i]}}</td>
+                </tr>
+        {%endfor%}
+    </tbody>
+    </table>
+
+
+{%endblock%}
