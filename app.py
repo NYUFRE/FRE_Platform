@@ -14,7 +14,8 @@ import urllib.request
 
 from helpers import apology, login_required, lookup, usd
 
-
+import json
+import random
 
 #from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 #from werkzeug.security import check_password_hash, generate_password_hash
@@ -409,52 +410,42 @@ def register():
     else: return render_template ("register.html")
 
 @app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    return render_template("ajax.html")
-
-#get to the yahoo page 
-@app.route("/get_quote")
 def get_quote():
-    url = "http://download.finance.yahoo.com/d/quotes.csv?f=snl1&s={}".format(request.args.get("symbol"))
-    webpage = urllib.request.urlopen(url)
-    #read the data, decode whatever yahoo gives back, breaks down the form into lines and then break down the line into words
-    datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
-    row = next(datareader)
-    return jsonify({"name": row[1], "price": float(row[2]), "symbol": row[0].upper()})
-    # if not url:
-    #     return apology('Symbol does not exist!')
+    if request.method == 'POST':
+        quote = {}
+        url_common = "https://cloud-sse.iexapis.com/stable/stock/"
 
-# def quote():
-#     if request.method=='POST':
-#         #which form is symbol stored in?
-#         symbol = request.form.get('symbol')
-        
-#         #calls the lookup function in helpers.py
-#         #lookup is the function specified in helpers.py
-#         #We are imputting the variabel symbol into the lookup function and assigning the output to be the variable quote 
-#         quote = lookup(symbol)
-        
-#         #ensure the symbol ecists 
-#         if not quote:
-#             return apology("symbol does not exist")
-            
-#         #tells variable price to get the value from the ['price'] dict we got 
-#         price = quote['price']
-        
-#         #change the unit to usd 
-#         price=usd(price)
-        
-#         #tells the variable'name' to get the value from the dict ["name"] we got from quote
-#         name = quote['name']
-        
-#         #successfully got all the variables, direct the user to quoted.html, pass on all the variables that will be displayed in quoted 
-#         return render_template("quoted.html", price=price, symbol=symbol, name=name)
-        
-#         #if the method is not POST, return to quote.html
-#     else:
-#         return render_template("quote.html")
+        if not request.form.get("symbol"):
+            return apology("symbol missing")
+
+        symbol = request.form.get("symbol")
+        api_token = "sk_6ced41d910224dd384355b65b085e529"
+        url = url_common + symbol + "/quote?token=" + api_token
+        print(url)
+        with urllib.request.urlopen(url) as req:
+            data = json.load(req)
+            if not data:
+                return apology("symbol does not exist")
+            #name = data["companyName"]
+            #print(data)
+            if "iexBidPrice" in data.keys() and data["iexBidPrice"] != None and \
+                "iexAskPrice" in data.keys() and data["iexAskPrice"] != None:
+                quote["symbol"] = symbol
+                quote["bidPrice"] = data["iexBidPrice"]
+                quote["bidSize"] = data["iexBidSize"]
+                quote["askPrice"] = data["iexAskPrice"]
+                quote["askSize"] = data["iexAskSize"]
+            else:
+                random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
+                quote["symbol"] = symbol
+                quote["bidPrice"] = data["low"]
+                quote["bidSize"] = int(random_ratio * data["latestVolume"])
+                quote["askPrice"] = data["high"]
+                quote["askSize"] = int((1 - random_ratio) * data["latestVolume"])
+            #print(quote)
+            return render_template("quote.html", dict=quote)
+    else:
+        return render_template("get_quote.html")
 
 '''
 def errorhandler(e):

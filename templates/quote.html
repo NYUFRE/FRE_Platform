@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Stock Quote
+{% endblock %}
+
+{% block main %}
+
+    <table class="table table-striped">
+        <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Bid Price</th>
+                    <th>Bid Size</th>
+                    <th>Ask Price</th>
+					<th>Ask Size</th>
+                </tr>
+        </thead>
+        
+        <tbody>
+                <tr>
+                    <td>{{dict['symbol']}}</td>
+                    <td>{{dict['bidPrice']}}</td>
+                    <td>{{dict['bidSize']}}</td>
+                    <td>{{dict['askPrice']}}</td>
+                    <td>{{dict['askSize']}}</td>
+                </tr>
+        
+    </tbody>
+    </table>
+
+{%endblock%}
