@@ -9,10 +9,10 @@
         <thead>
             <tr>
                 <th>Symbol</th>
-                <th>Name</th>
+                <th>Company Name</th>
                 <th>Shares</th>
                 <th>Price</th>
-                <th>TOTAL</th>
+                <th>Total</th>
             </tr>
         </thead>
         <tbody>
@@ -22,27 +22,28 @@
                 <tr>
                     <!--call the value from the dictionary-->
                     <!--the double curly parentheses are for jinja-->
-                    <td>{{dict['Symbol'][i]}}</td>
-                    <td>{{dict['Name'][i]}}</td>
-                    <td>{{dict['Shares'][i]}}</td>
-                    <td>{{dict['Price'][i]}}</td>
-                    <td>{{dict['Total'][i]}}</td>
+                    <td>{{dict['symbol'][i]}}</td>
+                    <td>{{dict['name'][i]}}</td>
+                    <td>{{dict['shares'][i]}}</td>
+                    <td>{{dict['price'][i]}}</td>
+                    <td>{{dict['total'][i]}}</td>
                 </tr>
                 <tr>
-                    <!--;,is a place holer-->
+                    <!--;,is a place holder-->
                 
                 </tr>
             {%endfor%}
             
             <tr>
-                <td colspan="4">CASH</td>
-                <td>{{ cash|usd }}</td>
+                <td>Cash</td>
+                <td colspan="3"></td>
+                <td>{{cash}}</td>
             </tr>
         </tbody>
 		<tfoot>
             <tr>
                 <td colspan="4"></td>
-                <td>{{t|usd}}</td>
+                <td>{{ total }}</td>
             </tr>
         </tfoot>
     </table>

@@ -1,35 +1,21 @@
-from sqlalchemy import create_engine
-from sqlalchemy import MetaData
-from sqlalchemy import Table
-
-from flask import Flask, flash, redirect, jsonify, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import mkdtemp
 
-import time
-import csv
-import os
-import urllib.request
-
-from helpers import apology, login_required, lookup, usd
-
-from market_data import iex_market_data
-
-#import json
-#import random
-
-#from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
+from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 #from werkzeug.security import check_password_hash, generate_password_hash
 
+import time
+import os
 
+from utility.helpers import apology, login_required, usd
+
+from market_data import iex_market_data
+from database.fre_database import FREDatabase
 
 os.environ["API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
-
-# Configure application
 app = Flask(__name__)
-
-# Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Ensure responses aren't cached
@@ -50,16 +36,8 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-#db = SQL("sqlite:///finance.db")
-
-engine = create_engine('sqlite:///finance.db')
-conn = engine.connect()
-conn.execute("PRAGMA foreign_keys = ON")
-
-# MetaData is a container object that keeps together many different features of a database 
-metadata = MetaData()
-metadata.reflect(bind=engine)
+database = FREDatabase()
+market_data = iex_market_data.IEXMarketData(os.environ.get("API_KEY"))
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
@@ -69,347 +47,190 @@ if not os.environ.get("API_KEY"):
 @app.route("/")
 @login_required
 def index():
-    """Show portfolio of stocks"""
-    #display what the user currently own, in other words, the info in the portfolio table 
-    #use the id--the primary key, to find username 
-    result = engine.execute('SELECT*FROM users WHERE id=:id', id=session['user_id'])
-    row = result.fetchall()
-    cash = row[0]['cash']
-    #define username
-    user = row[0]["username"]
-    
-    #look for the rows in the portfolio table by username--get all the purchase/sale data under the user who is currently logged in 
-    result = engine.execute("SELECT * FROM portfolio WHERE username=:username", username=user)
-    user_portfolio = result.fetchall()
-    #if the user has made purchase/sale, get the data, put it in the dict, and display it on index 
-    if len(user_portfolio) > 0: 
-        #create the dict 
-        dict={}
-        dict['Symbol']=[]
-        dict['Name']=[]
-        dict['Shares']=[]
-        dict['Price']=[]
-        dict['Total']=[]
-    
-        #if the user has made purchase/sale, get the data, put it in the dict, and display it on index 
-        result = engine.execute('SELECT*FROM portfolio WHERE username=:username', username=user)
-        rows = result.fetchall()
-        #calculate the total amount of money
-        t = 0
-        
-        #make the for loop 
-        for row in rows:
-            #append--add the parameter to the list, in this case, dict["Symbol"]
-            #this for loop adds all the ['key'] values in rows to the cooresponding dict, which are displayed on index 
-            dict['Symbol'].append(row['symbol'])
-            dict['Shares'].append(row['shares'])
-            
-            #for every symbol, look up the price 
-            symbol=row['symbol']
-            quote = lookup(symbol)
-            price=quote["price"]
-            
-            #calculate the total of each purchase:
-            #for each row, grab the number of shares, and multiply it by the price 
-            shares=row['shares']
-            total=price*shares
-            
-            #add all the totals together 
-            t=t + total
-            
-            #continue to append the parameters into the dict 
-            dict['Name'].append(quote['name'])
-            dict['Price'].append(usd(quote['price']))
-            dict['Total'].append(usd(total))
-        
-        #add the final total to cash=the total value of the stocks and the cash--the total value of the user's property
-        t = t + cash
-        
-        #the variable length--how many row there are 
-        length=len(dict['Symbol'])
-        
-        #return to the index and display the info about the stocks currently owned by the user, cash and the total 
-        #pass on the variables so that the html file can 'see' and display them
-        return render_template('index.html',dict=dict,t=t,cash=cash,length=length)
-        
-    #if the user has not made any purchase, then the length will be zero, the total will be cash, and the dict will be empty
+    portfolio = database.get_portfolio(session['user_id'])
+    cash = portfolio['cash']
+    total = cash
+
+    length = len(portfolio['symbol'])
+    if length > 0:
+        for i in range(len(portfolio['symbol'])):
+            price, error = market_data.get_price(portfolio['symbol'][i])
+            if len(error) > 0:
+                return apology(error)
+            portfolio['name'][i] = price['name']
+            portfolio['price'][i] = usd(price['price'])
+            cost = price['price'] * portfolio['shares'][i]
+            portfolio['total'][i] = usd(cost)
+            total += cost
+
+        return render_template('index.html', dict=portfolio, total=usd(total), cash=usd(cash), length=length)
+
     else:
-        return render_template("index.html",length=0,cash=cash,t=cash,dict=[])
+        return render_template("index.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
+
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    """Buy shares of stock"""
-    if request.method=="POST":
+    if request.method == "POST":
         symbol = request.form.get('symbol')
-        shares = int(request.form.get('shares'))
-        #quote is a dictionary 
-        quote = lookup(symbol)
-        id=session['user_id']
-        
         if not symbol:
-            return apology('Symbol can not be blank!')
-        if not quote:
-            return apology("symbol does not exist")
+            return apology('Symbol can not be blank.')
+
+        input_shares = request.form.get('shares')
+        if not input_shares:
+            return apology("Shares cannot be blank.")
+        shares = int(input_shares)
         if not shares > 0:
-            return apology("Shares must be positive!")
-        if not shares:
-            return apology("Shares cannot be blank!!")
-            
-        #price=value, use the dict--quote to match up the values 'price'
-        # ["name"] is used for dict in python 
-        price = quote['price']
-        result = engine.execute("SELECT * FROM users WHERE id=:id", id=session['user_id'])
-        rows = result.fetchall()
-        cash = rows[0]["cash"]
-        username = rows[0]['username']
-        total= price*shares
-        transacted=time.strftime("%H:%M:%S %d/%m/%Y")
-        
-        #ensure that the user can afford the stocks 
-        if total>cash:
-            return apology("Sorry, too many stocks!")
-        #if the user can afford, update the cash and insert the purchase data into the history table 
+            return apology("Shares must be positive.")
+
+        price = 0.0
+        input_price = request.form.get('price')
+        if not input_price:
+            latest_price, error = market_data.get_price(symbol)
+            if len(error) > 0:
+                return apology(error)
+            price = latest_price['price']
         else:
-            cash=cash-total
-            engine.execute("UPDATE users set cash=:cash where id=:id", cash=cash,id=session['user_id'])
-            
-            engine.execute("INSERT INTO history (symbol,shares,price,transacted,id)values (:symbol,:shares,:price,:transacted,:id)",symbol=symbol,shares=shares,price=price,transacted=transacted,id=id)
- 
-            #check if the user alreay owinns a certain stock
-            result=engine.execute("SELECT*FROM portfolio Where username=:username And symbol=:symbol",username=username,symbol=symbol)
-            user_portfolio=result.fetchall()   
-            #if the user has this kind of stock, update the shares 
-            if len(user_portfolio)>0:
-                old_shares=user_portfolio[0]['shares']
-                final_shares=old_shares+shares
-                engine.execute('UPDATE portfolio set shares=:shares where username=:username AND symbol=:symbol',username=username,symbol=symbol,shares=final_shares)
-           
-            #if the user does not own this stock, insert a new row 
-            else:
-                engine.execute("INSERT INTO portfolio (username,shares,symbol) values (:username,:shares,:symbol)",username=username,symbol=symbol,shares=shares)
-        #the "output" of the function--dircect the user to the index page, where the info is displayed 
+            price = float(input_price)
+            if not price > 0:
+                return apology("price must be positive.")
+
+        uid = session['user_id']
+        user = database.get_user('', uid)
+        cash = user["cash"]
+
+        total = price * shares
+        timestamp = time.strftime("%Y/%m/%d %H:%M:%S")
+
+        # ensure that the user can afford the stocks
+        if total > cash:
+            return apology("Insufficient fund")
+        # if the user can afford, update the cash and insert the purchase data into the history table
+        else:
+            cash = cash - total
+            database.create_buy_transaction(uid, cash, symbol, shares, price, timestamp)
+
         return redirect(url_for("index"))
     else:
         return render_template("buy.html")
-        
-    #get variables symbol and shares
-    #symbol --> price and other stuff
-    #check portfolio table to see if symbol already exists
-    
-    #price * shares
-    #check to see if cash is enough
-    #apology too many shares
-    #INSERT or UPDATE number of shares / row, remember username
+
 
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    
-    """Sell shares of stock."""
-    if request.method=="POST":
-        #call the symbol from the form as the user submit it
+    if request.method == "POST":
         symbol = request.form.get('symbol')
-        shares=request.form.get('shares')
-        #define the username by id
-        #the username will be used as the key to look up the stock in the portfolio table
-        id=session['user_id']
-        result = engine.execute("SELECT * FROM users WHERE id=:id", id=id)
-        rows = result.fetchall()
-        username = rows[0]['username']
-        #use the username and the symbol input by the user to see if the user owns that stock
-        result=engine.execute('SELECT*FROM portfolio Where symbol=:symbol AND username=:username',symbol=symbol,username=username)
-        #if there is no row, the user does not own this stock, then return an apology
-        row = result.fetchall()
         if not symbol:
-            return apology("Symbol cannot be blank!")
-        if not shares:
-            return apology("Shares cannot be blank!")
-        if len(row)==0:
-            return apology ("This stock does not exist in your account")
-        
-        def RepresentsInt(shares):
-            try: 
-                int(shares)
-                return True
-            except ValueError:
-                return False
-                
-        #since the data type is text in the html, change it into inetger here
-        if RepresentsInt(request.form.get('shares')):
-            shares1 = int(request.form.get('shares'))
+            return apology('Symbol can not be blank.')
+
+        input_shares = request.form.get('shares')
+        if not input_shares:
+            return apology("Shares cannot be blank.")
+        shares = int(input_shares)
+        if not shares > 0:
+            return apology("Shares must be positive.")
+
+        price = 0.0
+        input_price = request.form.get('price')
+        if not input_price:
+            latest_price, error = market_data.get_price(symbol)
+            if len(error) > 0:
+                return apology(error)
+            price = latest_price['price']
         else:
-            return apology("Shares must be an integer!")
-            
-        if shares1<0:
-            return apology('Shares must be positive!')
-        
-        #if there is a row (only one row since we are updating the data), take the symbol, old number of shares, and old cash from the table 
-        symbol=row[0]["symbol"]
-        shares2=row[0]["shares"]
-        cash = rows[0]['cash']
-        #calculate the new cash 
-        shares3=shares2-shares1
-        
-        #if the user wants to sell more shares than she owns, return an apology 
-        if shares1>shares2:
-                return apology ("Too many stocks!")
-        
-        #since the symbol exists, use this to look up the current price 
-        quote = lookup(symbol)
-        price=quote["price"]
-        #calculate the amount of money the user makes by selling the stocks 
-        total=price*shares1
-        #calculate the new_cash, which will be used to update the cash in the users table 
-        new_cash=cash+total
-        #get the negative value for history 
-        shares4=0-shares1
-        #get the time for history
-        transacted=time.strftime("%H:%M:%S %d/%m/%Y")
+            price = float(input_price)
+            if not price > 0:
+                return apology("price must be positive.")
 
-        #insert the data into the history table
-        engine.execute("INSERT INTO history (symbol,shares,price,transacted,id)values (:symbol,:shares,:price,:transacted,:id)",symbol=symbol,shares=shares4,price=price,transacted=transacted,id=id)
+        uid = session['user_id']
+        portfolio = database.get_portfolio(session['user_id'], symbol)
+        existing_shares = 0
+        if len(portfolio['symbol']) == 1 and portfolio['symbol'][0] == symbol:
+            existing_shares = portfolio['shares'][0]
+        cash = portfolio['cash']
 
-        #if the user is selling all the stocks of one kind that she has, delete that row in the portfolio table and update the cash in the users table 
-        if shares3==0:
-            engine.execute ("DELETE FROM portfolio WHERE username=:username AND symbol=:symbol",symbol=symbol,username=username)
-            engine.execute("UPDATE users SET cash=:new_cash WHERE username=:username AND id=:id",id=id,username=username,new_cash=new_cash)
-            
-        #if the user is not selling all she has, update the data 
-        if shares1<shares2:
-            engine.execute("UPDATE portfolio set shares=:shares3 WHERE username=:username AND symbol=:symbol",symbol=symbol,username=username,shares3=shares3)
-            engine.execute("UPDATE users SET cash=:new_cash WHERE username=:username AND id=:id",id=id,username=username,new_cash=new_cash)
-        
-        #after the user making a sale, return to the index page, and let the user see the change in the shares, cash and total (both the total for that stock and t)
-        return redirect(url_for("index"))  
-            
-            
+        if shares > existing_shares:
+            return apology("No enough shares to sell.")
+
+        updated_shares = existing_shares - shares
+
+        total = price * shares
+        new_cash = cash + total
+        timestamp = time.strftime("%Y/%m/%d %H:%M:%S")
+
+        database.create_sell_transaction(uid, new_cash, symbol, updated_shares, -shares, price, timestamp)
+
+        return redirect(url_for("index"))
     else:
         return render_template("sell.html")
 
-    
+
 @app.route("/history")
 @login_required
 def history():
-    """Show history of transactions"""
-    id=session["user_id"]
-    rows=engine.execute("SELECT*FROM history WHERE id=:id",id=id)
-    #if len(rows)==0:
-    #    return ("No history!")
-            
-    dict={}
-    dict['Symbol']=[]
-    dict['Shares']=[]                        
-    dict['Price']=[]
-    dict['transacted']=[]
-            
-    for row in rows:
-        dict['Symbol'].append(row["symbol"])
-        dict['Shares'].append(row["shares"])
-        dict['Price'].append(row["price"])
-        dict['transacted'].append(row["transacted"])           
-        
-    length=len(dict['Symbol'])
-        
-    return render_template("history.html",length=length,dict=dict)
+    uid = session["user_id"]
+    transactions = database.get_transaction(uid)
+    length = len(transactions['symbol'])
+    return render_template("history.html", length=length, dict=transactions)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Log user in"""
-
-    # Forget any user_id
     session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
-        # Ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username", 403)
+            return apology("Must provide username", 403)
 
-        # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return apology("Must provide password", 403)
 
-        # Query database for username
-        result = engine.execute("SELECT * FROM users WHERE username = :username",
-                          username=request.form.get("username"))
-        rows = result.fetchall()
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
+        user = database.get_user(request.form.get("username"), '')
+        if len(user['username']) == 0 or not pwd_context.verify(request.form.get("password"), user["hash"]):
             return apology("invalid username and/or password", 403)
-        #if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-        #    return apology("invalid username and/or password", 403)
 
-        # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
-
-        # Redirect user to home page
+        session["user_id"] = user["user_id"]
         return redirect("/")
 
-    # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    """Log user out"""
-
-    # Forget any user_id
     session.clear()
-
-    # Redirect user to login form
-    #return redirect("/")
     return redirect(url_for("login"))
 
 
-#GET allows the user to get to the register page, while POST allows the data to be inserted into the database 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Register user"""
-    #if the user is not sending any input, return to the register page.  By doing so, we ensure the user is inputting username and password 
-    if request.method=='POST':
-        #request.form.get ("a") is slightly safer than request.form ["a"] when a exists 
-        if not request.form.get ("username"):
-            return apology("Missing Username")
-    
-        #if the username already exists    
-        result = engine.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username"))
-        rows = result.fetchall()
-        if len(rows) != 0:
-            return apology("This username already exists")
-    
-        #if the password is blank:
-        if not request.form.get ("password"):
+    if request.method == 'POST':
+        if not request.form.get("username"):
+            return apology("Missing username")
+
+        username = request.form.get("username")
+        user = database.get_user(username, '')
+        if len(user['username']) > 0:
+            return apology("This username is already exists")
+
+        if not request.form.get("password"):
             return apology("Missing password!")
-        
-        #if the password and the confirmation don't match 
-        #for line250, both request.form.get["paswsword"] and quest.form("password") will work 
-        if request.form.get("password")!=request.form.get("confirmation"):
+
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
+        if password != confirmation:
             return apology("Passwords do not match!")
         else:
-        #save the password as hash, encrypt it.  If anyone hacks into the database, he/she won't be able to see all the passwords
+            encrypted_password = pwd_context.hash(request.form.get("password"))
+            database.create_user(user, encrypted_password)
 
-            hash=pwd_context.encrypt(request.form.get("password"))
-            
-            engine.execute("INSERT INTO users (username,hash) values(:username,:password)",username=request.form.get("username"),password=hash)
-    
-        #in this case, you are sure the username exists in the table, so stick with request.form.get("username")
-        result = engine.execute("SELECT * FROM users WHERE username=:username", username=request.form.get('username'))
-        rows = result.fetchall()
-        # remember which user has logged in
-        #session is the temporary memory.  The user info in stored in session.  Once the user log out, the session info may disappear 
-        session["user_id"] = rows[0]["id"]
-        
-        #if the user completes the register without any mistake, she will be redirected to the index page.
-        return redirect (url_for("index"))
-        
-        #if the method is not POST (which allows the user to input data into the user table), return to the register page 
-        #in what case can the method be GET or whatever besides POST?
-        
-    else: return render_template ("register.html")
+        user = database.get_user(username, '')
+        session["user_id"] = user["user_id"]
+        return redirect(url_for("index"))
+
+    else:
+        return render_template("register.html")
+
 
 @app.route("/quote", methods=["GET", "POST"])
 def get_quote():
@@ -417,18 +238,17 @@ def get_quote():
         if not request.form.get("symbol"):
             return apology("symbol missing")
 
-        market_data = iex_market_data.IEXMarketData (request.form.get("symbol"), os.environ.get("API_KEY"))
-        quote, error = market_data.get_quote()
+        quote, error = market_data.get_quote(request.form.get("symbol"))
 
         if len(error) > 0:
-            return apology(error)
+            return apology("Invalid symbol")
         else:
             return render_template("quote.html", dict=quote)
 
     else:
         return render_template("get_quote.html")
 
-'''
+
 def errorhandler(e):
     """Handle error"""
     if not isinstance(e, HTTPException):
@@ -439,7 +259,9 @@ def errorhandler(e):
 # Listen for errors
 for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
-'''
+
 
 if __name__ == "__main__":
-        app.run()
+    table_list = ["users", "portfolios", "transactions"]
+    database.create_table(table_list)
+    app.run()

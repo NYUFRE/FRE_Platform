@@ -13,7 +13,7 @@ from model.logger import setup_logger
 setup_logger('logfix', 'Logs/message.log')
 client_log = logging.getLogger('logfix')
 
-
+#TODO Change class name to FIXClient
 class Application(fix.Application):
 
     def __init__(self, session):
