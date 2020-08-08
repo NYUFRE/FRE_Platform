@@ -1,32 +1,51 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}
     Stock Quote
 {% endblock %}
 
-{% block main %}
+{% block content %}
 
-    <table class="table table-striped">
-        <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Bid Price</th>
-                    <th>Bid Size</th>
-                    <th>Ask Price</th>
-					<th>Ask Size</th>
-                </tr>
-        </thead>
-        
-        <tbody>
-                <tr>
-                    <td>{{dict['symbol']}}</td>
-                    <td>{{dict['bidPrice']|usd}}</td>
-                    <td>{{dict['bidSize']}}</td>
-                    <td>{{dict['askPrice']|usd}}</td>
-                    <td>{{dict['askSize']}}</td>
-                </tr>
-        
-    </tbody>
-    </table>
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+	<ul class="nav nav-pills flex-column">
+		<li class="nav-item">
+			<a class="nav-link" href="/">Portfolio</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link active" href="/quote">Stock Quote</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" href="/buy">Buy Stock</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link" href="/sell">Sell Stock</a>
+		</li>
+	</ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Current Quote</h3>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<thead>
+			<tr>
+				<th style="text-align:center">Symbol</th>
+				<th style="text-align:center">Bid Price</th>
+				<th style="text-align:center">Bid Size</th>
+				<th style="text-align:center">Ask Price</th>
+				<th style="text-align:center">Ask Size</th>
+			</tr>
+			</thead>
+
+			<tbody>
+			<tr>
+				<td>{{dict['symbol']}}</td>
+				<td>{{dict['bidPrice']|usd}}</td>
+				<td>{{dict['bidSize']}}</td>
+				<td>{{dict['askPrice']|usd}}</td>
+				<td>{{dict['askSize']}}</td>
+			</tr>
+			</tbody>
+		</table>
 
 {%endblock%}

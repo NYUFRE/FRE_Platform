@@ -11,10 +11,20 @@ import os
 
 from utility.helpers import apology, login_required, usd
 
-from market_data import iex_market_data
+from market_data.fre_market_data import IEXMarketData
 from database.fre_database import FREDatabase
+from stat_arb.pair_trading import *
 
-os.environ["API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
+os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
+os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
+
+# Make sure API key is set
+if not os.environ.get("IEX_API_KEY"):
+    raise RuntimeError("IEX_API_KEY not set")
+
+if not os.environ.get("EOD_API_KEY"):
+    raise RuntimeError("EOD_API_KEY not set")
+
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
@@ -37,12 +47,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 database = FREDatabase()
-market_data = iex_market_data.IEXMarketData(os.environ.get("API_KEY"))
-
-# Make sure API key is set
-if not os.environ.get("API_KEY"):
-    raise RuntimeError("API_KEY not set")
-
+iex_market_data = IEXMarketData(os.environ.get("IEX_API_KEY"))
 
 @app.route("/")
 @login_required
@@ -54,7 +59,7 @@ def index():
     length = len(portfolio['symbol'])
     if length > 0:
         for i in range(len(portfolio['symbol'])):
-            price, error = market_data.get_price(portfolio['symbol'][i])
+            price, error = iex_market_data.get_price(portfolio['symbol'][i])
             if len(error) > 0:
                 return apology(error)
             portfolio['name'][i] = price['name']
@@ -87,7 +92,7 @@ def buy():
         price = 0.0
         input_price = request.form.get('price')
         if not input_price:
-            latest_price, error = market_data.get_price(symbol)
+            latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
                 return apology(error)
             price = latest_price['price']
@@ -134,7 +139,7 @@ def sell():
         price = 0.0
         input_price = request.form.get('price')
         if not input_price:
-            latest_price, error = market_data.get_price(symbol)
+            latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
                 return apology(error)
             price = latest_price['price']
@@ -238,7 +243,7 @@ def get_quote():
         if not request.form.get("symbol"):
             return apology("symbol missing")
 
-        quote, error = market_data.get_quote(request.form.get("symbol"))
+        quote, error = iex_market_data.get_quote(request.form.get("symbol"))
 
         if len(error) > 0:
             return apology("Invalid symbol")
@@ -259,6 +264,52 @@ def errorhandler(e):
 # Listen for errors
 for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
+
+
+@app.route('/build_model')
+@login_required
+def build_model():
+    build_pair_trading_model()
+    back_testing(k, back_testing_start_date, back_testing_end_date)
+    select_stmt = "SELECT * FROM stock_pairs;"
+    result_set = database.execute_sql_statement(select_stmt)
+    result_df = pd.DataFrame(result_set.fetchall())
+    result_df.columns = result_set.keys()
+    result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
+    result_df = result_df.transpose()
+    list_of_pairs = [result_df[i] for i in result_df]
+    return render_template("build_model.html", pair_list=list_of_pairs)
+
+
+@app.route('/back_test')
+@login_required
+def model_back_testing():
+    back_testing(k, back_testing_start_date, back_testing_end_date)
+    select_stmt = "SELECT * FROM stock_pairs;"
+    result_set = database.execute_sql_statement(select_stmt)
+    result_df = pd.DataFrame(result_set.fetchall())
+    result_df.columns = result_set.keys()
+    result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
+    result_df['profit_loss'] = result_df['profit_loss'].map('${:,.2f}'.format)
+    result_df = result_df.transpose()
+    list_of_pairs = [result_df[i] for i in result_df]
+    return render_template("back_test.html", pair_list=list_of_pairs)
+
+
+@app.route('/probation_test')
+@login_required
+def trade_analysis():
+    select_stmt = "SELECT symbol1, symbol2, printf(\"$%.2f\", sum(profit_loss)) AS Profit, count(profit_loss) AS Total_Trades, \
+                sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
+                sum(CASE WHEN profit_loss <=0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades \
+                GROUP BY symbol1, symbol2;"
+    result_set = database.execute_sql_statement(select_stmt)
+    result_df = pd.DataFrame(result_set.fetchall())
+    result_df.columns = result_set.keys()
+    #print(result_df.to_string(index=False))
+    result_df = result_df.transpose()
+    trade_results = [result_df[i] for i in result_df]
+    return render_template("probation_test.html", trade_list=trade_results)
 
 
 if __name__ == "__main__":

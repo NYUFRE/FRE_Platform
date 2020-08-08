@@ -1,24 +1,42 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}
     Index
 {% endblock %}
 
-{% block main %}
-<table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Company Name</th>
-                <th>Shares</th>
-                <th>Price</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-        
-            {% for i in range(length) %}
-            
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/">Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/quote">Stock Quote</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/buy">Buy Stock</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/sell">Sell Stock</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Trading Portfolio</h3>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th style="text-align:center">Symbol</th>
+					<th style="text-align:center">Company Name</th>
+					<th style="text-align:center">Shares</th>
+					<th style="text-align:center">Price</th>
+					<th style="text-align:center">Total</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for i in range(length) %}
                 <tr>
                     <!--call the value from the dictionary-->
                     <!--the double curly parentheses are for jinja-->
@@ -32,19 +50,19 @@
                     <!--;,is a place holder-->
                 
                 </tr>
-            {%endfor%}
+				{%endfor%}
             
-            <tr>
-                <td>Cash</td>
-                <td colspan="3"></td>
-                <td>{{cash}}</td>
-            </tr>
-        </tbody>
-		<tfoot>
-            <tr>
-                <td colspan="4"></td>
-                <td>{{ total }}</td>
-            </tr>
-        </tfoot>
-    </table>
+				<tr>
+					<td>Cash</td>
+					<td colspan="3"></td>
+					<td>{{cash}}</td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="4"></td>
+					<td>{{ total }}</td>
+				</tr>
+			</tfoot>
+		</table>
 {% endblock %}

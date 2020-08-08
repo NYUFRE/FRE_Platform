@@ -1,11 +1,17 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR
+from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
+
+import pandas as pd
 
 
 class FREDatabase:
     def __init__(self):
+        #path = os.path.dirname(os.path.abspath('fre_database.py'))
+        #db = os.path.join(path, 'fre_database.db')
+        #self.engine = create_engine('sqlite:///' + 'FRE_Platform\\database\\fre_database.db')
         self.engine = create_engine('sqlite:///fre_database.db')
 
         self.conn = self.engine.connect()
@@ -49,6 +55,148 @@ class FREDatabase:
                               sqlite_autoincrement=True,
                               extend_existing=True)
                 table.create(self.engine)
+
+            elif table_name == "stock_pairs" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol1', String(50), primary_key=True, nullable=False),
+                              Column('symbol2', String(50), primary_key=True, nullable=False),
+                              Column('volatility', Float, nullable=False),
+                              Column('profit_loss', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif (table_name == "pair1_stocks" or table_name == "pair2_stocks") and table_name not in tables:
+                if table_name == 'pair1_stocks':
+                    foreign_key = 'stock_pairs.symbol1'
+                else:
+                    foreign_key = 'stock_pairs.symbol2'
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(50), ForeignKey(foreign_key), primary_key=True, nullable=False),
+                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('open', Float, nullable=False),
+                              Column('high', Float, nullable=False),
+                              Column('low', Float, nullable=False),
+                              Column('close', Float, nullable=False),
+                              Column('adjusted_close', Float, nullable=False),
+                              Column('volume', Integer, nullable=False))
+                table.create(self.engine)
+
+            elif table_name == "pair_prices" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True, nullable=False),
+                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True, nullable=False),
+                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('open1', Float, nullable=False),
+                              Column('close1', Float, nullable=False),
+                              Column('open2', Float, nullable=False),
+                              Column('close2', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "pair_trades" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True, nullable=False),
+                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True, nullable=False),
+                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('open1', Float, nullable=False),
+                              Column('close1', Float, nullable=False),
+                              Column('open2', Float, nullable=False),
+                              Column('close2', Float, nullable=False),
+                              Column('qty1', Integer, nullable=False),
+                              Column('qty2', Integer, nullable=False),
+                              Column('profit_loss', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "sp500" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(20), primary_key=True, nullable=False),
+                              Column('name', String(20), nullable=False),
+                              Column('sector', String(20), ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"), nullable=False),
+                              Column('industry', String(20), nullable=False),
+                              Column('weight', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "sp500_sectors" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('sector', String(20), primary_key=True, nullable=False),
+                              Column('equity_pct', Float, nullable=False),
+                              Column('category_pct', Float, nullable=False),
+                              extend_existing = True)
+                table.create(self.engine)
+
+            elif table_name == "fundamentals" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, nullable=False),
+                              Column('pe_ratio', Float),
+                              Column('dividend_yield', Float),
+                              Column('beta', Float),
+                              Column('high_52weeks', Float),
+                              Column('low_52weeks', Float),
+                              Column('ma_50days', Float),
+                              Column('ma_200days', Float),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif (table_name == "spy" or table_name == "us10y" or table_name == "stocks") and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, nullable=False),
+                              Column('date', String(20), primary_key=True, nullable=False),
+                              Column('open', Float, nullable=False),
+                              Column('high', Float, nullable=False),
+                              Column('low', Float, nullable=False),
+                              Column('close', Float, nullable=False),
+                              Column('adjusted_close', Float, nullable=False),
+                              Column('volume', Integer, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+    def clear_table(self, table_list):
+        conn = self.engine.connect()
+        for table_name in table_list:
+            table = self.metadata.tables[table_name]
+            delete_stmt = table.delete()
+            conn.execute(delete_stmt)
+
+    def drop_table(self, table_name):
+        sql_stmt = 'Drop Table if exists ' + table_name + ';'
+        self.engine.execute(sql_stmt)
+
+    def execute_sql_statement(self, sql_stmt):
+        result_set = self.engine.execute(sql_stmt)
+        result_df = pd.DataFrame(result_set.fetchall())
+        if not result_df.empty:
+            result_df.columns = result_set.keys()
+        return result_df
+
+    def get_sp500_symbols(self):
+        symbols = []
+        result = self.engine.execute("SELECT symbol FROM sp500")
+        data = result.fetchall()
+        for i in range(len(data)):
+            symbols.append(data[i][0])
+        return symbols
+
+    def get_sp500_sectors(self):
+        sectors = []
+        result = self.engine.execute("SELECT sector FROM sp500_sectors")
+        data = result.fetchall()
+        for i in range(len(data)):
+            sectors.append(data[i][0])
+        return sectors
+
+    def get_sp500_symbol_map(self):
+        sp500_symbol_map = {}
+        sectors = self.get_sp500_sectors()
+        for sector in sectors:
+            sp500_symbol_map[sector] = []
+
+        result = self.engine.execute("SELECT * FROM sp500")
+        data = result.fetchall()
+        for stock_data in data:
+            sp500_symbol_map[stock_data['sector']].append(stock_data['symbol'])
+        return sp500_symbol_map
 
     def get_user(self, usr, uid):
         data = []

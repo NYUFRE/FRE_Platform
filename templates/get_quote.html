@@ -1,10 +1,10 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}
     Quote
 {% endblock %}
 
-{% block main %}
+{% block content %}
 
     <head>
         <script src="https://code.jquery.com/jquery-latest.min.js"></script>
@@ -30,10 +30,33 @@
         <title>Get Quote</title>
     </head>
     <body>
-		<form action="/quote" id="quote" method="post">
-            <input id="symbol" name="symbol" placeholder="Symbol" type="text"/>
-            <input type="submit" value="Get Quote"/>
-        </form>
+		<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+			<ul class="nav nav-pills flex-column">
+				<li class="nav-item">
+					<a class="nav-link" href="/">Portfolio</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link active" href="/quote">Stock Quote</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/buy">Buy Stock</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/sell">Sell Stock</a>
+				</li>
+			</ul>
+		</nav>
+	
+		<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+			<h3>Get Current Stock Quote</h3>
+			<div class="form-group">
+				<form action="/quote" id="quote" method="post">
+					<input id="symbol" name="symbol" placeholder="Symbol" type="text"/>
+					<input type="submit" value="Get Quote"/>
+				</form>
+			</div>
+		</main>
+		
     </body>
 
 {%endblock%}
