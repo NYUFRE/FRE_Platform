@@ -1,8 +1,13 @@
+import os
 import statistics
 import random
+import datetime as dt
 
-import pandas as pd
-import numpy as np
+from market_data.fre_market_data import EODMarketData
+from database.fre_database import FREDatabase
+
+#import pandas as pd
+#import numpy as np
 
 # from numpy.core._multiarray_umath import ndarray
 
@@ -11,11 +16,17 @@ PORTFOLIO_NUM_OF_STOCK = 11
 
 fund = 1000000
 
-import os
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
 
 if not os.environ.get("EOD_API_KEY"):
     raise RuntimeError("EOD_API_KEY not set")
+
+start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+end_date = dt.datetime.today().strftime('%Y-%m-%d')
+
+database = FREDatabase()
+eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
+
 
 class Trade:
     def __init__(self):
@@ -34,6 +45,7 @@ class Trade:
     def __repr__(self):
         return str(self.__class__) + ": " + str(self.__dict__) + "\n"
     '''
+
 
 class Fundamental:
     def __init__(self):
