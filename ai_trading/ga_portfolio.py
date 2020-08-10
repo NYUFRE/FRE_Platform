@@ -135,17 +135,19 @@ class Stock:
         daily_returns = self.daily_returns.values()
         self.volatility = statistics.stdev(daily_returns)
 
-    def calculate_cumulative_daily_return(self, start_date, end_date):
-        daily_cumulative_return = 0
+    def calculate_daily_cumulative_return(self, start_date, end_date):
+        self.cumulative_return  = 0
         for date, trade in self.daily_returns.items():
             if date >= start_date and date <= end_date:
-                self.daily_cumulative_returns[date] = self.daily_returns[date] + daily_cumulative_return
-                daily_cumulative_return = self.daily_cumulative_returns[date]
-
+                self.daily_cumulative_returns[date] = self.daily_returns[date] + self.cumulative_return
+                self.cumulative_return  = self.daily_cumulative_returns[date]
+    '''
     def calculate_cumulative_return(self, start_date, end_date):
         for date, daily_return in self.daily_returns.items():
             if date >= start_date and date <= end_date:
                 self.cumulative_return += daily_return
+    '''
+
     '''
     def add_probation_trade(self, trade):
         self.probation_test_trades.append(trade)
@@ -171,6 +173,7 @@ class GAPortfolio:
 
         self.stocks = []
         self.portfolio_daily_returns = {}
+        self.portfolio_daily_cumulative_returns = {}
         self.betas = {}
 
         self.profit_loss = 0.0
@@ -266,18 +269,19 @@ class GAPortfolio:
         self.score = (self.portfolio_yield - spy_yield) + (spy_beta - self.beta) + self.trend + \
                      self.volatility / spy_volatility + \
                      self.sharpe_ratio + self.treynor_measure + self.jensen_measure
-
+    '''
     def calculate_cumulative_return(self, start_date, end_date):
         for date, daily_return in self.portfolio_daily_returns.items():
             if date >= start_date and date <= end_date:
                 self.cumulative_return += daily_return
+    '''
 
-    def calculate_cumulative_daily_return(self, start_date, end_date):
-        daily_cumulative_return = 0
+    def calculate_daily_cumulative_return(self, start_date, end_date):
+        self.cumulative_return = 0
         for date, daily_return in self.portfolio_daily_returns.items():
             if date >= start_date and date <= end_date:
-                self.portfolio_daily_cumulative_returns[date] = self.portfolio_daily_returns[date] + daily_cumulative_return
-                daily_cumulative_return = self.portfolio_daily_cumulative_returns[date]
+                self.portfolio_daily_cumulative_returns[date] = self.portfolio_daily_returns[date] + self.cumulative_return
+                self.cumulative_return = self.portfolio_daily_cumulative_returns[date]
 
     def calculate_profit_loss(self):
         for stock in self.stocks:

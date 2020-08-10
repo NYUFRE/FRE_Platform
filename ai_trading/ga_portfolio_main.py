@@ -11,4 +11,5 @@ if __name__ == "__main__":
     #create_populate_tables()
     #build_ga_model()
     ga_back_test()
+    ga_back_test_plot()
     ga_probation_test()
