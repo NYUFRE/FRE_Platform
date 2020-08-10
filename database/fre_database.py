@@ -152,6 +152,20 @@ class FREDatabase:
                               extend_existing=True)
                 table.create(self.engine)
 
+            elif table_name == "best_portfolio" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, nullable=False),
+                              Column('sector', String(20)),
+                              Column('category_pct', Float, nullable=False),
+                              Column('open_date', String(20), nullable=False),
+                              Column('open_price', Float, nullable=False),
+                              Column('close_date', String(20), nullable=False),
+                              Column('close_price', Float, nullable=False),
+                              Column('shares', Integer, nullable=False),
+                              Column('profit_loss', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
     def clear_table(self, table_list):
         conn = self.engine.connect()
         for table_name in table_list:
@@ -163,12 +177,15 @@ class FREDatabase:
         sql_stmt = 'Drop Table if exists ' + table_name + ';'
         self.engine.execute(sql_stmt)
 
-    def execute_sql_statement(self, sql_stmt):
-        result_set = self.engine.execute(sql_stmt)
-        result_df = pd.DataFrame(result_set.fetchall())
-        if not result_df.empty:
-            result_df.columns = result_set.keys()
-        return result_df
+    def execute_sql_statement(self, sql_stmt, insert=False):
+        if insert:
+            self.engine.execute(sql_stmt)
+        else:
+            result_set = self.engine.execute(sql_stmt)
+            result_df = pd.DataFrame(result_set.fetchall())
+            if not result_df.empty:
+                result_df.columns = result_set.keys()
+            return result_df
 
     def get_sp500_symbols(self):
         symbols = []

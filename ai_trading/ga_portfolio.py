@@ -9,6 +9,13 @@ import numpy as np
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
 
+fund = 1000000
+
+import os
+os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
+
+if not os.environ.get("EOD_API_KEY"):
+    raise RuntimeError("EOD_API_KEY not set")
 
 class Trade:
     def __init__(self):
@@ -79,6 +86,7 @@ class Stock:
         self.trades = {}
         self.daily_returns = {}
         self.daily_risk_free_rates = {}
+        self.daily_cumulative_returns = {}
 
         # self.backtest_trades = np.empty(dtype=BackTestTrade, order='C')
         #self.backtest_trades = []
@@ -114,6 +122,13 @@ class Stock:
     def calculate_volatility(self):
         daily_returns = self.daily_returns.values()
         self.volatility = statistics.stdev(daily_returns)
+
+    def calculate_cumulative_daily_return(self, start_date, end_date):
+        daily_cumulative_return = 0
+        for date, trade in self.daily_returns.items():
+            if date >= start_date and date <= end_date:
+                self.daily_cumulative_returns[date] = self.daily_returns[date] + daily_cumulative_return
+                daily_cumulative_return = self.daily_cumulative_returns[date]
 
     def calculate_cumulative_return(self, start_date, end_date):
         for date, daily_return in self.daily_returns.items():
@@ -179,6 +194,18 @@ class GAPortfolio:
                     self.portfolio_daily_returns[date] = 0
                 self.portfolio_daily_returns[date] += stock_weight * self.stocks[i].daily_returns[date]
 
+    def calculate_portfolio_daily_return(self):
+        self.portfolio_daily_returns = self.stocks[0].daily_returns
+        stock_weight = self.stocks[0].category_pct
+        self.portfolio_daily_returns.update(
+            (date, daily_return * stock_weight) for date, daily_return in self.portfolio_daily_returns.items())
+        for i in range(1, PORTFOLIO_NUM_OF_STOCK):
+            stock_weight = self.stocks[i].category_pct
+            for date, daily_return in self.stocks[i].daily_returns.items():
+                if date not in self.portfolio_daily_returns.keys():
+                    self.portfolio_daily_returns[date] = 0
+                self.portfolio_daily_returns[date] += stock_weight * self.stocks[i].daily_returns[date]
+
     def calculate_portfolio_daily_beta(self, spy_daily_returns, daily_risk_free_returns):
         for date, daily_return in self.portfolio_daily_returns.items():
             if date in daily_risk_free_returns.keys() and date in daily_risk_free_returns.keys():
@@ -232,6 +259,13 @@ class GAPortfolio:
         for date, daily_return in self.portfolio_daily_returns.items():
             if date >= start_date and date <= end_date:
                 self.cumulative_return += daily_return
+
+    def calculate_cumulative_daily_return(self, start_date, end_date):
+        daily_cumulative_return = 0
+        for date, daily_return in self.portfolio_daily_returns.items():
+            if date >= start_date and date <= end_date:
+                self.portfolio_daily_cumulative_returns[date] = self.portfolio_daily_returns[date] + daily_cumulative_return
+                daily_cumulative_return = self.portfolio_daily_cumulative_returns[date]
 
     def calculate_profit_loss(self):
         for stock in self.stocks:

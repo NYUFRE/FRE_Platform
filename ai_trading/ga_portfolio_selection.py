@@ -6,6 +6,8 @@ sys.path.append('../')
 
 import os
 import datetime as dt
+import holidays
+
 import copy
 
 import pandas as pd
@@ -19,8 +21,6 @@ from market_data.fre_market_data import EODMarketData
 from database.fre_database import FREDatabase
 from ai_trading.ga_portfolio import *
 
-location_of_pairs = 'csv/PairTrading.csv'
-
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
 
 if not os.environ.get("EOD_API_KEY"):
@@ -29,15 +29,24 @@ if not os.environ.get("EOD_API_KEY"):
 start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
-back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
-back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
+fund = 1000000
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 
+def previous_working_day(check_day_, holidays=holidays.US()):
+    offset = max(1, (check_day_.weekday() + 6) % 7 - 3)
+    most_recent = check_day_ - dt.timedelta(offset)
+    if most_recent not in holidays:
+        return most_recent
+    else:
+        return previous_working_day(most_recent, holidays)
+
+
 def create_populate_tables():
-    tables = ['sp500', 'sp500_sectors', 'fundamentals', 'stocks', 'spy', 'us10y']
+    """
+    tables = ['sp500', 'sp500_sectors', 'fundamentals', 'stocks', 'spy', 'us10y', 'best_portfolios']
     database.create_table(tables)
     database.clear_table(tables)
     eod_market_data.populate_sp500_data('SPY', 'US')
@@ -47,13 +56,11 @@ def create_populate_tables():
     eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, end_date, 'INDX')
     tickers.append('SPY')
     eod_market_data.populate_fundamental_data(tickers, 'US')
+    """
 
-    '''
-    tables = ['fundamentals']
+    tables = ['best_portfolio']
+    database.create_table(tables)
     database.clear_table(tables)
-    tickers = database.get_sp500_symbols()
-    eod_market_data.populate_fundamental_data(tickers, 'US')
-    '''
 
 
 def build_ga_model():
@@ -68,8 +75,11 @@ def build_ga_model():
     for sector in sp500_sectors:
         sp500_stock_map[sector] = []
 
-    # TODO!Avoid hard-coding start and end dates
-    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"2010-01-01\" AND \"2019-12-31\";"
+    modeling_testing_start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+    modeling_testing_end_date = dt.date(2019, 12, 31).strftime('%Y-%m-%d')
+
+    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
+                 modeling_testing_start_date + "\" AND \"" + modeling_testing_end_date + "\";"
     print(spy_select)
     price_df = database.execute_sql_statement(spy_select)
     for index, row in price_df.iterrows():
@@ -101,7 +111,8 @@ def build_ga_model():
         fundamental.ma_200days = row['ma_200days']
     spy.fundamental = fundamental
 
-    us10y_select = "SELECT * FROM us10y WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"2010-01-01\" AND \"2019-12-31\";";
+    us10y_select = "SELECT * FROM us10y WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
+                 modeling_testing_start_date + "\" AND \"" + modeling_testing_end_date + "\";"
     print(us10y_select)
     price_df = database.execute_sql_statement(us10y_select)
     for index, row in price_df.iterrows():
@@ -127,20 +138,27 @@ def build_ga_model():
 
     sp500_symbol_map = database.get_sp500_symbol_map()
     for key, symbols in sorted(sp500_symbol_map.items()):
+        stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + modeling_testing_start_date + "\" AND \"" + \
+                        modeling_testing_end_date + "\" AND open > 0 AND close > 0 AND symbol IN (" + ",".join("'" + symbol + "'" for symbol in symbols) + ");"
+        print(stock_select)
+        price_df = database.execute_sql_statement(stock_select)
+        if price_df.empty:
+            exit("price_df is empty")
+
+        fundamental_select = "SELECT * FROM Fundamentals WHERE symbol IN (" + ",".join("'" + symbol + "'" for symbol in symbols) + ");"
+        print(fundamental_select)
+        fundamental_df = database.execute_sql_statement(fundamental_select)
+        if fundamental_df.empty:
+            exit("fundamental_df is empty")
+
         for symbol in sorted(symbols):
             stock = Stock()
             stock.symbol = symbol
             stock.sector = key
             stock.category_pct = sp500_sector_map[key]
 
-            stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
-                           "BETWEEN \"2010-01-01\" AND \"2019-12-31\" AND open > 0 AND close > 0 AND symbol = \'" + symbol + "\';"
-            print(stock_select)
-            price_df = database.execute_sql_statement(stock_select)
-            if price_df.empty:
-                continue
-
-            for index, row in price_df.iterrows():
+            trades = price_df.loc[price_df['symbol'] == symbol]
+            for index, row in trades.iterrows():
                 trade = Trade()
                 trade.date = row['date']
                 trade.open = row['open']
@@ -153,12 +171,8 @@ def build_ga_model():
 
             stock.calculate_daily_return()
 
-            fundamental_select = "SELECT * FROM Fundamentals WHERE symbol = \"" + symbol + "\";"
-            print(fundamental_select)
-
-            fundamental_df = database.execute_sql_statement(fundamental_select)
             fundamental = Fundamental()
-            for index, row in fundamental_df.iterrows():
+            for index, row in fundamental_df.loc[fundamental_df['symbol'] == symbol].iterrows():
                 fundamental.pe_ratio = row['pe_ratio']
                 fundamental.dividend_yield = row['dividend_yield']
                 fundamental.beta = row['beta']
@@ -169,6 +183,7 @@ def build_ga_model():
             stock.fundamental = fundamental
             # print(stock)
             sp500_stock_map[stock.sector].append(stock)
+        #print(symbols)
 
     population = {}
     number_of_portfolio = 50
@@ -295,9 +310,25 @@ def build_ga_model():
         sorted_fitness = sorted(population.keys(), reverse=True)
         best_portfolio = population[sorted_fitness[0]]
         if abs(best_portfolio.score - max_score) < min_improvement:
+            for stock in best_portfolio.stocks:
+                #TODO! Move this logic into fre_database
+                #portfolio_insert_table = "INSERT INTO portfolios (symbol, sector, category_pct, open_date, open_price, close_date, close_price, shares, profitL_loss) \
+                #                        VALUES(\"%s\", \"%s\", %f, \"%s\", %f, \"%s\", %f, %d, %f)" % (stock.symbol, stock.sector, stock.category_pct, "", 0, "", 0, 0, 0)
+                #print(portfolio_insert_table)
+                #database.engine.execute(portfolio_insert_table, True)
+
+                conn = database.engine.connect()
+                table = database.metadata.tables["best_portfolio"]
+                insert_stmt = table.insert().values(symbol=stock.symbol, sector=stock.sector, category_pct=stock.category_pct,
+                                                  open_date="", open_price=0, close_date="", close_price=0, shares=0, profit_loss=0)
+                conn.execute(insert_stmt)
             break
         else:
             max_score = best_portfolio.score
+
+    # Back Testing
+    back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+    back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
     for i in range(len(best_portfolio.stocks)):
         stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
@@ -306,8 +337,7 @@ def build_ga_model():
         print(stock_select)
         price_df = database.execute_sql_statement(stock_select)
         if price_df.empty:
-            continue
-
+            exit("back testing price_df is empty")
         for index, row in price_df.iterrows():
             trade = Trade()
             trade.date = row['date']
@@ -324,6 +354,7 @@ def build_ga_model():
     best_portfolio.calculate_portfolio_daily_returns(sp500_sector_map)
     best_portfolio.calculate_cumulative_return(back_testing_start_date, back_testing_end_date)
 
+    # Probation Testing
     # make SPY captical in spy table
     spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) " \
                  "BETWEEN \"" + back_testing_start_date + "\" AND \"" + back_testing_end_date + \
@@ -349,12 +380,12 @@ def build_ga_model():
     print("best portfolio cumulative return: %4.2f%%" % (best_portfolio.cumulative_return*100))
     print("spy cumulative return: %4.2f%%" % (spy.cumulative_return*100))
 
-
-    ## TODO! make it base on back_testing_end_date
-    probation_testing_start_date = "2020-07-01"
-    probation_testing_end_date = "2020-07-31"
-
-    fund = 1000000
+    # Probation Testing
+    #probation_testing_start_date = "2020-07-01"
+    #probation_testing_end_date = "2020-07-31"
+    probation_testing_start_date = (dt.date(2020, 6, 30) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+    #probation_testing_end_date = previous_working_day(dt.datetime.today()).strftime('%Y-%m-%d')
+    probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
 
     for i in range(len(best_portfolio.stocks)):
         stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
@@ -363,8 +394,7 @@ def build_ga_model():
         print(stock_select)
         price_df = database.execute_sql_statement(stock_select)
         if price_df.empty:
-            continue
-
+            exit("probation testing price_df is empty")
         for index, row in price_df.iterrows():
             trade = Trade()
             trade.date = row['date']
@@ -383,8 +413,8 @@ def build_ga_model():
     for i in range(len(best_portfolio.stocks)):
         best_portfolio.stocks[i].probation_test_trade.open_date = probation_testing_start_date
         best_portfolio.stocks[i].probation_test_trade.close_date = probation_testing_end_date
-        best_portfolio.stocks[i].probation_test_trade.open_price = best_portfolio.stocks[i].trades[probation_testing_start_date].open
-        best_portfolio.stocks[i].probation_test_trade.close_price = best_portfolio.stocks[i].trades[probation_testing_end_date].close
+        best_portfolio.stocks[i].probation_test_trade.open_price = best_portfolio.stocks[i].trades[probation_testing_start_date].adjusted_close
+        best_portfolio.stocks[i].probation_test_trade.close_price = best_portfolio.stocks[i].trades[probation_testing_end_date].adjusted_close
         best_portfolio.stocks[i].probation_test_trade.shares = int(fund*best_portfolio.stocks[i].category_pct/
                                                                    best_portfolio.stocks[i].probation_test_trade.open_price)
         best_portfolio.stocks[i].probation_test_trade.profit_loss = (best_portfolio.stocks[i].probation_test_trade.close_price -
@@ -412,7 +442,7 @@ def build_ga_model():
         spy.add_trade(trade)
 
     spy.calculate_daily_return()
-    # TODO! We have an issue when there is a stock split or reverse split
+
     spy.probation_test_trade.open_date = probation_testing_start_date
     spy.probation_test_trade.close_date = probation_testing_end_date
     spy.probation_test_trade.open_price = spy.trades[probation_testing_start_date].open
@@ -426,5 +456,5 @@ def build_ga_model():
     print("spy return: %4.2f%%" % (float(spy.probation_test_trade.profit_loss/fund)*100))
 
 if __name__ == "__main__":
-    #create_populate_tables()
+    create_populate_tables()
     build_ga_model()
