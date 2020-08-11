@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/pair_trade_build_model">Building Model</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Genetic Algorithm to Select SP500 Investment Portfolios</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Genetic Algorithm</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Create a chromosome (portfolio) of genes (stocks), one
+							stock per S&amp;P500 sector.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Build 50 Initial parent portfolios from random selection
+							from the pool of S&amp;P500 composite stocks.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Construct a fitness function based on investment
+							parameters such as portfolio returns, risk, beta, yields,
+							Sharpe ratio, Treynor measure and Jensen measure.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Generate a child portfolio by crossover of two parent
+							chromosomes.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							5) Measure the fitness of chromosome of the child
+							portfolio.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							6) Replace a parent portfolio by the child portfolio if it
+							has a higher fitness value.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							7) Apply 3% mutation to chromosomes in each population.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							8) Continue the crossover, selection and mutation cycle
+							from generation to generation.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							9) Evaluate portfolios in each generation with fitness
+							function until the best portfolio is shown up or the max
+							number of generations is reached.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Market Data: </strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Use libcurl and Json to process daily price, fundamental
+							and index for S&amp;P 500 composite stocks.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Use 10 years (1/1/2010-12/31/2019) of daily price data
+							for each S&amp;P 500 stock and SPY data for portfolio gene
+							and chromosome creation.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Use 1/1/2020 to 6/30/2020 for portfolio back testing
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Use 7/1/2020 to present for portfolio probation testing
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Data Persistency</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Sqlite3 integration
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Programming Language</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) C++ or Python
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Python User Interface
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

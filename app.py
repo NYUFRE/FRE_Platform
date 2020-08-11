@@ -305,6 +305,10 @@ def trade_analysis():
     trade_results = [result_df[i] for i in result_df]
     return render_template("pair_trade_probation_test.html", trade_list=trade_results)
 
+@app.route('/ai_trading')
+@login_required
+def ai_trading():
+    return render_template("ai_trading.html")
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "transactions"]
