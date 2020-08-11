@@ -14,6 +14,7 @@ from utility.helpers import apology, login_required, usd
 from market_data.fre_market_data import IEXMarketData
 from database.fre_database import FREDatabase
 from stat_arb.pair_trading import *
+from ai_trading.ga_portfolio import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -48,6 +49,7 @@ Session(app)
 
 database = FREDatabase()
 iex_market_data = IEXMarketData(os.environ.get("IEX_API_KEY"))
+eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 @app.route("/")
 @login_required
@@ -305,10 +307,126 @@ def trade_analysis():
     trade_results = [result_df[i] for i in result_df]
     return render_template("pair_trade_probation_test.html", trade_list=trade_results)
 
+
 @app.route('/ai_trading')
 @login_required
 def ai_trading():
     return render_template("ai_trading.html")
+
+
+@app.route('/md_sp500')
+@login_required
+def market_data_sp500():
+    table_list = ['sp500', 'sp500_sectors']
+    database.create_table(table_list)
+    if database.check_table_empty('sp500'):
+        eod_market_data.populate_sp500_data('SPY', 'US')
+    select_stmt = 'SELECT symbol, name as company_name, sector, industry, printf("%.2f", weight) as weight FROM sp500 ORDER BY symbol ASC;'
+    result_df = database.execute_sql_statement(select_stmt)
+    result_df = result_df.transpose()
+    list_of_stocks = [result_df[i] for i in result_df]
+    return render_template("md_sp500.html", stock_list=list_of_stocks)
+
+
+@app.route('/md_sp500_sectors')
+@login_required
+def market_data_sp500_sectors():
+    table_list = ['sp500', 'sp500_sectors']
+    database.create_table(table_list)
+    if database.check_table_empty('sp500_sectors'):
+        eod_market_data.populate_sp500_data('SPY', 'US')
+    select_stmt = 'SELECT sector as sector_name, printf("%.4f", equity_pct) as equity_pct, printf("%.4f", category_pct) as category_pct FROM sp500_sectors ORDER BY sector ASC;'
+    result_df = database.execute_sql_statement(select_stmt)
+    result_df = result_df.transpose()
+    list_of_sectors = [result_df[i] for i in result_df]
+    return render_template("md_sp500_sectors.html", sector_list=list_of_sectors)
+
+
+@app.route('/md_spy')
+@login_required
+def market_data_spy():
+    table_list = ['spy']
+    database.create_table(table_list)
+    if database.check_table_empty('spy'):
+        eod_market_data.populate_stock_data(['SPY'], "spy", start_date, end_date, 'US')
+    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                  'printf("%.2f", adjusted_close) as adjusted_close, volume FROM spy ORDER BY date;'
+    result_df = database.execute_sql_statement(select_stmt)
+    result_df = result_df.transpose()
+    list_of_spy = [result_df[i] for i in result_df]
+    return render_template("md_spy.html", spy_list=list_of_spy)
+
+
+@app.route('/md_us10y')
+@login_required
+def market_data_us10y():
+    table_list = ['US10Y']
+    database.create_table(table_list)
+    if database.check_table_empty('us10y'):
+        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, end_date, 'INDX')
+    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                  'printf("%.2f", adjusted_close) as adjusted_close FROM us10y ORDER BY date;'
+    result_df = database.execute_sql_statement(select_stmt)
+    result_df = result_df.transpose()
+    list_of_us10y = [result_df[i] for i in result_df]
+    return render_template("md_us10y.html", us10y_list=list_of_us10y)
+
+
+@app.route('/md_fundamentals')
+@login_required
+def market_data_fundamentals():
+    table_list = ['fundamentals']
+    database.create_table(table_list)
+    if database.check_table_empty('fundamentals'):
+        tickers = database.get_sp500_symbols()
+        tickers.append('SPY')
+        eod_market_data.populate_fundamental_data(tickers, 'US')
+    select_stmt = 'SELECT symbol, printf("%.4f", pe_ratio) as pe_ratio, printf("%.4f", dividend_yield) as dividend_yield, ' \
+                  'printf("%.4f", beta) as beta, printf("%.2f", high_52weeks) as high_52weeks, printf("%.2f", low_52weeks) as low_52weeks, ' \
+                  'printf("%.2f", ma_50days) as ma_50days, printf("%.2f", ma_200days) as ma_200days FROM fundamentals ORDER BY symbol;'
+    result_df = database.execute_sql_statement(select_stmt)
+    result_df = result_df.transpose()
+    list_of_stocks = [result_df[i] for i in result_df]
+    return render_template("md_fundamentals.html", stock_list=list_of_stocks)
+
+
+@app.route('/md_stocks', methods=["GET", "POST"])
+@login_required
+def market_data_stock():
+    table_list = ['stocks']
+    database.create_table(table_list)
+    if database.check_table_empty('stocks'):
+        tickers = database.get_sp500_symbols()
+        eod_market_data.populate_stock_data(tickers, "stocks", start_date, end_date, 'US')
+
+    if request.method == 'POST':
+        ticker = "A"
+        if request.form.get("symbol"):
+            ticker = request.form.get("symbol")
+
+        date1 = start_date
+        if request.form.get("start_date"):
+            date1 = request.form.get("start_date")
+
+        date2 = end_date
+        if request.form.get("end_date"):
+            date2 = request.form.get("end_date")
+
+        select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                      'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                      'printf("%.2f", adjusted_close) as adjusted_close, volume FROM stocks ' \
+                      'WHERE symbol = \"' + ticker + '\" AND strftime(\'%Y-%m-%d\', date) BETWEEN \"' + date1 + '\" AND \"' + date2 + '\"' + \
+                      'ORDER BY date;'
+        result_df = database.execute_sql_statement(select_stmt)
+        result_df = result_df.transpose()
+        list_of_stock = [result_df[i] for i in result_df]
+        return render_template("md_stock.html", stock_list=list_of_stock)
+
+    else:
+        return render_template("md_get_stock.html")
+
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "transactions"]

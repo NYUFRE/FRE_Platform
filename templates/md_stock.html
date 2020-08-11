@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/md_sp500">SP500 Index Components</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_sp500_sectors">SP500 Sectors</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_spy">SPY Daily Prices</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_us10y">10 Year Treasury Yields</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link active" href="/md_stocks">Stock Daily Prices</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_fundamentals">Stock Fundamentals</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Stock Daily Prices and Volume</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:left">Symbol</th>
+                <th style="text-align:left">Date</th>
+                <th style="text-align:center">Open</th>
+				<th style="text-align:center">High</th>
+				<th style="text-align:center">Low</th>
+				<th style="text-align:center">Close</th>
+				<th style="text-align:center">Volume</th>
+				<th style="text-align:center">Adjusted_Close</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for stock in stock_list %}
+            <tr>
+                <td style="text-align:left"> {{stock.symbol}}</td>
+                <td style="text-align:left"> {{stock.date}}</td>
+                <td style="text-align:center"> {{stock.open}}</td>
+				<td style="text-align:center"> {{stock.high}}</td>
+                <td style="text-align:center"> {{stock.low}}</td>
+                <td style="text-align:center"> {{stock.close}}</td>
+				<td style="text-align:center"> {{stock.volume}}</td>
+				<td style="text-align:center"> {{stock.adjusted_close}}</td>
+                
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}

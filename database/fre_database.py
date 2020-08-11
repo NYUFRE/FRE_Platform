@@ -177,6 +177,15 @@ class FREDatabase:
         sql_stmt = 'Drop Table if exists ' + table_name + ';'
         self.engine.execute(sql_stmt)
 
+    def check_table_empty(self, table_name):
+        sql_stmt = 'select count(*) from ' + table_name + ';'
+        result_set = self.engine.execute(sql_stmt)
+        result = result_set.fetchone()
+        if result[0] == 0:
+            return True
+        else:
+            return False
+
     def execute_sql_statement(self, sql_stmt, change=False):
         if change:
             self.engine.execute(sql_stmt)

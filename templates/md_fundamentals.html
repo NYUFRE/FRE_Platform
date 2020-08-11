@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/md_sp500">SP500 Index Components</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_sp500_sectors">SP500 Sectors</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_spy">SPY Daily Prices</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_us10y">10 Year Treasury Yields</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/md_stocks">Stock Daily Prices</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link active" href="/md_fundamentals">Stock Fundamentals</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>SP500 Stock Fundamental</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:left">Symbol</th>
+                <th style="text-align:center">PE Ratio</th>
+                <th style="text-align:center">Dividend Yield</th>
+                <th style="text-align:center">Beta</th>
+				<th style="text-align:center">High 52 Weeks</th>
+				<th style="text-align:center">Low 52 Weeks</th>
+				<th style="text-align:center">MA 50 Days</th>
+				<th style="text-align:center">MA 200 Days</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for stock in stock_list %}
+            <tr>
+                <td style="text-align:left"> {{stock.symbol}}</td>
+                <td style="text-align:center"> {{stock.pe_ratio}}</td>
+                <td style="text-align:center"> {{stock.dividend_yield}}</td>
+                <td style="text-align:center"> {{stock.beta}}</td>
+				<td style="text-align:center"> {{stock.high_52weeks}}</td>
+				<td style="text-align:center"> {{stock.low_52weeks}}</td>
+				<td style="text-align:center"> {{stock.ma_50days}}</td>
+				<td style="text-align:center"> {{stock.ma_200days}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}
