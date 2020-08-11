@@ -3,27 +3,26 @@
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
-            <a class="nav-link" href="/build_model">Building Model</a>
+            <a class="nav-link active" href="/pair_trade_build_model">Building Model</a>
         </li>
 		<li class="nav-item">
-            <a class="nav-link active" href="/back_test">Back Testing</a>
+            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/probation_test">Probation Testing</a>
+            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
         </li>
     </ul>
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3>Back Testing</h3>
+    <h3>Building Model for Pair Trading</h3>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
             <tr>
-                <th style="text-align:center">Ticker1</th>
-                <th style="text-align:center">Ticker2</th>
+                <th style="text-align:center">Symbol1</th>
+                <th style="text-align:center">Symbol2</th>
                 <th style="text-align:center">Volatility</th>
-                <th style="text-align:center">Profit_Loss</th>
             </tr>
             </thead>
             <tbody>
@@ -32,7 +31,6 @@
                 <td> {{pair.symbol1}}</td>
                 <td> {{pair.symbol2}}</td>
                 <td> {{pair.volatility}}</td>
-                <td> {{pair.profit_loss}}</td>
             </tr>
             {% endfor %}
             </tbody>

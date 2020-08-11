@@ -266,33 +266,33 @@ for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
 
 
-@app.route('/build_model')
+@app.route('/pair_trade_build_model')
 @login_required
 def build_model():
     build_pair_trading_model()
-    back_testing(k, back_testing_start_date, back_testing_end_date)
+    #pair_trading_back_testing(k, back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
     result_df = database.execute_sql_statement(select_stmt)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df = result_df.transpose()
     list_of_pairs = [result_df[i] for i in result_df]
-    return render_template("build_model.html", pair_list=list_of_pairs)
+    return render_template("pair_trade_build_model.html", pair_list=list_of_pairs)
 
 
-@app.route('/back_test')
+@app.route('/pair_trade_back_test')
 @login_required
 def model_back_testing():
-    back_testing(k, back_testing_start_date, back_testing_end_date)
+    pair_trade_back_test(k, back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
     result_df = database.execute_sql_statement(select_stmt)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df['profit_loss'] = result_df['profit_loss'].map('${:,.2f}'.format)
     result_df = result_df.transpose()
     list_of_pairs = [result_df[i] for i in result_df]
-    return render_template("back_test.html", pair_list=list_of_pairs)
+    return render_template("pair_trade_back_test.html", pair_list=list_of_pairs)
 
 
-@app.route('/probation_test')
+@app.route('/pair_trade_probation_test')
 @login_required
 def trade_analysis():
     select_stmt = "SELECT symbol1, symbol2, printf(\"$%.2f\", sum(profit_loss)) AS Profit, count(profit_loss) AS Total_Trades, \
@@ -303,7 +303,7 @@ def trade_analysis():
     #print(result_df.to_string(index=False))
     result_df = result_df.transpose()
     trade_results = [result_df[i] for i in result_df]
-    return render_template("probation_test.html", trade_list=trade_results)
+    return render_template("pair_trade_probation_test.html", trade_list=trade_results)
 
 
 if __name__ == "__main__":

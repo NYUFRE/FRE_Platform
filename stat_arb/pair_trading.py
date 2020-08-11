@@ -136,7 +136,7 @@ class StockPair:
         return pd.DataFrame(trades_matrix[:, range(4, trades_matrix.shape[1])], columns=['qty1', 'qty2', 'profit_loss'])
 
 
-def back_testing(k, back_testing_start_date, back_testing_end_date):
+def pair_trade_back_test(k, back_testing_start_date, back_testing_end_date):
     #database.drop_table('pair_trades')
     stock_pair_map = dict()
 
