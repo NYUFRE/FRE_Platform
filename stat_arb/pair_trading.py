@@ -39,7 +39,7 @@ def populate_stock_data(tickers, table_name, start_date, end_date):
     column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
     price_data = []
     for ticker in tickers:
-        stock = eod_market_data.get_daily_data(ticker, start_date, end_date)
+        stock = eod_market_data.get_daily_data(ticker, start_date, end_date, 'US')
         for stock_data in stock:
             price_data.append([ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
                                stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
@@ -70,15 +70,11 @@ def build_pair_trading_model():
                  WHERE (((stock_pairs.symbol1 = pair1_stocks.symbol) AND (stock_pairs.symbol2 = pair2_stocks.symbol)) AND \
                  (pair1_stocks.date = pair2_stocks.date)) ORDER BY symbol1, symbol2;"
 
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
     result_df.to_sql('pair_prices', con=database.engine, if_exists='append', index=False)
 
     select_stmt = "SELECT * FROM pair_prices WHERE date <= " + "\"" + back_testing_start_date + "\";"
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
     result_df['ratio'] = result_df['close1']/result_df['close2']
     result_df_stdev = result_df.groupby(['symbol1', 'symbol2'])['ratio'].std()
     result_df_stdev.to_sql('tmp', con=database.engine, if_exists='replace')
@@ -95,7 +91,7 @@ def build_pair_trading_model():
     and tmp.symbol2 = stock_pairs.symbol2);
     """
 
-    database.execute_sql_statement(update_st)
+    database.execute_sql_statement(update_st, True)
     database.drop_table('tmp')
 
 
@@ -145,9 +141,7 @@ def back_testing(k, back_testing_start_date, back_testing_end_date):
     stock_pair_map = dict()
 
     select_stmt = 'SELECT symbol1, symbol2, volatility FROM stock_pairs;'
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
 
     for index, row in result_df.iterrows():
         aKey = (row['symbol1'], row['symbol2'])
@@ -155,9 +149,7 @@ def back_testing(k, back_testing_start_date, back_testing_end_date):
 
     select_stmt = "SELECT * FROM pair_prices WHERE date >= " + "\"" + back_testing_start_date + "\"" + \
                 " AND date <= " + "\"" + back_testing_end_date + "\"" + ";"
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
 
     for index in range(0, result_df.shape[0]):
         aKey = (result_df.at[index, 'symbol1'], result_df.at[index, 'symbol2'])
@@ -174,7 +166,7 @@ def back_testing(k, back_testing_start_date, back_testing_end_date):
 
         table = database.metadata.tables['stock_pairs']
         update_stmt = table.update().values(profit_loss=value.total_profit_loss).where(and_(table.c.symbol1 == value.symbol1, table.c.symbol2 == value.symbol2))
-        database.execute_sql_statement(update_stmt)
+        database.execute_sql_statement(update_stmt, True)
 
     result_df = result_df.join(trades_df)
     #print(result_df)

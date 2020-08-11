@@ -272,9 +272,7 @@ def build_model():
     build_pair_trading_model()
     back_testing(k, back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df = result_df.transpose()
     list_of_pairs = [result_df[i] for i in result_df]
@@ -286,9 +284,7 @@ def build_model():
 def model_back_testing():
     back_testing(k, back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df['profit_loss'] = result_df['profit_loss'].map('${:,.2f}'.format)
     result_df = result_df.transpose()
@@ -303,9 +299,7 @@ def trade_analysis():
                 sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
                 sum(CASE WHEN profit_loss <=0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades \
                 GROUP BY symbol1, symbol2;"
-    result_set = database.execute_sql_statement(select_stmt)
-    result_df = pd.DataFrame(result_set.fetchall())
-    result_df.columns = result_set.keys()
+    result_df = database.execute_sql_statement(select_stmt)
     #print(result_df.to_string(index=False))
     result_df = result_df.transpose()
     trade_results = [result_df[i] for i in result_df]

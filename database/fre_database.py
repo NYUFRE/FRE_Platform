@@ -177,8 +177,8 @@ class FREDatabase:
         sql_stmt = 'Drop Table if exists ' + table_name + ';'
         self.engine.execute(sql_stmt)
 
-    def execute_sql_statement(self, sql_stmt, insert=False):
-        if insert:
+    def execute_sql_statement(self, sql_stmt, change=False):
+        if change:
             self.engine.execute(sql_stmt)
         else:
             result_set = self.engine.execute(sql_stmt)
