@@ -16,16 +16,16 @@ PORTFOLIO_NUM_OF_STOCK = 11
 
 fund = 1000000
 
-os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
+#os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
 
-if not os.environ.get("EOD_API_KEY"):
-    raise RuntimeError("EOD_API_KEY not set")
+#if not os.environ.get("EOD_API_KEY"):
+#    raise RuntimeError("EOD_API_KEY not set")
 
 start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
-database = FREDatabase()
-eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
+#database = FREDatabase()
+#eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 
 class Trade:
@@ -85,6 +85,7 @@ class ProbationTestTrade:
 class Stock:
     def __init__(self):
         self.symbol = ""
+        self.name = ""
         self.sector = ""
         self.expected_daily_return = 0.0
         self.expected_risk_free_rate = 0.0

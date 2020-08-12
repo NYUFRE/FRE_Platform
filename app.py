@@ -15,6 +15,7 @@ from market_data.fre_market_data import IEXMarketData
 from database.fre_database import FREDatabase
 from stat_arb.pair_trading import *
 from ai_trading.ga_portfolio import *
+from ai_trading.ga_portfolio_select import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -184,6 +185,9 @@ def history():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    table_list = ["users", "portfolios", "transactions"]
+    database.create_table(table_list)
+
     session.clear()
     if request.method == "POST":
         if not request.form.get("username"):
@@ -193,7 +197,7 @@ def login():
             return apology("Must provide password", 403)
 
         user = database.get_user(request.form.get("username"), '')
-        if len(user['username']) == 0 or not pwd_context.verify(request.form.get("password"), user["hash"]):
+        if len(user['username']) == 0 or not pwd_context.verify(request.form.get("password"), user["password"]):
             return apology("invalid username and/or password", 403)
 
         session["user_id"] = user["user_id"]
@@ -211,6 +215,9 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    table_list = ["users", "portfolios", "transactions"]
+    database.create_table(table_list)
+
     if request.method == 'POST':
         if not request.form.get("username"):
             return apology("Missing username")
@@ -229,7 +236,7 @@ def register():
             return apology("Passwords do not match!")
         else:
             encrypted_password = pwd_context.hash(request.form.get("password"))
-            database.create_user(user, encrypted_password)
+            database.create_user(username, encrypted_password)
 
         user = database.get_user(username, '')
         session["user_id"] = user["user_id"]
@@ -314,6 +321,37 @@ def ai_trading():
     return render_template("ai_trading.html")
 
 
+@app.route('/ai_build_model')
+@login_required
+def ai_build_model():
+    database.drop_table('best_portfolio')
+    table_list = ['best_portfolio']
+    database.create_table(table_list)
+    best_portfolio = build_ga_model(database)
+    print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
+          ((best_portfolio.portfolio_yield * 100), best_portfolio.beta, (best_portfolio.volatility * 100),
+           (best_portfolio.expected_daily_return * 100)))
+    print("trend: %8.4f, sharpe_ratio:%8.4f, score:%8.4f" %
+          (best_portfolio.trend, best_portfolio.sharpe_ratio, best_portfolio.score))
+
+    stocks = []
+    for stock in best_portfolio.stocks:
+        #print(stock.symbol, end=",")
+        print(stock.symbol, stock.name, stock.sector, stock.category_pct)
+        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct*100, 4))))
+    length = len(stocks)
+    portfolio_yield = str(round(best_portfolio.portfolio_yield * 100, 4)) + '%'
+    beta = str(round(best_portfolio.beta, 4))
+    volatility = str(round(best_portfolio.volatility * 100, 4)) + '%'
+    daily_return = str(round(best_portfolio.expected_daily_return * 100, 4)) + '%'
+    trend = str(round(best_portfolio.trend, 4))
+    sharpe_ratio = str(round(best_portfolio.sharpe_ratio, 4))
+    score = str(round(best_portfolio.score, 4))
+    return render_template('ai_best_portfolio.html', stock_list=stocks, portfolio_yield=portfolio_yield,
+                           beta=beta, volatility=volatility, daily_return=daily_return, trend=trend,
+                           sharpe_ratio=sharpe_ratio, score=score, length=length)
+
+
 @app.route('/md_sp500')
 @login_required
 def market_data_sp500():
@@ -361,7 +399,7 @@ def market_data_spy():
 @app.route('/md_us10y')
 @login_required
 def market_data_us10y():
-    table_list = ['US10Y']
+    table_list = ['us10y']
     database.create_table(table_list)
     if database.check_table_empty('us10y'):
         eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, end_date, 'INDX')

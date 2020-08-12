@@ -17,7 +17,7 @@ from sqlalchemy import and_, or_, not_
 from flask import Flask, flash, redirect, render_template, request, url_for
 
 
-def create_populate_tables():
+def create_populate_tables(database, eod_market_data):
     tables = ['sp500', 'sp500_sectors', 'fundamentals', 'stocks', 'spy', 'us10y', 'best_portfolios']
     database.create_table(tables)
     database.clear_table(tables)
@@ -36,7 +36,7 @@ def create_populate_tables():
     """
 
 
-def build_ga_model():
+def build_ga_model(database):
     spy = Stock()
     spy.symbol = 'SPY'
 
@@ -113,26 +113,27 @@ def build_ga_model():
     for key, symbols in sorted(sp500_symbol_map.items()):
         stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + modeling_testing_start_date + "\" AND \"" + \
                        modeling_testing_end_date + "\" AND open > 0 AND close > 0 AND symbol IN (" + ",".join(
-            "'" + symbol + "'" for symbol in symbols) + ");"
+            "'" + symbol_name[0] + "'" for symbol_name in symbols) + ");"
         print(stock_select)
         price_df = database.execute_sql_statement(stock_select)
         if price_df.empty:
             exit("price_df is empty")
 
         fundamental_select = "SELECT * FROM Fundamentals WHERE symbol IN (" + ",".join(
-            "'" + symbol + "'" for symbol in symbols) + ");"
+            "'" + symbol_name[0] + "'" for symbol_name in symbols) + ");"
         print(fundamental_select)
         fundamental_df = database.execute_sql_statement(fundamental_select)
         if fundamental_df.empty:
             exit("fundamental_df is empty")
 
-        for symbol in sorted(symbols):
+        for symbol_name in sorted(symbols):
             stock = Stock()
-            stock.symbol = symbol
+            stock.symbol = symbol_name[0]
+            stock.name = symbol_name[1]
             stock.sector = key
             stock.category_pct = sp500_sector_map[key]
 
-            trades = price_df.loc[price_df['symbol'] == symbol]
+            trades = price_df.loc[price_df['symbol'] == symbol_name[0]]
             for index, row in trades.iterrows():
                 trade = Trade()
                 trade.date = row['date']
@@ -147,7 +148,7 @@ def build_ga_model():
             stock.calculate_daily_return()
 
             fundamental = Fundamental()
-            for index, row in fundamental_df.loc[fundamental_df['symbol'] == symbol].iterrows():
+            for index, row in fundamental_df.loc[fundamental_df['symbol'] == symbol_name[0]].iterrows():
                 fundamental.pe_ratio = row['pe_ratio']
                 fundamental.dividend_yield = row['dividend_yield']
                 fundamental.beta = row['beta']
@@ -294,12 +295,12 @@ def build_ga_model():
 
                 conn = database.engine.connect()
                 table = database.metadata.tables["best_portfolio"]
-                insert_stmt = table.insert().values(symbol=stock.symbol, sector=stock.sector,
+                insert_stmt = table.insert().values(symbol=stock.symbol, name=stock.name, sector=stock.sector,
                                                     category_pct=stock.category_pct,
                                                     open_date="", open_price=0, close_date="", close_price=0, shares=0,
                                                     profit_loss=0)
                 conn.execute(insert_stmt)
-            break
+            return best_portfolio
         else:
             max_score = best_portfolio.score
     """

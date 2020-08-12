@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/ai_build_model">Building Model</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/ai_back_test">Back Testing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/ai_probation_test">Probation Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Best GA Portfolio</h3>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th style="text-align:center">Symbol</th>
+					<th style="text-align:center">Name</th>
+					<th style="text-align:center">Sector</th>
+					<th style="text-align:center">Weight %</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for i in range(length) %}
+                <tr>
+                    <td>{{stock_list[i][0]}}</td>
+					<td>{{stock_list[i][1]}}</td>
+					<td>{{stock_list[i][2]}}</td>
+					<td>{{stock_list[i][3]}}</td>
+                </tr>
+                <tr>
+                </tr>
+				{%endfor%}
+            </tbody>
+		</table>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th style="text-align:center">Yield</th>
+					<th style="text-align:center">Beta</th>
+					<th style="text-align:center">Volatility</th>
+					<th style="text-align:center">Trend</th>
+					<th style="text-align:center">Score</th>
+					<th style="text-align:center">Sharpe Ratio</th>
+					<th style="text-align:center">Exepected Daily Return</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{portfolio_yield}}</td>
+					<td>{{beta}}</td>
+					<td>{{volatility}}</td>
+					<td>{{trend}}</td>
+					<td>{{score}}</td>
+					<td>{{sharpe_ratio}}</td>
+					<td>{{daily_return}}</td>
+				</tr>
+			</tbody>
+		</table>
+    </div>
+</main>
+
+{% endblock %}
