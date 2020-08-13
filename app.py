@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for, make_response
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import mkdtemp
@@ -16,6 +16,8 @@ from database.fre_database import FREDatabase
 from stat_arb.pair_trading import *
 from ai_trading.ga_portfolio import *
 from ai_trading.ga_portfolio_select import *
+from ai_trading.ga_portfolio_back_test import *
+from ai_trading.ga_portfolio_probation_test import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -352,6 +354,63 @@ def ai_build_model():
                            sharpe_ratio=sharpe_ratio, score=score, length=length)
 
 
+@app.route('/ai_back_test')
+@login_required
+def ai_back_test():
+    global portfolio_ys, spy_ys, n
+    best_portfolio, spy = ga_back_test(database)
+    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
+    spy_ys = list(spy.daily_cumulative_returns.values())
+    n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
+    portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
+    spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
+    return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
+
+
+@app.route('/plot/ai_back_test_plot')
+def ai_back_test_plot():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    line = np.zeros(n)
+    t = range(n)
+    axis.plot(t, portfolio_ys[0:n], 'ro')
+    axis.plot(t, spy_ys[0:n], 'bd')
+    axis.plot(t, line, 'b')
+
+    axis.set(xlabel="Date",
+           ylabel="Cumulative Returns",
+           title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
+           xlim=[0, n])
+
+    axis.text(0.2, 0.9, 'Red - Portfolio, Blue - SPY',
+            verticalalignment='center',
+            horizontalalignment='center',
+            transform=axis.transAxes,
+            color='black', fontsize=10)
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/ai_probation_test')
+@login_required
+def ai_probation_test():
+    best_portfolio, spy, cash = ga_probation_test(database)
+    portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss/cash) * 100))
+    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss/cash) * 100))
+    profit = best_portfolio.profit_loss
+    length = len(best_portfolio.stocks)
+    return render_template('ai_probation_test.html', stock_list=best_portfolio.stocks,
+                           portfolio_profit=portfolio_profit, spy_profit=spy_profit,
+                           profit=usd(profit), length=length)
+
+
 @app.route('/md_sp500')
 @login_required
 def market_data_sp500():
@@ -469,4 +528,5 @@ def market_data_stock():
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "transactions"]
     database.create_table(table_list)
-    app.run()
+    #app.run()
+    app.run(host='0.0.0.0', port=80, debug=False)

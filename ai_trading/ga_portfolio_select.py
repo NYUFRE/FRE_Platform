@@ -7,7 +7,8 @@ import copy
 
 from ai_trading.ga_portfolio import *
 
-
+#SP500_NUM_OF_STOCKS = 505
+#PORTFOLIO_NUM_OF_STOCK = 11
 
 import holidays
 import pandas as pd
@@ -16,6 +17,8 @@ import numpy as np
 from sqlalchemy import and_, or_, not_
 from flask import Flask, flash, redirect, render_template, request, url_for
 
+start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 def create_populate_tables(database, eod_market_data):
     tables = ['sp500', 'sp500_sectors', 'fundamentals', 'stocks', 'spy', 'us10y', 'best_portfolios']

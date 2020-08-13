@@ -23,15 +23,15 @@ from ai_trading.ga_portfolio import *
 #database = FREDatabase()
 #eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
-back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
-back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
+def ga_back_test(database):
+    back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+    back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
-best_portfolio = GAPortfolio()
+    best_portfolio = GAPortfolio()
 
-spy = Stock()
-spy.symbol = 'SPY'
+    spy = Stock()
+    spy.symbol = 'SPY'
 
-def ga_back_test():
     best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
     print(best_portfolio_select)
     stock_df = database.execute_sql_statement(best_portfolio_select)
@@ -62,7 +62,6 @@ def ga_back_test():
         best_portfolio.stocks.append(stock)
 
     best_portfolio.calculate_portfolio_daily_return()
-    #est_portfolio.calculate_cumulative_return(back_testing_start_date, back_testing_end_date)
     best_portfolio.calculate_daily_cumulative_return(back_testing_start_date, back_testing_end_date)
 
     # make SPY captical in spy table
@@ -89,62 +88,29 @@ def ga_back_test():
     print("Back Test:")
     print("best portfolio cumulative return: %4.2f%%" % (best_portfolio.cumulative_return*100))
     print("spy cumulative return: %4.2f%%" % (spy.cumulative_return*100))
+    return best_portfolio, spy
 
-def ga_back_test_plot():
+
+def ga_back_test_plot(database):
+    best_portfolio, spy = ga_back_test(database)
     portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
     spy_ys = list(spy.daily_cumulative_returns.values())
     n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
-    #xs = list(best_portfolio.portfolio_daily_cumulative_returns.keys())
-    '''
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    axis.set_title("Portfolio Back Test Cumulative Daily Return")
-    axis.set_xlabel("Date")
-    axis.grid(True)
-    
-    axis.plot(xs, portfolio_ys)
-    canvas = FigureCanvas(fig)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    #response = make_response(output.getvalue())
-    #response.mimetype = 'image/png'
-    #return response
-    '''
+
     fig, ax = plt.subplots()
     line = np.zeros(n)
     t = range(n)
     ax.plot(t, portfolio_ys[0:n], 'ro')
     ax.plot(t, spy_ys[0:n], 'bd')
     ax.plot(t, line, 'b')
-    #ax.plot(xs, portfolio_ys[0:n], 'ro')
-    #ax.plot(xs, spy_ys[0:n], 'bd')
-    #ax.plot(xs, line, 'b')
     plt.figtext(0.2, 0.8, "Red - Portfolio, Blue - SPY")
-    #plt.xlim("2020-01-01", "2020-06-30")
     plt.xlim(1, n)
     ax.set(xlabel="Date",
            ylabel="Cumulative Returns",
            title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
            xlim=[0, n])
 
-    #date_from = DateFormatter('%Y-%m-%d')
-    #ax.xaxis.set_major_formatter(date_from)
-    #ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=3))
     ax.grid(True)
     fig.autofmt_xdate()
 
     plt.show()
-
-    '''
-    line = np.zeros(n)
-    plt.plot(xs, ys[0:n], 'ro')
-    #plt.plot(t, ret2[0:n], 'bd')
-    plt.plot(xs, line, 'b')
-    plt.figtext(0.4, 0.8, "Red for Google, Blue for S&P500")
-    plt.xlim(1, n)
-    plt.ylim(-0.10, 0.10)
-    plt.title("Comparison between stock and market returns")
-    plt.xlabel("Day")
-    plt.ylabel("Returns")
-    plt.show()
-    '''

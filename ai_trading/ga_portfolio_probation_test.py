@@ -12,6 +12,8 @@ from market_data.fre_market_data import EODMarketData
 from database.fre_database import FREDatabase
 from ai_trading.ga_portfolio import *
 
+fund = 1000000
+
 #database = FREDatabase()
 #eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
@@ -28,15 +30,16 @@ probation_testing_start_date = (dt.date(2020, 6, 30) + dt.timedelta(days=1)).str
 # probation_testing_end_date = previous_working_day(dt.datetime.today()).strftime('%Y-%m-%d')
 probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
 
-def ga_probation_test():
+def ga_probation_test(database):
     best_portfolio = GAPortfolio()
 
-    best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
+    best_portfolio_select = "SELECT symbol, name as symbol_name, sector, category_pct from best_portfolio;"
     print(best_portfolio_select)
     stock_df = database.execute_sql_statement(best_portfolio_select)
     for index, stock_row in stock_df.iterrows():
         stock = Stock()
         stock.symbol = stock_row['symbol']
+        stock.name = stock_row['symbol_name']
         stock.sector = stock_row['sector']
         stock.category_pct = stock_row['category_pct']
         stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
@@ -121,3 +124,5 @@ def ga_probation_test():
     print("Probabtion Test:")
     print("best portfolio return: %4.2f%%" % (float(best_portfolio.profit_loss / fund) * 100))
     print("spy return: %4.2f%%" % (float(spy.probation_test_trade.profit_loss / fund) * 100))
+
+    return best_portfolio, spy, fund

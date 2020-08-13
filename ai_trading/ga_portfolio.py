@@ -14,15 +14,15 @@ from database.fre_database import FREDatabase
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
 
-fund = 1000000
+#fund = 1000000
 
 #os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
 
 #if not os.environ.get("EOD_API_KEY"):
 #    raise RuntimeError("EOD_API_KEY not set")
 
-start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
-end_date = dt.datetime.today().strftime('%Y-%m-%d')
+#start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+#end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 #database = FREDatabase()
 #eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
