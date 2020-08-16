@@ -14,10 +14,10 @@ from utility.helpers import apology, login_required, usd
 from market_data.fre_market_data import IEXMarketData
 from database.fre_database import FREDatabase
 from stat_arb.pair_trading import *
-from ai_trading.ga_portfolio import *
-from ai_trading.ga_portfolio_select import *
-from ai_trading.ga_portfolio_back_test import *
-from ai_trading.ga_portfolio_probation_test import *
+from ai_modeling.ga_portfolio import *
+from ai_modeling.ga_portfolio_select import *
+from ai_modeling.ga_portfolio_back_test import *
+from ai_modeling.ga_portfolio_probation_test import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -317,10 +317,10 @@ def trade_analysis():
     return render_template("pair_trade_probation_test.html", trade_list=trade_results)
 
 
-@app.route('/ai_trading')
+@app.route('/ai_modeling')
 @login_required
 def ai_trading():
-    return render_template("ai_trading.html")
+    return render_template("ai_modeling.html")
 
 
 @app.route('/ai_build_model')

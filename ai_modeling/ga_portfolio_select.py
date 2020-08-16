@@ -5,7 +5,7 @@ sys.path.append('../')
 
 import copy
 
-from ai_trading.ga_portfolio import *
+from ai_modeling.ga_portfolio import *
 
 #SP500_NUM_OF_STOCKS = 505
 #PORTFOLIO_NUM_OF_STOCK = 11

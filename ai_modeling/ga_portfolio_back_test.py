@@ -18,7 +18,7 @@ import datetime as dt
 
 from market_data.fre_market_data import EODMarketData
 from database.fre_database import FREDatabase
-from ai_trading.ga_portfolio import *
+from ai_modeling.ga_portfolio import *
 
 #database = FREDatabase()
 #eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
