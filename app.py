@@ -9,6 +9,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 import time
 import os
 
+from utility.config import client_config, trading_queue, trading_event
 from utility.helpers import apology, login_required, usd
 
 from market_data.fre_market_data import IEXMarketData
@@ -18,6 +19,9 @@ from ai_modeling.ga_portfolio import *
 from ai_modeling.ga_portfolio_select import *
 from ai_modeling.ga_portfolio_back_test import *
 from ai_modeling.ga_portfolio_probation_test import *
+
+from sim_trading.network import PacketTypes, Packet
+from sim_trading.client import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -277,6 +281,7 @@ for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
 
 
+# Statistical Arbitrage
 @app.route('/pair_trade_build_model')
 @login_required
 def build_model():
@@ -317,6 +322,7 @@ def trade_analysis():
     return render_template("pair_trade_probation_test.html", trade_list=trade_results)
 
 
+# AI modeling
 @app.route('/ai_modeling')
 @login_required
 def ai_trading():
@@ -411,6 +417,64 @@ def ai_probation_test():
                            profit=usd(profit), length=length)
 
 
+# Simulated Trading
+@app.route('/sim_trading')
+@login_required
+def sim_trading():
+    return render_template("sim_trading.html")
+
+
+@app.route('/sim_trading_auto')
+@login_required
+def sim_trading_auto():
+    if not client_config.client_thread_started:
+        client_config.client_socket.connect(client_config.ADDR)
+        client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+        client_thread.start()
+        client_config.client_thread_started = True
+
+    while not client_config.trade_complete:
+        pass
+
+    #print(client_config.orders, sep="\n")
+
+    return render_template("sim_trading_auto.html", trading_results=client_config.orders)
+
+
+@app.route('/sim_trading_adhoc', methods=['POST', 'GET'])
+@login_required
+def trading_result():
+
+    if not client_config.client_socket.stillconnnected():
+        client_config.client_socket.connect(client_config.ADDR)
+
+    if request.method == 'POST':
+        form_input = request.form
+        client_packet = Packet()
+        client_msg = enter_a_new_order(client_packet, 1, form_input['Symbol'], form_input['Side'],
+                                       form_input['Price'], form_input['Quantity'])
+        send_msg(client_msg)
+        data = get_response(trading_queue)
+        return render_template("sim_trading_ahoc.html", trading_results=data)
+
+
+@app.route('/sim_client_down')
+@login_required
+def client_down():
+    client_packet = Packet()
+    msg_data = {}
+    try:
+        send_msg(quit_connection(client_packet))
+        msg_type, msg_data = trading_queue.get()
+        trading_queue.task_done()
+        print(msg_data)
+        return render_template("sim_client_down.html", server_response=msg_data)
+    except(OSError, Exception):
+        print(msg_data)
+        return render_template("sim_client_down.html", server_response=msg_data)
+
+
+# Market Data
 @app.route('/md_sp500')
 @login_required
 def market_data_sp500():
@@ -526,7 +590,23 @@ def market_data_stock():
 
 
 if __name__ == "__main__":
+
     table_list = ["users", "portfolios", "transactions"]
     database.create_table(table_list)
-    #app.run()
-    app.run(host='0.0.0.0', port=80, debug=False)
+
+    try:
+        # client_thread = threading.Thread(target=send, args=(q,))
+        #client_thread = threading.Thread(target=join_trading_network, args=(q, e))
+        #bClientThreadStarted = False
+        #bTradeComplete = False
+
+        app.run(host='0.0.0.0', port=80, debug=False)
+
+        if client_config.client_thread.is_alive() is True:
+            client_config.client_thread.join()
+
+    except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
+        client_config.client_socket.close()
+        sys.exit(0)
+
+

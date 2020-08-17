@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+		<li class="nav-item">
+            <a class="nav-link" href="/sim_server_up">Launch Server</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/sim_trading_adhoc">Adhoc Trading</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/sim_trading_auto">Auto Trading</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/sim_client_down">Client Down</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/sim_server_down">Stop Server</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Simulated Trading</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							The simulated market is based on the latest 30 trading days of market data, for which the intraday trading data are available. 
+							Therefore, the market simulation will stop after 30 simulated trading days.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Definition of Trading Day and Market Status</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Each trading day is 60 seconds, followed by 10 seconds of market close, and then a new trading day.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Market open time = 50 seconds, status: Open.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Market pending close time = 10 seconds, status: Pending Closing.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Market close time = 10 seconds, status: Market Closed.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Daily Order Book - Historical Daily Market Data, created before market open</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Number of orders = (high_price - low_price)/price scale, 
+							price_scale is either 0.05 or 5 based stock price >= 1000 or not.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) buy_price = open_price - price_scale * rand().
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) sell_price = open_price + price_scale * rand().
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) quantity = randomized, but sum of all the orders = daily volume.
+						</p>
+					</td>
+				</tr>
+				<td width="881" valign="top">
+						<p>
+							4) The book interested are populated before market open.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Intraday Market Interests - Daily Intraday Market Data, during market open</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Buy interests: Evey 5 min low price, 1/2 of the volume * rand().
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Sell interests: Evey 5 min high price, 1/2 of the volume * rand().
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Any crossed interests will be traded.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) The order book is sorted accorinding Side, Symbol, Price and Quantity.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Close Trade - either a buy or sell order is filled</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) If buy side or sell side book is not empty, a best buy or best sell is filled.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) If buy side or sell side is empty, the close trade for a buy or sell will be executed at daily market data closing price.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Execution logic</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) If market is closed, new orders will be rejected.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) While market is open or in pending closing.
+						</p>
+						<ul>
+							<li>Market orders - always filled from best price.</li>
+							<li>Limit orders - will be filled at equal or better price.</li>
+							<li>A new limit order or a limit order with better price sweep books until it is filled or counter side of the book is empty.</li>
+						</ul>  
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Responses to new orders.
+						</p>
+						<ul>
+							<li>Order Fill</li>
+							<li>Order Partial Fill</li>
+							<li>Order Reject</li>
+						</ul>  
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
