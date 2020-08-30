@@ -59,8 +59,35 @@ class FREDatabase:
                 table = Table(table_name, self.metadata,
                               Column('symbol1', String(50), primary_key=True, nullable=False),
                               Column('symbol2', String(50), primary_key=True, nullable=False),
+                              Column('price_mean', Float, nullable=False),
                               Column('volatility', Float, nullable=False),
                               Column('profit_loss', Float, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "sector_stocks" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol', String(50), primary_key=True, nullable=False),
+                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('open', Float, nullable=False),
+                              Column('high', Float, nullable=False),
+                              Column('low', Float, nullable=False),
+                              Column('close', Float, nullable=False),
+                              Column('adjusted_close', Float, nullable=False),
+                              Column('volume', Integer, nullable=False),
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "pair_info" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('symbol1', String(50), primary_key=True, nullable=False),
+                              Column('symbol2', String(50), primary_key=True, nullable=False),
+                              Column('correlation', Float, nullable=False),
+                              Column('beta0', Float, nullable=False),
+                              Column('beta1_hedgeratio', Float, nullable=False),
+                              Column('adf_p_value', Float, nullable=False),
+                              Column('res_mean', Float, nullable=False),
+                              Column('res_std', Float, nullable=False),
                               extend_existing=True)
                 table.create(self.engine)
 

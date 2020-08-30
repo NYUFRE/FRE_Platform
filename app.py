@@ -286,9 +286,9 @@ for code in default_exceptions:
 @login_required
 def build_model():
     build_pair_trading_model()
-    #pair_trading_back_testing(k, back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
     result_df = database.execute_sql_statement(select_stmt)
+    result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df = result_df.transpose()
     list_of_pairs = [result_df[i] for i in result_df]
@@ -298,28 +298,32 @@ def build_model():
 @app.route('/pair_trade_back_test')
 @login_required
 def model_back_testing():
-    pair_trade_back_test(k, back_testing_start_date, back_testing_end_date)
+    pair_trade_back_test(back_testing_start_date, back_testing_end_date)
     select_stmt = "SELECT * FROM stock_pairs;"
     result_df = database.execute_sql_statement(select_stmt)
+    total = result_df['profit_loss'].sum()
+    result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
     result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
     result_df['profit_loss'] = result_df['profit_loss'].map('${:,.2f}'.format)
     result_df = result_df.transpose()
     list_of_pairs = [result_df[i] for i in result_df]
-    return render_template("pair_trade_back_test.html", pair_list=list_of_pairs)
+    return render_template("pair_trade_back_test.html", pair_list=list_of_pairs, total=usd(total))
 
 
 @app.route('/pair_trade_probation_test')
 @login_required
 def trade_analysis():
-    select_stmt = "SELECT symbol1, symbol2, printf(\"$%.2f\", sum(profit_loss)) AS Profit, count(profit_loss) AS Total_Trades, \
+    select_stmt = "SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
                 sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
-                sum(CASE WHEN profit_loss <=0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades \
+                sum(CASE WHEN profit_loss <0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades  \
+                WHERE profit_loss <> 0 \
                 GROUP BY symbol1, symbol2;"
     result_df = database.execute_sql_statement(select_stmt)
-    #print(result_df.to_string(index=False))
+    total = result_df['Profit'].sum()
+    result_df['Profit'] = result_df['Profit'].map('${:,.2f}'.format)
     result_df = result_df.transpose()
     trade_results = [result_df[i] for i in result_df]
-    return render_template("pair_trade_probation_test.html", trade_list=trade_results)
+    return render_template("pair_trade_probation_test.html", trade_list=trade_results, total=usd(total))
 
 
 # AI modeling
@@ -424,13 +428,16 @@ def sim_trading():
     return render_template("sim_trading.html")
 
 
-@app.route('/sim_trading_auto')
+@app.route('/sim_auto_trading')
 @login_required
-def sim_trading_auto():
+def sim_auto_trading():
     if not client_config.client_thread_started:
-        client_config.client_socket.connect(client_config.ADDR)
-        client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
-        client_thread.start()
+        status = client_config.client_socket.connect_ex(client_config.ADDR)
+        if status != 0:
+            return apology("Fail in connecting to server")
+
+        client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+        client_config.client_thread.start()
         client_config.client_thread_started = True
 
     while not client_config.trade_complete:
@@ -438,40 +445,71 @@ def sim_trading_auto():
 
     #print(client_config.orders, sep="\n")
 
-    return render_template("sim_trading_auto.html", trading_results=client_config.orders)
+    return render_template("sim_auto_trading.html", trading_results=client_config.orders)
 
 
-@app.route('/sim_trading_adhoc', methods=['POST', 'GET'])
+@app.route('/sim_adhoc_trading')
 @login_required
-def trading_result():
+def sim_adhoc_trading():
+    if not client_config.client_socket_connected:
+        status = client_config.client_socket.connect_ex(client_config.ADDR)
+        if status != 0:
+            return apology("Fail in connecting to server")
+        else:
+            client_config.client_socket_connected = True
 
-    if not client_config.client_socket.stillconnnected():
-        client_config.client_socket.connect(client_config.ADDR)
+    return render_template("sim_adhoc_trading.html")
 
+
+@app.route('/sim_trading_result', methods=['POST'])
+def sim_trading_result():
     if request.method == 'POST':
         form_input = request.form
         client_packet = Packet()
-        client_msg = enter_a_new_order(client_packet, 1, form_input['Symbol'], form_input['Side'],
-                                       form_input['Price'], form_input['Quantity'])
+
+        order_id = request.form.get('OrderId')
+        symbol = request.form.get('Symbol')
+        side = request.form.get('Side')
+        price = request.form.get('Price')
+        qty = request.form.get('Quantity')
+
+        order_type = "Mkt"
+        if float(price) > 0:
+            order_type = "Lmt"
+
+        client_msg = enter_a_new_order(client_packet, order_id, symbol, order_type, side, price, qty)
+        print(client_msg)
         send_msg(client_msg)
         data = get_response(trading_queue)
-        return render_template("sim_trading_ahoc.html", trading_results=data)
+        print(data)
+        return render_template("sim_trading_result.html", trading_results=data)
 
 
 @app.route('/sim_client_down')
 @login_required
-def client_down():
+def sim_client_down():
     client_packet = Packet()
     msg_data = {}
-    try:
-        send_msg(quit_connection(client_packet))
-        msg_type, msg_data = trading_queue.get()
-        trading_queue.task_done()
-        print(msg_data)
-        return render_template("sim_client_down.html", server_response=msg_data)
-    except(OSError, Exception):
-        print(msg_data)
-        return render_template("sim_client_down.html", server_response=msg_data)
+
+    if client_config.client_thread_started:
+        try:
+            send_msg(quit_connection(client_packet))
+            while not trading_queue.empty():
+                msg_type, msg_data = trading_queue.get()
+            trading_queue.task_done()
+            print(msg_data)
+            client_config.client_thread_started = False
+            client_config.orders = []
+            client_config.client_socket.close()
+            return render_template("sim_client_down.html", server_response=msg_data)
+        except(OSError, Exception):
+            print(msg_data)
+            client_config.client_thread_started = False
+            client_config.orders = []
+            client_config.client_socket.close()
+            return render_template("sim_client_down.html", server_response=msg_data)
+    else:
+        return apology("Client was not started")
 
 
 # Market Data

@@ -22,10 +22,10 @@
             <tr>
             	<th style="text-align:center">Symbol1</th>
                 <th style="text-align:center">Symbol2</th>
-                <th style="text-align:center">Profit</th>
-                <th style="text-align:center">Total_Trades</th>
                 <th style="text-align:center">Profit_Trades</th>
                 <th style="text-align:center">Loss_Trades</th>
+				<th style="text-align:center">Total_Trades</th>
+				<th style="text-align:center">Profit</th>
             </tr>
             </thead>
             <tbody>
@@ -33,13 +33,19 @@
             <tr>
             	<td> {{trade.symbol1}}</td>
             	<td> {{trade.symbol2}}</td>
-                <td> {{trade.Profit}}</td>
-                <td> {{trade.Total_Trades}}</td>
                 <td> {{trade.Profit_Trades}}</td>
                 <td> {{trade.Loss_Trades}}</td>
+				<td> {{trade.Total_Trades}}</td>
+				<td> {{trade.Profit}}</td>
             </tr>
             {% endfor %}
             </tbody>
+			<tfoot>
+				<tr>
+					<td colspan="5"></td>
+					<td>{{ total }}</td>
+				</tr>
+			</tfoot>
         </table>
     </div>
 </main>

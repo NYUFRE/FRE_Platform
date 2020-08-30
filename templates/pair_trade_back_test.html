@@ -22,6 +22,7 @@
             <tr>
                 <th style="text-align:center">Ticker1</th>
                 <th style="text-align:center">Ticker2</th>
+				<th style="text-align:center">Mean</th>
                 <th style="text-align:center">Volatility</th>
                 <th style="text-align:center">Profit_Loss</th>
             </tr>
@@ -31,11 +32,18 @@
             <tr>
                 <td> {{pair.symbol1}}</td>
                 <td> {{pair.symbol2}}</td>
+				<td> {{pair.price_mean}}</td>
                 <td> {{pair.volatility}}</td>
                 <td> {{pair.profit_loss}}</td>
             </tr>
             {% endfor %}
             </tbody>
+			<tfoot>
+				<tr>
+					<td colspan="4"></td>
+					<td>{{ total }}</td>
+				</tr>
+			</tfoot>
         </table>
     </div>
 </main>
