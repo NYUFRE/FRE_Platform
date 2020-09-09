@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/pair_trade_build_model">Building Model</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Pair Trading</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Pair trading is a well-known statistical arbitrage trading strategy for stock trading. An an example, stock pairs are selected from S&P500 technology sector 
+							based on OLS regression, cointegration test and ADF test.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Pair Selection</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) The historical daily price data from 2019-01-01 to 2020-07-31 are used for stock pair selection
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) A pair of stocks are selected if their correlation >= 0.95 and ADF p_value <= 0.01
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Pair Trading Logic</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Open Spread: S<sub>t</sub> = ln(stock 1 open price) - &beta;0 - &beta;1 * ln(stock 2 open price)
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Close Spread: S<sub>t</sub> = ln(stock 1 close price) - &beta;0 - &beta;1 * ln(stock 2 close price)
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Z score: Z<sub>t</sub> = (S<sub>t</sub> - &mu;<sub>t</sub>) / &sigma;<sub>t</sub>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Open Trades:
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open short position if Z<sub>t</sub> >= threshold, sell stock 1 and buy stock 2
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open long position if Z<sub>t</sub> <= -threshold, buy stock 1 and sell stock 2
+						</p>
+					</td>
+				</tr>
+				<td width="881" valign="top">
+						<p>
+							5) Close Trades:
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open positions for each pair at market close</br>
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Back Testing</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Use the daily price data from 2020-08-01 to 2020-08-31 for pair trading and P&L calculation
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Probation Testing</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Any two trading dates before current date could be used for conducting pair trading
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

@@ -282,6 +282,12 @@ for code in default_exceptions:
 
 
 # Statistical Arbitrage
+@app.route('/pair_trading')
+@login_required
+def pair_trading():
+    return render_template("pair_trading.html")
+
+
 @app.route('/pair_trade_build_model')
 @login_required
 def build_model():
