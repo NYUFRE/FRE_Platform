@@ -299,31 +299,42 @@ def build_model():
 @login_required
 def model_back_testing():
     pair_trade_back_test(back_testing_start_date, back_testing_end_date)
-    select_stmt = "SELECT * FROM stock_pairs;"
-    result_df = database.execute_sql_statement(select_stmt)
-    total = result_df['profit_loss'].sum()
-    result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
-    result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
-    result_df['profit_loss'] = result_df['profit_loss'].map('${:,.2f}'.format)
-    result_df = result_df.transpose()
-    list_of_pairs = [result_df[i] for i in result_df]
-    return render_template("pair_trade_back_test.html", pair_list=list_of_pairs, total=usd(total))
 
-
-@app.route('/pair_trade_probation_test')
-@login_required
-def trade_analysis():
     select_stmt = "SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
-                sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
-                sum(CASE WHEN profit_loss <0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades  \
-                WHERE profit_loss <> 0 \
-                GROUP BY symbol1, symbol2;"
+                    sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
+                    sum(CASE WHEN profit_loss <0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades  \
+                    WHERE profit_loss <> 0 \
+                    GROUP BY symbol1, symbol2;"
     result_df = database.execute_sql_statement(select_stmt)
     total = result_df['Profit'].sum()
     result_df['Profit'] = result_df['Profit'].map('${:,.2f}'.format)
     result_df = result_df.transpose()
     trade_results = [result_df[i] for i in result_df]
-    return render_template("pair_trade_probation_test.html", trade_list=trade_results, total=usd(total))
+    return render_template("pair_trade_back_test_result.html", trade_list=trade_results, total=usd(total))
+
+
+@app.route('/pair_trade_probation_test', methods = ['POST', 'GET'])
+@login_required
+def model_probation_testing():
+    if request.method == 'POST':
+        form_input = request.form
+        probation_testing_start_date = form_input['Start Date']
+        probation_testing_end_date = form_input['End Date']
+        pair_trade_probation_test(probation_testing_start_date, probation_testing_end_date)
+
+        select_stmt = "SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
+                           sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
+                           sum(CASE WHEN profit_loss <0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades  \
+                           WHERE profit_loss <> 0 \
+                           GROUP BY symbol1, symbol2;"
+        result_df = database.execute_sql_statement(select_stmt)
+        total = result_df['Profit'].sum()
+        result_df['Profit'] = result_df['Profit'].map('${:,.2f}'.format)
+        result_df = result_df.transpose()
+        trade_results = [result_df[i] for i in result_df]
+        return render_template("pair_trade_probation_test_result.html", trade_list=trade_results, total=usd(total))
+    else:
+        return render_template("pair_trade_probation_test.html")
 
 
 # AI modeling

@@ -32,6 +32,7 @@ end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 back_testing_start_date = dt.date(2020, 8, 1).strftime('%Y-%m-%d')
 back_testing_end_date = dt.date(2020, 8, 31).strftime('%Y-%m-%d')
+#back_testing_end_date = end_date
 
 k = 2
 
@@ -275,5 +276,45 @@ def pair_trade_back_test(back_testing_start_date, back_testing_end_date):
 
     result_df = result_df.join(trades_df)
     # print(result_df)
+    database.clear_table(['pair_trades'])
+    result_df.to_sql('pair_trades', con=database.engine, if_exists='append', index=False)
+
+
+def pair_trade_probation_test(probation_testing_start_date, probation_testing_end_date):
+    stock_pair_map = dict()
+    select_stmt = 'SELECT symbol1, symbol2, price_mean, volatility FROM stock_pairs;'
+    result_df = database.execute_sql_statement(select_stmt)
+
+    for index, row in result_df.iterrows():
+        aKey = (row['symbol1'], row['symbol2'])
+        stock_pair_map[aKey] = StockPair(row['symbol1'], row['symbol2'], row['price_mean'], row['volatility'])
+
+    select_stmt = "SELECT stock_pairs.symbol1 as symbol1, stock_pairs.symbol2 as symbol2, beta0, beta1_hedgeratio " \
+                  "FROM stock_pairs, pair_info " \
+                  "WHERE pair_info.symbol1 = stock_pairs.symbol1 AND pair_info.symbol2 = stock_pairs.symbol2;"
+    result_df = database.execute_sql_statement(select_stmt)
+    for index, row in result_df.iterrows():
+        aKey = (row['symbol1'], row['symbol2'])
+        stock_pair_map[aKey].update_betas(row['beta0'], row['beta1_hedgeratio'])
+
+    select_stmt = "SELECT * FROM pair_prices WHERE date >= " + "\"" + probation_testing_start_date + "\"" + \
+                  " AND date <= " + "\"" + probation_testing_end_date + "\"" + ";"
+    result_df = database.execute_sql_statement(select_stmt)
+
+    for index in range(0, result_df.shape[0]):
+        aKey = (result_df.at[index, 'symbol1'], result_df.at[index, 'symbol2'])
+        stock_pair_map[aKey].create_trade(result_df.at[index, 'date'], result_df.at[index, 'open1'],
+                                          result_df.at[index, 'close1'], result_df.at[index, 'open2'],
+                                          result_df.at[index, 'close2'])
+
+    trades_df = pd.DataFrame(columns=['qty1', 'qty2', 'profit_loss'])
+    for key, value in stock_pair_map.items():
+        trades_df = trades_df.append(value.update_trades(), ignore_index=True)
+        print(trades_df)
+        np.set_printoptions(precision=2, floatmode='fixed')
+        np.set_printoptions(suppress=True)
+        print(key, value)
+
+    result_df = result_df.join(trades_df)
     database.clear_table(['pair_trades'])
     result_df.to_sql('pair_trades', con=database.engine, if_exists='append', index=False)

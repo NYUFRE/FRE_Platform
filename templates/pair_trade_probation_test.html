@@ -15,38 +15,14 @@
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3>Trading Analysis</h3>
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-            	<th style="text-align:center">Symbol1</th>
-                <th style="text-align:center">Symbol2</th>
-                <th style="text-align:center">Profit_Trades</th>
-                <th style="text-align:center">Loss_Trades</th>
-				<th style="text-align:center">Total_Trades</th>
-				<th style="text-align:center">Profit</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for trade in trade_list %}
-            <tr>
-            	<td> {{trade.symbol1}}</td>
-            	<td> {{trade.symbol2}}</td>
-                <td> {{trade.Profit_Trades}}</td>
-                <td> {{trade.Loss_Trades}}</td>
-				<td> {{trade.Total_Trades}}</td>
-				<td> {{trade.Profit}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-			<tfoot>
-				<tr>
-					<td colspan="5"></td>
-					<td>{{ total }}</td>
-				</tr>
-			</tfoot>
-        </table>
+	<h3>Start Probation Testing</h3>
+	<hr>
+	<div class="form-group">
+		<form action="/pair_trade_probation_test" id="buy" method="POST">
+			<p>Start Date <input type = "text" name = "Start Date" placeholder="yyyy-mm-dd"></p>
+			<p>End Date <input type = "text" name = "End Date" placeholder="yyyy-mm-dd"></p>
+			<p><input type = "submit" value = "submit" /></p>
+		</form>
     </div>
 </main>
 {% endblock %}

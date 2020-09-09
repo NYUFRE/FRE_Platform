@@ -15,32 +15,34 @@
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3>Back Testing</h3>
+    <h3>Back Test Analysis</h3>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
             <tr>
-                <th style="text-align:center">Ticker1</th>
-                <th style="text-align:center">Ticker2</th>
-				<th style="text-align:center">Mean</th>
-                <th style="text-align:center">Volatility</th>
-                <th style="text-align:center">Profit_Loss</th>
+            	<th style="text-align:center">Symbol1</th>
+                <th style="text-align:center">Symbol2</th>
+                <th style="text-align:center">Profit_Trades</th>
+                <th style="text-align:center">Loss_Trades</th>
+				<th style="text-align:center">Total_Trades</th>
+				<th style="text-align:center">Profit</th>
             </tr>
             </thead>
             <tbody>
-            {% for pair in pair_list %}
+            {% for trade in trade_list %}
             <tr>
-                <td> {{pair.symbol1}}</td>
-                <td> {{pair.symbol2}}</td>
-				<td> {{pair.price_mean}}</td>
-                <td> {{pair.volatility}}</td>
-                <td> {{pair.profit_loss}}</td>
+            	<td> {{trade.symbol1}}</td>
+            	<td> {{trade.symbol2}}</td>
+                <td> {{trade.Profit_Trades}}</td>
+                <td> {{trade.Loss_Trades}}</td>
+				<td> {{trade.Total_Trades}}</td>
+				<td> {{trade.Profit}}</td>
             </tr>
             {% endfor %}
             </tbody>
 			<tfoot>
 				<tr>
-					<td colspan="4"></td>
+					<td colspan="5"></td>
 					<td>{{ total }}</td>
 				</tr>
 			</tfoot>
