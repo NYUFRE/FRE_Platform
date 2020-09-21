@@ -31,8 +31,8 @@ start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 back_testing_start_date = dt.date(2020, 8, 1).strftime('%Y-%m-%d')
-back_testing_end_date = dt.date(2020, 8, 31).strftime('%Y-%m-%d')
-#back_testing_end_date = end_date
+back_testing_end_date = dt.date(2020, 9, 15).strftime('%Y-%m-%d')
+
 
 k = 2
 

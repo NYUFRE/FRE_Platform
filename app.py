@@ -9,7 +9,8 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 import time
 import os
 
-from utility.config import client_config, trading_queue, trading_event
+#from utility.config import client_config, trading_queue, trading_event
+from utility.config import *
 from utility.helpers import apology, login_required, usd
 
 from market_data.fre_market_data import IEXMarketData
@@ -449,18 +450,46 @@ def sim_trading():
 @login_required
 def sim_auto_trading():
     if not client_config.client_thread_started:
+        client_config.client_thread_started = True
+
+        client_config.client_socket = socket(AF_INET, SOCK_STREAM)
+        client_config.client_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
         status = client_config.client_socket.connect_ex(client_config.ADDR)
         if status != 0:
             return apology("Fail in connecting to server")
 
+        client_config.client_up = True
+        client_config.orders = []
+        client_packet = Packet()
+        msg_data = {}
+
+        client_config.client_receiver = threading.Thread(target=receive, args=(trading_queue, trading_event))
         client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+
+        client_config.client_receiver.start()
         client_config.client_thread.start()
-        client_config.client_thread_started = True
 
     while not client_config.trade_complete:
         pass
 
-    #print(client_config.orders, sep="\n")
+    if client_config.client_up == True:
+        client_config.client_up = False
+        client_packet = Packet()
+        msg_data = {}
+        set_event(trading_event)
+        send_msg(quit_connection(client_packet))
+        wait_for_an_event(trading_event)
+        msg_type, msg_data = trading_queue.get()
+        if msg_type != PacketTypes.END_RSP.value:
+            client_config.orders.append(msg_data)
+            msg_type, msg_data = trading_queue.get()
+        trading_queue.task_done()
+        print(msg_data)
+        client_config.client_thread_started = False
+        client_config.trade_complete = False
+        client_config.client_socket.close()
+
+        #print(client_config.orders, sep="\n")
 
     return render_template("sim_auto_trading.html", trading_results=client_config.orders)
 
@@ -501,7 +530,7 @@ def sim_trading_result():
         print(data)
         return render_template("sim_trading_result.html", trading_results=data)
 
-
+"""
 @app.route('/sim_client_down')
 @login_required
 def sim_client_down():
@@ -511,8 +540,7 @@ def sim_client_down():
     if client_config.client_thread_started:
         try:
             send_msg(quit_connection(client_packet))
-            while not trading_queue.empty():
-                msg_type, msg_data = trading_queue.get()
+            msg_type, msg_data = trading_queue.get()
             trading_queue.task_done()
             print(msg_data)
             client_config.client_thread_started = False
@@ -527,7 +555,31 @@ def sim_client_down():
             return render_template("sim_client_down.html", server_response=msg_data)
     else:
         return apology("Client was not started")
+"""
 
+"""
+@app.route('/sim_server_down')
+@login_required
+def sim_server_down():
+    client_packet = Packet()
+    msg_data = {}
+    
+    try:
+        send_msg(quit_connection(client_packet))
+        msg_type, msg_data = trading_queue.get()
+        trading_queue.task_done()
+        print(msg_data)
+        client_config.client_thread_started = False
+        client_config.orders = []
+        client_config.client_socket.close()
+        return render_template("sim_client_down.html", server_response=msg_data)
+    except(OSError, Exception):
+        print(msg_data)
+        client_config.client_thread_started = False
+        client_config.orders = []
+        client_config.client_socket.close()
+        return render_template("sim_server_down.html", server_response=msg_data)
+"""
 
 # Market Data
 @app.route('/md_sp500')

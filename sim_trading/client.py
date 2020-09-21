@@ -16,32 +16,39 @@ def receive(q=None, e=None):
     while True:
         try:
             server_response = client_config.client_socket.recv(client_config.BUF_SIZE)
-            if len(server_response) > 0:
-                total_server_response += server_response
-                # print(total_server_response)
-                msgSize = len(total_server_response)
-                while msgSize > 0:
-                    if msgSize > 12:
-                        server_packet = Packet()
-                        server_response = server_packet.deserialize(total_server_response)
-                        # print(server_packet.m_msg_size, msgSize, server_packet.m_data)
-                    if msgSize > 12 and server_packet.m_data_size <= msgSize:
-                        data = json.loads(server_packet.m_data)
-                        # print(type(data), data)
-                        q.put([server_packet.m_type, data])
-                        if e.isSet():
-                            e.clear()
-                        total_server_response = total_server_response[server_packet.m_data_size:]
-                        msgSize = len(total_server_response)
-                        server_response = b''
-                    else:
-                        server_response = client_config.client_socket.recv(client_config.BUF_SIZE)
-                        total_server_response += server_response
-                        msgSize = len(total_server_response)
-        #except (OSError, Exception):
-        except (KeyError,):
-            q.put([PacketTypes.CONNECTION_NONE.value, Exception('receive')])
-            print("Exception in receive\n")
+            #if len(server_response) > 0:
+            total_server_response += server_response
+            # print(total_server_response)
+            msgSize = len(total_server_response)
+            while msgSize > 0:
+                if msgSize > 12:
+                    server_packet = Packet()
+                    #server_response = server_packet.deserialize(total_server_response)
+                    server_packet.deserialize(total_server_response)
+                    #print(server_packet.m_msg_size, msgSize, server_packet.m_data)
+                if msgSize > 12 and server_packet.m_data_size <= msgSize:
+                #if server_packet.m_data_size <= msgSize:
+                    data = json.loads(server_packet.m_data)
+                    #print(type(data), data)
+                    q.put([server_packet.m_type, data])
+                    #while e.isSet():
+                    #    e.clear()
+                    total_server_response = total_server_response[server_packet.m_data_size:]
+                    #total_server_response = total_server_response[server_response]
+                    msgSize = len(total_server_response)
+                    #server_response = b''
+                    #print("msgSize = ", msgSize)
+                else:
+                    server_response = client_config.client_socket.recv(client_config.BUF_SIZE)
+                    total_server_response += server_response
+                    msgSize = len(total_server_response)
+                    #print("msgSize = ", msgSize)
+            if not q.empty() and e.isSet():
+                e.clear()
+        except (OSError, Exception):
+        #except (KeyError,):
+            ######q.put([PacketTypes.CONNECTION_NONE.value, Exception('receive')])
+            print("Client Receiver exited\n")
             sys.exit(0)
 
 
@@ -119,7 +126,7 @@ def wait_for_an_event(e):
 
 
 def join_trading_network(q, e):
-    threading.Thread(target=receive, args=(q, e)).start()
+    #threading.Thread(target=receive, args=(q, e)).start()
     try:
         client_packet = Packet()
         set_event(e)
@@ -183,6 +190,7 @@ def join_trading_network(q, e):
             set_event(e)
             send_msg(client_packet)
             wait_for_an_event(e)
+            client_config.orders.append(get_response(q))
             while not q.empty():
                 client_config.orders.append(get_response(q))
 
@@ -191,13 +199,16 @@ def join_trading_network(q, e):
 
         #while not any(order['OrderIndex'] == client_order_id for order in client_config.orders):
         #    client_config.orders.append(get_response(q))
-
+        '''
         client_packet = Packet()
         client_msg = get_order_book(client_packet, stock_data['Stock List'])
         set_event(e)
         send_msg(client_msg)
         wait_for_an_event(e)
         get_response(q)
+        '''
+        while not q.empty():
+            client_config.orders.append(get_response(q))
 
         client_config.trade_complete = True
 
