@@ -2,18 +2,19 @@ import sys
 import time
 import random
 import json
-import threading
-from utility.config import client_config, trading_queue, trading_event
+#import threading
+from utility.config import ClientConfig, trading_queue, trading_event
 from sim_trading.network import PacketTypes, Packet
 
 sys.path.append('../')
 
+client_config = ClientConfig()
 
-def receive(q=None, e=None):
+def client_receive(q=None, e=None):
     """Handles receiving of messages."""
     total_server_response = b''
 
-    while True:
+    while not client_config.receiver_stop:
         try:
             server_response = client_config.client_socket.recv(client_config.BUF_SIZE)
             #if len(server_response) > 0:
@@ -38,6 +39,9 @@ def receive(q=None, e=None):
                     msgSize = len(total_server_response)
                     #server_response = b''
                     #print("msgSize = ", msgSize)
+                    if server_packet.m_type == PacketTypes.END_RSP.value or \
+                        server_packet.m_type == PacketTypes.SERVER_DOWN_RSP.value:
+                        client_config.receiver_stop = True
                 else:
                     server_response = client_config.client_socket.recv(client_config.BUF_SIZE)
                     total_server_response += server_response
@@ -98,6 +102,12 @@ def quit_connection(client_packet):
     return client_packet
 
 
+def server_down(client_packet):
+    client_packet.m_type = PacketTypes.SERVER_DOWN_REQ.value
+    client_packet.m_data = json.dumps({'Client': client_config.client_id, 'Status': 'Server Down'})
+    return client_packet
+
+
 def send_msg(client_packet):
     client_config.client_socket.send(client_packet.serialize())
     data = json.loads(client_packet.m_data)
@@ -132,7 +142,8 @@ def join_trading_network(q, e):
         set_event(e)
         send_msg(logon(client_packet, client_config.client_symbols))
         wait_for_an_event(e)
-        print(get_response(q))
+        #print(get_response(q))
+        get_response(q)
 
         set_event(e)
         send_msg(get_client_list(client_packet))

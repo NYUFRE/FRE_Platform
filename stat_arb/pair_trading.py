@@ -41,7 +41,7 @@ eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 app = Flask(__name__)
 
-
+## TODO! Using populate_stock_data from fre_market_data.py
 def populate_stock_data(tickers, table_name, start_date, end_date):
     column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
     price_data = []

@@ -8,6 +8,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 
 import time
 import os
+import subprocess
 
 #from utility.config import client_config, trading_queue, trading_event
 from utility.config import *
@@ -23,6 +24,7 @@ from ai_modeling.ga_portfolio_probation_test import *
 
 from sim_trading.network import PacketTypes, Packet
 from sim_trading.client import *
+#from sim_trading.server import *
 
 os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
@@ -59,9 +61,22 @@ database = FREDatabase()
 iex_market_data = IEXMarketData(os.environ.get("IEX_API_KEY"))
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
+process_list = []
+
 @app.route("/")
 @login_required
 def index():
+
+    # List the python processes before launching the server
+    # www.geeksforgeeks.org/python-get-list-of-running-processes/
+    output = os.popen('wmic process get description, processid').read()
+    #print(output)
+    target_process = "python"
+    for line in output.splitlines():
+        line = line.strip()
+        if target_process in str(line):
+            process_list.append(int(line.split(' ', 1)[1].strip()))
+
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
     total = cash
@@ -445,15 +460,233 @@ def ai_probation_test():
 def sim_trading():
     return render_template("sim_trading.html")
 
+def start_server_process():
+    #cmd = "cd sim_trading"
+    cmd = "( python.exe sim_trading/server.py )"
+    #FNULL = open(os.devnull, 'w')
+    #subprocess.run(["python.exe", "sim_trading/server.py"]) 
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                               stderr=subprocess.PIPE,
+                               universal_newlines=True)
+    while True:
+        output = process.stdout.readline()
+        if output and not client_config.server_ready:
+            print(output.strip())
+            time.sleep(10)
+            client_config.server_ready = True
+
+       #eturn_code = process.poll()
+       #if return_code is not None:
+       #    print('RETURN CODE', return_code)
+          
+@app.route('/sim_server_up')
+@login_required
+def sim_server_up():
+    '''
+    if not server_config.server_thread_started:
+        server_config.server_thread_started = True
+        server_thread = threading.Thread(target=launch_server())
+        server_thread.start()
+        return render_template("sim_launch_server.html")
+    else:
+        return render_template("sim_launch_server.html")
+    '''
+    server_thread = threading.Thread(target=(start_server_process))
+    server_thread.start()
+    
+    while not client_config.server_ready:
+        pass
+    
+    #server_thread.join()
+    
+    #cmd = "cd sim_trading"
+    #cmd = "( python.exe sim_trading/server.py )"
+    #FNULL = open(os.devnull, 'w')
+    #subprocess.run(["python.exe", "sim_trading/server.py"]) 
+    #process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+    #                           stderr=subprocess.STDOUT,
+    #                           universal_newlines=True)
+    '''
+    while True:
+       output = process.stdout.readline()
+       print(output.strip())
+       if "Server is up" in output:
+       #eturn_code = process.poll()
+       #if return_code is not None:
+       #    print('RETURN CODE', return_code)
+           break
+    #out, err = result.communicate()
+    #out = os.system(cmd)
+    #out = subprocess.call(cmd, shell=True)
+    '''
+    #print(out)
+    return render_template("sim_launch_server.html")
+    #if len(err) == 0:
+    #    return render_template("sim_launch_server.html")
+    #else:
+    #    apology("Server Failure")
+
+    '''
+    # server_config.server_output = open
+    server_config.server_output = sys.stderr
+    server_config.symbols = get_stock_list()
+
+    # USFederalHolidayCalendar has a bug, GoodFriday is not excluded
+    us_bd = CustomBusinessDay(holidays=['2020-04-10'], calendar=USFederalHolidayCalendar())
+
+    lastBusDay = datetime.datetime.today()
+    if datetime.date.weekday(lastBusDay) == 5:  # if it's Saturday
+        lastBusDay = lastBusDay - datetime.timedelta(days=1)  # then make it Friday
+    elif datetime.date.weekday(lastBusDay) == 6:  # if it's Sunday
+        lastBusDay = lastBusDay - datetime.timedelta(days=2)  # then make it Friday
+
+    end_date = lastBusDay - datetime.timedelta(days=1)  # day before last trading day
+
+    # end_date = datetime.datetime.today() - datetime.timedelta(days = 1) # yesterday
+    start_date = end_date + datetime.timedelta(-server_config.total_market_days)
+
+    server_config.market_periods = pd.DatetimeIndex(
+        pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), freq=us_bd)).strftime(
+        "%Y-%m-%d").tolist()
+    print(server_config.market_periods, file=server_config.server_output)
+    server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
+
+    market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"),
+                                                           end=end_date.replace(hour=23, minute=30).strftime(
+                                                               "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
+    # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
+
+    for i in range(len(market_period_objects)):
+        server_config.market_period_seconds.append(
+            int(time.mktime(market_period_objects[i].timetuple())))  # As timestamp is 12am of each day
+    server_config.market_period_seconds.append(int(time.mktime(
+        market_period_objects[len(market_period_objects) - 1].timetuple())) + 24 * 3600)  # For last day intraday data
+    # print(market_period_objects)
+
+    # TODO! probably it is better to harden delete table function and use it here
+    database.drop_table(server_config.stock_intraday_data)
+    eod_market_data.populate_intraday_stock_data(server_config.symbols, server_config.stock_intraday_data,
+                                                 server_config.market_period_seconds[0],
+                                                 server_config.market_period_seconds[
+                                                     len(server_config.market_period_seconds) - 1])
+
+    stock_market_periods = populate_intraday_order_map(server_config.symbols,
+                                                        server_config.stock_intraday_data,
+                                                        server_config.market_periods)
+
+    print(server_config.intraday_order_map, file=server_config.server_output)
+
+    print(stock_market_periods, file=server_config.server_output)
+    for value in stock_market_periods.values():
+        if server_config.total_market_days > len(value):
+            server_config.total_market_days = len(value)
+            server_config.market_periods = value
+
+    print(server_config.market_periods, file=server_config.server_output)
+
+    # TODO! probably it is better to harden delete table function and use it here
+    database.drop_table(server_config.stock_daily_data)
+    eod_market_data.populate_stock_data(server_config.symbols,
+                                        server_config.stock_daily_data,
+                                        server_config.market_periods[0],
+                                        server_config.market_periods[len(server_config.market_periods) - 1])
+
+    server_config.server_socket.listen(1)
+    print("Waiting for client requests", file=server_config.server_output)
+    try:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        current_time_in_seconds = time.time()
+        scheduler_thread = threading.Thread(target=set_market_status, args=(scheduler, current_time_in_seconds))
+        # scheduler_thread.setDaemon(True)
+
+        server_thread = threading.Thread(target=accept_incoming_connections, args=(trading_queue,))
+        create_market_thread = threading.Thread(target=create_market_interest, args=(server_config.symbols,))
+        # server_thread.setDaemon(True)
+
+        scheduler_thread.start()
+        server_thread.start()
+        create_market_thread.start()
+
+        error = trading_queue.get()
+        trading_queue.task_done()
+        if error is not None:
+            raise error
+
+        #scheduler_thread.join()
+        #server_thread.join()
+
+        #server_config.server_socket.close()
+        #servr_config.server_output.close()
+        #sys.exit(0)
+
+        # order_table_file.close()
+        # intrday_order_file.close()
+
+        return render_template("sim_launch_server.html")
+
+    except (KeyError, KeyboardInterrupt, SystemExit, Exception):
+        # except (KeyboardInterrupt):
+        print("Exception in main\n", file=server_config.server_output)
+        server_config.server_socket.close()
+        server_config.server_output.close()
+        apology("Server Failure")
+        sys.exit(0)
+    '''
+
+
+@app.route('/sim_server_down')
+@login_required
+def sim_server_down():
+    try:
+        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+        status = client_config.client_socket.connect_ex(client_config.ADDR)
+        if status != 0:
+            return apology("Fail in connecting to server")
+
+        client_config.receiver_stop = False
+        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+        client_config.client_receiver.start()
+
+        set_event(trading_event)
+        client_packet = Packet()
+        send_msg(server_down(client_packet))
+        wait_for_an_event(trading_event)
+        msg_type, msg_data = trading_queue.get()
+        print(msg_data)
+        if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
+            time.sleep(2)
+            print("Server down confirmed!")
+            client_config.client_socket.close()
+
+        output = os.popen('wmic process get description, processid').read()
+        #process = subprocess.Popen(['ps'], stdout=subprocess)
+        #output, error = process.communicate()
+        #print(output)
+        target_process = "python"
+        for line in output.splitlines():
+            line = line.strip()
+            if target_process in str(line):
+                pid = int(line.split(' ', 1)[1].strip())
+                if pid not in process_list:
+                    os.kill(pid, 9)
+
+        client_config.server_ready = False
+        client_config.client_thread_started = False
+        return render_template("sim_server_down.html")
+    except(OSError, Exception):
+        return render_template("sim_server_down.html")
+
 
 @app.route('/sim_auto_trading')
 @login_required
 def sim_auto_trading():
     if not client_config.client_thread_started:
         client_config.client_thread_started = True
+        client_config.receiver_stop = False
 
-        client_config.client_socket = socket(AF_INET, SOCK_STREAM)
-        client_config.client_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
+        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         status = client_config.client_socket.connect_ex(client_config.ADDR)
         if status != 0:
             return apology("Fail in connecting to server")
@@ -463,7 +696,7 @@ def sim_auto_trading():
         client_packet = Packet()
         msg_data = {}
 
-        client_config.client_receiver = threading.Thread(target=receive, args=(trading_queue, trading_event))
+        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
         client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
 
         client_config.client_receiver.start()
@@ -486,6 +719,7 @@ def sim_auto_trading():
         trading_queue.task_done()
         print(msg_data)
         client_config.client_thread_started = False
+        #client_config.receiver_stop = True
         client_config.trade_complete = False
         client_config.client_socket.close()
 
@@ -557,29 +791,6 @@ def sim_client_down():
         return apology("Client was not started")
 """
 
-"""
-@app.route('/sim_server_down')
-@login_required
-def sim_server_down():
-    client_packet = Packet()
-    msg_data = {}
-    
-    try:
-        send_msg(quit_connection(client_packet))
-        msg_type, msg_data = trading_queue.get()
-        trading_queue.task_done()
-        print(msg_data)
-        client_config.client_thread_started = False
-        client_config.orders = []
-        client_config.client_socket.close()
-        return render_template("sim_client_down.html", server_response=msg_data)
-    except(OSError, Exception):
-        print(msg_data)
-        client_config.client_thread_started = False
-        client_config.orders = []
-        client_config.client_socket.close()
-        return render_template("sim_server_down.html", server_response=msg_data)
-"""
 
 # Market Data
 @app.route('/md_sp500')
@@ -707,7 +918,7 @@ if __name__ == "__main__":
         #bClientThreadStarted = False
         #bTradeComplete = False
 
-        app.run(host='0.0.0.0', port=80, debug=False)
+        app.run(host='127.0.0.1', port=80, debug=False)
 
         if client_config.client_thread.is_alive() is True:
             client_config.client_thread.join()

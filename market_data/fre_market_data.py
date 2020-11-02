@@ -1,3 +1,4 @@
+import sys
 import os
 import urllib.request
 import json
@@ -90,8 +91,19 @@ class EODMarketData:
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data
-
-    def populate_stock_data(self, tickers, table_name, start_date, end_date, category):
+    
+    def get_intraday_data(self, symbol, startTime='1585800000', endTime='1585886400', category='US'):
+        symbolURL = str(symbol) + '.' + category + '?'
+        startURL = "from=" + str(startTime)
+        endURL = "to=" + str(endTime)
+        apiKeyURL = "api_token=" + self.api_token
+        completeURL = self.url_common + 'intraday/' + symbolURL + startURL + '&' + endURL + '&' + apiKeyURL + '&period=d&fmt=json'
+        print(completeURL)
+        with urllib.request.urlopen(completeURL) as req:
+            data = json.load(req)
+            return data  
+        
+    def populate_stock_data(self, tickers, table_name, start_date, end_date, category='US', action='append', output_file=sys.stderr):
         column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
         price_data = []
         for ticker in tickers:
@@ -100,9 +112,29 @@ class EODMarketData:
                 price_data.append(
                     [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
                      stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
-            print(price_data[-1])
+            print(price_data[-1], file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)
-        stocks.to_sql(table_name, con=self.database.engine, if_exists='append', index=False)
+        stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
+
+    def populate_intraday_stock_data(self, tickers, table_name, start_time, end_time, category='US', action='append', output_file=sys.stderr):
+        column_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
+        price_data = []
+        for ticker in tickers:
+            stock = self.get_intraday_data(ticker, start_time, end_time, category)
+            print(stock, file=output_file)
+            for stock_data in stock:
+                if ((stock_data['open'] is not None and stock_data['open'] > 0) and
+                    (stock_data['high'] is not None and stock_data['high'] > 0) and
+                    (stock_data['low']  is not None and stock_data['low'] > 0) and 
+                    (stock_data['close'] is not None and stock_data['close'] > 0) and
+                    (stock_data['volume'] is not None and stock_data['volume'] > 0)):
+                    price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'], stock_data['low'], \
+                               stock_data['close'], stock_data['volume']])
+
+            print(price_data, file=output_file)
+        stocks = pd.DataFrame(price_data, columns=column_names)
+        stocks = stocks.dropna()
+        stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
     def populate_sp500_data(self, spy, category):
         data = self.get_fundamental_data(spy, category)
@@ -119,6 +151,8 @@ class EODMarketData:
                 symbol = symbol.replace('-', '')
             if sector == "Consumer Cyclical":
                 sector = "Consumer Cyclicals"
+            if sector == "Financial":
+                sector = "Financial Services"
             sp500_data.append([symbol, name, sector, industry, weight])
         sp500 = pd.DataFrame(sp500_data, columns=sp500_column_names)
         sp500.to_sql("sp500", con=self.database.engine, if_exists='append', index=False)
