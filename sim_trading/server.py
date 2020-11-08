@@ -133,8 +133,8 @@ def handle_client(client, q=None):
                         text = "%s duplicated connection request!" % clientID
                         server_msg = json.dumps({'Server': server_config.server_id, 'Response': text, 'Status': 'Rejected'})
                     else:
-                        client_symbols = list(msg_data["Symbol"].split(','))
-                        if all(symbol in server_config.symbols for symbol in client_symbols):
+                        client_symbol_list = list(msg_data["Symbol"].split(','))
+                        if all(symbol in server_config.symbol_list for symbol in client_symbol_list):
                             text = "Welcome %s!" % clientID
                             server_msg = json.dumps({'Server': server_config.server_id, 'Response': text, 'Status': 'Ack'})
                             clients[client] = clientID
@@ -168,7 +168,7 @@ def handle_client(client, q=None):
                     print(data, file=server_config.server_output)
                     
                 elif msg_type == PacketTypes.STOCK_LIST_REQ.value:
-                    stock_list = ','.join(server_config.symbols)
+                    stock_list = ','.join(server_config.symbol_list)
                     server_msg = json.dumps({"Stock List":stock_list})
                     server_packet.m_type = PacketTypes.STOCK_LIST_RSP.value
                     server_packet.m_data = server_msg
@@ -403,13 +403,15 @@ def handle_client(client, q=None):
             
 clients = {}
 
+
 def get_stock_list():
-    #TODO need to change stock pairs to stock list in server_config class
-    pairs = pd.read_csv(server_config.location_of_pairs)
-    tickers = pd.concat([pairs["Ticker1"], pairs["Ticker2"]], ignore_index=True)
+    symbols = pd.read_csv(server_config.location_of_symbols)
+    print(server_config.location_of_symbols, file=server_config.server_output)
+    tickers = pd.concat([symbols["Ticker1"], symbols["Ticker2"]], ignore_index=True)
     tickers.drop_duplicates(keep='first', inplace=True)
     tickers.sort_values(axis=0, ascending=True, inplace=True, kind='quicksort')
     return tickers.tolist()
+
 
 def generate_qty(number_of_qty):
     total_qty = 0
@@ -640,7 +642,7 @@ def update_market_status(status, day):
     print(server_config.market_status, server_config.market_periods[day], file=server_config.server_output)
     server_config.market_period = server_config.market_periods[day]
  
-    populate_order_table(server_config.symbols, server_config.market_periods[day], server_config.market_periods[day])
+    populate_order_table(server_config.symbol_list, server_config.market_periods[day], server_config.market_periods[day])
     server_config.market_status = 'Open'
     print(server_config.market_status, file=server_config.server_output)
     time.sleep(server_config.market_open_time)
@@ -649,7 +651,7 @@ def update_market_status(status, day):
     time.sleep(server_config.market_pending_close_time)
     server_config.market_status = 'Market Closed'
     print(server_config.market_status, file=server_config.server_output)
-    close_trades(server_config.symbols)
+    close_trades(server_config.symbol_list)
     time.sleep(server_config.market_close_time)
 
 
@@ -666,7 +668,8 @@ def launch_server():
     server_config.server_output = open("server_output.txt", "w")
     #server_config.server_output = sys.stderr
     #server_config.server_output = sys.stdout
-    server_config.symbols = get_stock_list()
+
+    server_config.symbol_list = get_stock_list()
 
     # USFederalHolidayCalendar has a bug, GoodFriday is not excluded
     us_bd = CustomBusinessDay(holidays=['2020-04-10'], calendar=USFederalHolidayCalendar())
@@ -701,12 +704,12 @@ def launch_server():
 
     # TODO! probably it is better to harden delete table function and use it here
     # database.drop_table(server_config.stock_intraday_data)
-    eod_market_data.populate_intraday_stock_data(server_config.symbols, server_config.stock_intraday_data,
+    eod_market_data.populate_intraday_stock_data(server_config.symbol_list, server_config.stock_intraday_data,
                                                  server_config.market_period_seconds[0],
                                                  server_config.market_period_seconds[len(server_config.market_period_seconds) - 1],
                                                  category='US', action='replace', output_file=server_config.server_output)
 
-    stock_market_periods = populate_intraday_order_map(server_config.symbols,
+    stock_market_periods = populate_intraday_order_map(server_config.symbol_list,
                                                        server_config.stock_intraday_data,
                                                        server_config.market_periods)
 
@@ -722,7 +725,7 @@ def launch_server():
 
     # TODO! probably it is better to harden delete table function and use it here
     #database.drop_table(server_config.stock_daily_data)
-    eod_market_data.populate_stock_data(server_config.symbols,
+    eod_market_data.populate_stock_data(server_config.symbol_list,
                                         server_config.stock_daily_data,
                                         server_config.market_periods[0],
                                         server_config.market_periods[len(server_config.market_periods) - 1],
@@ -735,7 +738,7 @@ def launch_server():
         # scheduler_thread.setDaemon(True)
 
         accept_client_thread = threading.Thread(target=accept_incoming_connections, args=(trading_queue,))
-        create_market_thread = threading.Thread(target=create_market_interest, args=(server_config.symbols,))
+        create_market_thread = threading.Thread(target=create_market_interest, args=(server_config.symbol_list,))
         # server_thread.setDaemon(True)
         
         server_config.server_socket.listen(1)

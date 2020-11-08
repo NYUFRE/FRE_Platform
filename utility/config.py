@@ -40,9 +40,7 @@ class ServerConfig:
         self.server_socket.bind((socket.gethostbyname(""), self.port))
         self.mutex = threading.Lock()
 
-        #TODO! will remove later
-        self.location_of_pairs = 'csv/PairTrading.csv'
-        
+        self.location_of_symbols = 'csv/server_symbols.csv'
         self.stock_daily_data = "server_daily_data"
         self.stock_intraday_data = "server_intraday_data"
 
@@ -61,7 +59,7 @@ class ServerConfig:
         self.market_status = "Not Open"
         self.server_output = "server_output.txt"
         self.order_index = 0
-        self.symbols = []
+        self.symbol_list = []
 
         self.market_period = ""
 
@@ -73,7 +71,6 @@ class ServerConfig:
         self.order_table['Close'] = self.order_table['Close'].astype(float)
         self.order_table['Qty'] = self.order_table['Qty'].astype(int)
         self.order_table['OrigQty'] = self.order_table['OrigQty'].astype(int)
-
 
 trading_queue = queue.Queue()
 trading_event = threading.Event()
