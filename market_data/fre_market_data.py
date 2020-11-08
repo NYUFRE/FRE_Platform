@@ -2,8 +2,8 @@ import sys
 import os
 import urllib.request
 import json
-
 import pandas as pd
+
 
 class IEXMarketData:
     def __init__(self, api_token):
@@ -125,11 +125,11 @@ class EODMarketData:
             for stock_data in stock:
                 if ((stock_data['open'] is not None and stock_data['open'] > 0) and
                     (stock_data['high'] is not None and stock_data['high'] > 0) and
-                    (stock_data['low']  is not None and stock_data['low'] > 0) and 
+                    (stock_data['low'] is not None and stock_data['low'] > 0) and
                     (stock_data['close'] is not None and stock_data['close'] > 0) and
                     (stock_data['volume'] is not None and stock_data['volume'] > 0)):
-                    price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'], stock_data['low'], \
-                               stock_data['close'], stock_data['volume']])
+                        price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'],
+                                           stock_data['low'], stock_data['close'], stock_data['volume']])
 
             print(price_data, file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)

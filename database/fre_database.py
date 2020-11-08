@@ -1,4 +1,3 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
 from sqlalchemy import Table
@@ -13,10 +12,9 @@ class FREDatabase:
         #db = os.path.join(path, 'fre_database.db')
         #self.engine = create_engine('sqlite:///' + 'FRE_Platform\\database\\fre_database.db')
         self.engine = create_engine('sqlite:///fre_database.db')
-
         self.conn = self.engine.connect()
         self.conn.execute("PRAGMA foreign_keys = ON")
-
+        
         self.metadata = MetaData()
         self.metadata.reflect(bind=self.engine)
 

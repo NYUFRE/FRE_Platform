@@ -40,10 +40,8 @@ class Packet:
     def serialize(self):
         self.m_data_size = 12 + len(self.m_data)
         self.m_msg_size = self.m_data_size
-        return self.m_type.to_bytes(4, byteorder='little') + \
-               self.m_msg_size.to_bytes(4, byteorder='little') + \
-               self.m_data_size.to_bytes(4, byteorder='little') + \
-               bytes(self.m_data, 'utf-8')
+        return self.m_type.to_bytes(4, byteorder='little') + self.m_msg_size.to_bytes(4, byteorder='little') + \
+               self.m_data_size.to_bytes(4, byteorder='little') + bytes(self.m_data, 'utf-8')
 
     def deserialize(self, message):
         msg_len = len(message)

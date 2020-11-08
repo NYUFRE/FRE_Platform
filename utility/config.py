@@ -1,4 +1,3 @@
-# Simulated Trading
 import queue
 import threading
 import pandas as pd
@@ -9,7 +8,6 @@ import socket
 class ClientConfig:
     def __init__(self):
         self.client_id = "client1"
-        #self.HOST = "192.168.1.13"
         self.HOST = "127.0.0.1"
         self.PORT = 6510
         self.BUF_SIZE = 4096
@@ -76,19 +74,7 @@ class ServerConfig:
         self.order_table['Qty'] = self.order_table['Qty'].astype(int)
         self.order_table['OrigQty'] = self.order_table['OrigQty'].astype(int)
 
-        """
-        self.client_thread = threading.Thread()
-        self.client_receiver = threading.Thread()
 
-        self.orders = []
-
-        self.client_thread_started = False
-        self.trade_complete = False
-        self.client_up = False
-        self.client_symbols = "AAPL,XOM"
-        """
-        
 trading_queue = queue.Queue()
 trading_event = threading.Event()
-#client_config = ClientConfig()
-#server_config = ServerConfig()
+
