@@ -2,8 +2,8 @@ import sys
 import time
 import random
 import json
-from utility.config import ClientConfig
-from sim_trading.network import PacketTypes, Packet
+from system.utility.config import ClientConfig
+from system.sim_trading.network import PacketTypes, Packet
 
 sys.path.append('../')
 

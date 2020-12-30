@@ -1,65 +1,42 @@
+#################
+#### imports ####
+#################
+
 from flask import Flask, redirect, render_template, request, session, url_for, make_response
-from flask_session import Session
-from passlib.apps import custom_app_context as pwd_context
-from tempfile import mkdtemp
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.dates import DateFormatter
+from matplotlib.figure import Figure
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
-#from werkzeug.security import check_password_hash, generate_password_hash
+from passlib.apps import custom_app_context as pwd_context
 
-import time
 import os
+import sys
 import subprocess
+import threading
+import socket
+import io
+import numpy as np
+import time
 
-#from utility.config import client_config, trading_queue, trading_event
-from utility.config import *
-from utility.helpers import apology, login_required, usd
+from system import app, database, iex_market_data, eod_market_data
 
-from market_data.fre_market_data import IEXMarketData
-from database.fre_database import FREDatabase
-from stat_arb.pair_trading import *
-from ai_modeling.ga_portfolio import *
-from ai_modeling.ga_portfolio_select import *
-from ai_modeling.ga_portfolio_back_test import *
-from ai_modeling.ga_portfolio_probation_test import *
+#TODO consolidate into FREDatabase
+#from system.portfolio.users import create_user_table
 
-from sim_trading.network import PacketTypes, Packet
-from sim_trading.client import *
-#from sim_trading.server import *
+from system.utility.helpers import apology, login_required, usd
+from system.utility.config import trading_queue, trading_event
 
-os.environ["IEX_API_KEY"] = "sk_6ced41d910224dd384355b65b085e529"
-os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
+from system.sim_trading.network import PacketTypes, Packet
+from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, wait_for_an_event, join_trading_network, quit_connection
+#from system.sim_trading.server import *
+#from system.sim_trading.client import *
 
-# Make sure API key is set
-if not os.environ.get("IEX_API_KEY"):
-    raise RuntimeError("IEX_API_KEY not set")
-
-if not os.environ.get("EOD_API_KEY"):
-    raise RuntimeError("EOD_API_KEY not set")
-
-app = Flask(__name__)
-app.config["TEMPLATES_AUTO_RELOAD"] = True
-
-# Ensure responses aren't cached
-if app.config["DEBUG"]:
-    @app.after_request
-    def after_request(response):
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Expires"] = 0
-        response.headers["Pragma"] = "no-cache"
-        return response
-
-# Custom filter
-app.jinja_env.filters["usd"] = usd
-
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
-
-database = FREDatabase()
-iex_market_data = IEXMarketData(os.environ.get("IEX_API_KEY"))
-eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
+from system.ai_modeling.ga_portfolio import *
+from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
+from system.ai_modeling.ga_portfolio_back_test import ga_back_test
+from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
+from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, back_testing_start_date, back_testing_end_date
 
 process_list = []
 
@@ -76,6 +53,7 @@ def index():
         if target_process in str(line):
             process_list.append(int(line.split(' ', 1)[1].strip()))
 
+    session['user_id'] = 1
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
     total = cash
@@ -203,7 +181,219 @@ def history():
     length = len(transactions['symbol'])
     return render_template("history.html", length=length, dict=transactions)
 
+from flask import render_template
+from flask import flash, abort, redirect, url_for
+from flask import request
+from system.portfolio.models import User
+from system.portfolio.forms import RegisterForm, LoginForm, EmailForm, PasswordForm
+from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
+from system import db
+from system import app
+from sqlalchemy.exc import IntegrityError
+from flask_login import login_required,login_user,current_user,logout_user
+from itsdangerous import URLSafeTimedSerializer
+from datetime import datetime
+from system import bcrypt
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            try:
+                new_user = User(form.email.data, form.password.data)
+                new_user.authenticated = True
+                db.session.add(new_user)
+                db.session.commit()
+                login_user(new_user)
+                # send_email('Registration',['stangny@gmail.com'], 'Thanks for registering with Kennedy Family Recipes!',
+                #           '<h3>Thanks for registering with Kennedy Family Recipes!</h3>')
+                send_confirmation_email(new_user.email)
+                flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
+                return redirect(url_for('index'))
+            except IntegrityError:
+                db.session.rollback()
+                flash('ERROR! Email ({}) already exists.'.format(form.email.data), 'error')
+    return render_template('register.html', form=form)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=form.email.data).first()
+            if user is not None and user.is_correct_password(form.password.data):
+                user.authenticated = True
+                user.last_logged_in = user.current_logged_in
+                user.current_logged_in = datetime.now()
+                db.session.add(user)
+                db.session.commit()
+                login_user(user)
+                #flash('Thanks for logging in, {}'.format(current_user.email))
+                session['user_id'] = 1
+                #return redirect("/")
+                return redirect(url_for('index'))
+            else:
+                flash('ERROR! Incorrect login credentials.', 'error')
+    return render_template('login.html', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    user = current_user
+    user.authenticated = False
+    db.session.add(user)
+    db.session.commit()
+    logout_user()
+    flash('Goodbye!', 'info')
+    session.clear()
+    return redirect(url_for('login'))
+
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        confirm_serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        email = confirm_serializer.loads(token, salt='email-confirmation-salt', max_age=3600)
+    except:
+        flash('The confirmation link is invalid or has expired.', 'error')
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=email).first()
+
+    if user.email_confirmed:
+        flash('Account already confirmed. Please login.', 'info')
+    else:
+        user.email_confirmed = True
+        user.email_confirmed_on = datetime.now()
+        db.session.add(user)
+        db.session.commit()
+        flash('Thank you for confirming your email address!')
+
+    return redirect(url_for('index'))
+
+
+@app.route('/reset', methods=["GET", "POST"])
+def reset():
+    form = EmailForm()
+    if form.validate_on_submit():
+        try:
+            user = User.query.filter_by(email=form.email.data).first_or_404()
+        except:
+            flash('Invalid email address!', 'error')
+            return render_template('password_reset_email.html', form=form)
+
+        if user.email_confirmed:
+            send_password_reset_email(user.email)
+            flash('Please check your email for a password reset link.', 'success')
+        else:
+            flash('Your email address must be confirmed before attempting a password reset.', 'error')
+        return redirect(url_for('login'))
+
+    return render_template('password_reset_email.html', form=form)
+
+
+@app.route('/reset/<token>', methods=["GET", "POST"])
+def reset_with_token(token):
+    try:
+        password_reset_serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        email = password_reset_serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except:
+        flash('The password reset link is invalid or has expired.', 'error')
+        return redirect(url_for('login'))
+
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        try:
+            user = User.query.filter_by(email=email).first_or_404()
+        except IntegrityError:
+            flash('Invalid email address!', 'error')
+            return redirect(url_for('login'))
+
+        user._password = bcrypt.generate_password_hash(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Your password has been updated!', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password_with_token.html', form=form, token=token)
+
+
+@app.route('/user_profile')
+@login_required
+def user_profile():
+    return render_template('user_profile.html')
+
+
+@app.route('/email_change', methods=["GET", "POST"])
+@login_required
+def email_change():
+    form = EmailForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            try:
+                user_check = User.query.filter_by(email=form.email.data).first()
+                if user_check is None:
+                    user = current_user
+                    user.email = form.email.data
+                    user.email_confirmed = False
+                    user.email_confirmed_on = None
+                    user.email_confirmation_sent_on = datetime.now()
+                    db.session.add(user)
+                    db.session.commit()
+                    send_confirmation_email(user.email)
+                    flash('Email changed!  Please confirm your new email address (link sent to new email).', 'success')
+                    return redirect(url_for('user_profile'))
+                else:
+                    flash('Sorry, that email already exists!', 'error')
+            except IntegrityError:
+                flash('Error! That email already exists!', 'error')
+    return render_template('email_change.html', form=form)
+
+
+@app.route('/password_change', methods=["GET", "POST"])
+@login_required
+def user_password_change():
+    form = PasswordForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = current_user
+            user._password = bcrypt.generate_password_hash(form.password.data)
+            # user.password = form.password.data
+            db.session.add(user)
+            db.session.commit()
+            flash('Password has been updated!', 'success')
+            return redirect(url_for('user_profile'))
+
+    return render_template('password_change.html', form=form)
+
+
+@app.route('/resend_confirmation')
+@login_required
+def resend_email_confirmation():
+    try:
+        send_confirmation_email(current_user.email)
+        flash('Email sent to confirm your email address.  Please check your email!', 'success')
+    except IntegrityError:
+        flash('Error!  Unable to send email to confirm your email address.', 'error')
+
+    return redirect(url_for('user_profile'))
+
+
+@app.route('/admin_view_users')
+@login_required
+def admin_view_users():
+    if current_user.role != 'admin':
+        abort(403)
+    else:
+        users = User.query.order_by(User.id).all()
+        return render_template('admin_view_users.html', users=users)
+    return redirect(url_for('user_profile'))
+
+'''
 @app.route("/login", methods=["GET", "POST"])
 def login():
     table_list = ["users", "portfolios", "transactions"]
@@ -232,10 +422,12 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+'''
 
-
+'''
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    #TODO Should create all 3 tables before registration
     table_list = ["users", "portfolios", "transactions"]
     database.create_table(table_list)
 
@@ -265,6 +457,7 @@ def register():
 
     else:
         return render_template("register.html")
+'''
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -461,7 +654,7 @@ def sim_trading():
 
 
 def start_server_process():
-    cmd = "( python.exe sim_trading/server.py )"
+    cmd = "( python.exe server.py )"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
                                stderr=subprocess.PIPE,
                                universal_newlines=True)
@@ -488,6 +681,7 @@ def sim_server_up():
     else:
         return render_template("sim_launch_server.html")
     '''
+
     server_thread = threading.Thread(target=(start_server_process))
     server_thread.start()
     
@@ -703,13 +897,18 @@ def market_data_stock():
     else:
         return render_template("md_get_stock.html")
 
+#app.secret_key = os.urandom(24)
+#app.config.from_pyfile('flask.cfg')
+#app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 if __name__ == "__main__":
-    table_list = ["users", "portfolios", "transactions"]
+    table_list = ["users", "fre_users", "portfolios", "transactions"]
     database.create_table(table_list)
+    add_admin_user()
 
     try:
-        app.run(host='127.0.0.1', port=80, debug=False)
+        #app.run(host='127.0.0.1', port=80, debug=False)
+        app.run(host='127.0.0.1', port=80, debug=True, use_reloader=False)
         if client_config.client_thread.is_alive() is True:
             client_config.client_thread.join()
 

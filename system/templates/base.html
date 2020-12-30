@@ -39,8 +39,10 @@
 					</ul>
 				{% else %}
 					<ul class="navbar-nav ml-auto mt-2">
-						<li class="nav-item font-weight-bold"><a class="nav-link" href="/register">Register</a></li>
-						<li class="nav-item font-weight-bold"><a class="nav-link" href="/login">Log In</a></li>
+						<li><a href="{{ url_for('portfolio.register') }}">Register</a></li>
+						<li><a href="{{ url_for('portfolio.login') }}">Log In</a></li>
+						<!--li class="nav-item font-weight-bold"><a class="nav-link" href="/register">Register</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/login">Log In</a></li-->
 					</ul>
 				{% endif %}
 			</div>

@@ -2,12 +2,21 @@
 *.pyc
 *.log
 *.whl
-/fre_server/logs/*
-/fre_server/sessions/*
-/fix_engine/fre_client/logs/*
-/fix_engine/fre_client/sessions/*
 /venv/Include/*
 /venv/Lib/*
 /venv/Scripts/*
 Notes.*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+ 
+# Mac custom attributes file (Desktop Service Store)
+.DS_Store
+ 
+# PyCharm files
+.idea/
+
+/fre_instance
 

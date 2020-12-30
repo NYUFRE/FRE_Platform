@@ -5,12 +5,9 @@ import sys
 
 sys.path.append('../')
 
-#import datetime as dt
+import datetime as dt
 import holidays
-
-from market_data.fre_market_data import EODMarketData
-from database.fre_database import FREDatabase
-from ai_modeling.ga_portfolio import *
+from system.ai_modeling.ga_portfolio import GAPortfolio, Stock, Trade
 
 fund = 1000000
 

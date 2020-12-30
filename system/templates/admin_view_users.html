@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% from "_form_macros.html" import render_field %}
+ 
+{% block content %}
+ 
+<div class="admin-view-users">
+  <div class="page-header">
+    <h2>Administrative Page: List of Users</h2>
+  </div>
+ 
+  <div class="row">
+    <table class="table table-striped" id="admin_list_of_users">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Registration Date</th>
+          <th>Email Confirmed?</th>
+          <th>Email Confirmed On</th>
+          <th>Last Login</th>
+          </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td> {{ user.id }} </td>
+            <td> {{ user.email }} </td>
+            <td> {{ user.role }} </td>
+            <td> {{ user.registered_on }} </td>
+            <td> {{ user.email_confirmed }} </td>
+            <td> {{ user.email_confirmed_on }} </td>
+            <td> {{ user.last_logged_in }} </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+ 
+{% endblock %}
+

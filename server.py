@@ -3,9 +3,6 @@
 #@ Copyright -
 
 
-import socket
-import urllib.request
-
 import os
 import sys
 import json
@@ -16,18 +13,18 @@ import numpy as np
 import sched, time
 import datetime
 
-from pandas.tseries.holiday import USFederalHolidayCalendar, GoodFriday
+from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
 import threading
 
 sys.path.append('../')
 
-from utility.config import ServerConfig, trading_queue, trading_event
-from sim_trading.network import PacketTypes, Packet
+from system.utility.config import ServerConfig, trading_queue
+from system.sim_trading.network import PacketTypes, Packet
 
-from market_data.fre_market_data import EODMarketData
-from database.fre_database import FREDatabase
+from system.market_data.fre_market_data import EODMarketData
+from system.database.fre_database import FREDatabase
 
 server_config = ServerConfig()
 

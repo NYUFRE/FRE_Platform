@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% from "_form_macros.html" import render_field %}
+ 
+{% block content %}
+ 
+<div class="user-profile">
+  <div class="page-header">
+    <h2>Email Change</h2>
+  </div>
+ 
+  <h3>Current Email: {{ current_user.email }}</h3>
+  <h3>Please enter your new email:</h3>
+  <form action="{{ url_for('email_change') }}" method="POST">
+  {{ form.csrf_token }}
+    <dl>
+      {{ render_field(form.email, placeholder="Enter New Email Address") }}
+    </dl>
+    <button class="btn btn-sm btn-success" type="submit">Update</button>
+  </form>
+</div>
+ 
+{% endblock %}

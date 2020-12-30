@@ -1,10 +1,9 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, VARCHAR, BLOB, BOOLEAN
 from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
 
 import pandas as pd
-
 
 class FREDatabase:
     def __init__(self):
@@ -25,8 +24,28 @@ class FREDatabase:
                 table = Table(table_name, self.metadata,
                               Column('user_id', Integer, primary_key=True),
                               Column('username', Text, nullable=False),
+                              #Column('first_name', Text, nullable=False),
+                              #Column('last_name', Text, nullable=False),
+                              #Column('email_address', Text, nullable=False),
                               Column('password', Text, nullable=False),
                               Column('cash', Numeric, nullable=False, server_default='10000.00'),
+                              sqlite_autoincrement=True,
+                              extend_existing=True)
+                table.create(self.engine)
+
+            elif table_name == "fre_users" and table_name not in tables:
+                table = Table(table_name, self.metadata,
+                              Column('id', Integer, primary_key=True),
+                              Column('email', VARCHAR, unique=True, nullable=False),
+                              Column('_password', BLOB, nullable=False),
+                              Column('authenticated', BOOLEAN, default=False),
+                              Column('email_confirmation_sent_on', DATETIME, nullable=True),
+                              Column('email_confirmed', BOOLEAN, nullable=True, default=False),
+                              Column('email_confirmed_on', DATETIME, nullable=True),
+                              Column('registered_on', DATETIME, nullable=True),
+                              Column('last_logged_in', DATETIME, nullable=True),
+                              Column('current_logged_in', DATETIME, nullable=True),
+                              Column('role', VARCHAR, default='user'),
                               sqlite_autoincrement=True,
                               extend_existing=True)
                 table.create(self.engine)
@@ -251,7 +270,7 @@ class FREDatabase:
 
     def get_user(self, usr, uid):
         data = []
-        user = {'user_id': '', 'username': '', 'password': '', 'cash' : 0.0}
+        user = {'user_id': '', 'username': '', 'password': '', 'cash' : 0.0, 'last_name' : '', 'first_name' : '', 'email_address' : ''}
 
         if len(usr) > 0:
             result = self.engine.execute("SELECT * FROM users WHERE username = :username", username=usr)
@@ -260,11 +279,15 @@ class FREDatabase:
             result = self.engine.execute("SELECT * FROM users WHERE user_id = :user_id", user_id=uid)
             data = result.fetchall()
 
+        #TODO! Improve the logic for getting users
         if len(data) > 0:
             user['user_id'] = data[0]['user_id']
             user['username'] = data[0]['username']
             user['password'] = data[0]['password']
             user['cash'] = data[0]['cash']
+            #user['last_name'] = data[0]['last_name']
+            #user['first_name'] = data[0]['first_name']
+            #user['email_address'] = data[0]['email_address']
 
         return user
 

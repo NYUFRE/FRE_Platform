@@ -13,12 +13,12 @@ import statsmodels.tsa.stattools as st
 from itertools import combinations
 import statsmodels.api as sm
 
-from sqlalchemy import and_, or_, not_
+from sqlalchemy import and_
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask
 
-from market_data.fre_market_data import EODMarketData
-from database.fre_database import FREDatabase
+from system.market_data.fre_market_data import EODMarketData
+from system.database.fre_database import FREDatabase
 
 location_of_pairs = 'csv/PairTrading.csv'
 

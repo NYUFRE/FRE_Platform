@@ -1,10 +1,5 @@
-import os
 import statistics
 import random
-import datetime as dt
-
-from market_data.fre_market_data import EODMarketData
-from database.fre_database import FREDatabase
 
 #import pandas as pd
 #import numpy as np

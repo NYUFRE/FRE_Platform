@@ -40,7 +40,7 @@ class ServerConfig:
         self.server_socket.bind((socket.gethostbyname(""), self.port))
         self.mutex = threading.Lock()
 
-        self.location_of_symbols = 'csv/server_symbols.csv'
+        self.location_of_symbols = 'system/csv/server_symbols.csv'
         self.stock_daily_data = "server_daily_data"
         self.stock_intraday_data = "server_intraday_data"
 

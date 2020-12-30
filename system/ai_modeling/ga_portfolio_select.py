@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*
 # !/usr/bin/env python3
 import sys
+
+from system.ai_modeling.ga_portfolio import Stock, Trade, Fundamental, GAPortfolio, PORTFOLIO_NUM_OF_STOCK
+
 sys.path.append('../')
 
 import copy
-
-from ai_modeling.ga_portfolio import *
+import datetime as dt
+import random
 
 #SP500_NUM_OF_STOCKS = 505
 #PORTFOLIO_NUM_OF_STOCK = 11
-
-import holidays
-import pandas as pd
-import numpy as np
-
-from sqlalchemy import and_, or_, not_
-from flask import Flask, flash, redirect, render_template, request, url_for
 
 start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')

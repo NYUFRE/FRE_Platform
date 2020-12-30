@@ -5,20 +5,12 @@ import sys
 
 sys.path.append('../')
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.dates import DateFormatter
 import numpy as np
-
-import io
 
 import datetime as dt
 
-from market_data.fre_market_data import EODMarketData
-from database.fre_database import FREDatabase
-from ai_modeling.ga_portfolio import *
+from system.ai_modeling.ga_portfolio import GAPortfolio, Stock, Trade
 
 #database = FREDatabase()
 #eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
