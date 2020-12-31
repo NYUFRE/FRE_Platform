@@ -12,26 +12,12 @@ from system.portfolio.models import User
 
 
 def add_admin_user():
-    # drop all of the existing database tables
-    ###db.drop_all()
-    '''
     try:
-        num_rows_deleted = User.query.delete()
-        db.session.commit()
-    except SQLAlchemyError:
-        db.session.rollback()
-
-    # create the database and the database table
-    db.create_all()
-    '''
-
-    try:
-        admin_user = User(email='stangny@gmail.com', plaintext_password='123456', role='admin')
+        admin_user = User(email='FrePlatform@gmail.com', last_name='Admin', first_name='FrePlatform', plaintext_password='123456', role='admin', cash='0.0')
         db.session.add(admin_user)
         db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
-
 
 
 def send_async_email(msg):

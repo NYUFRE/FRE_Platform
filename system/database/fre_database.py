@@ -5,12 +5,14 @@ from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETI
 
 import pandas as pd
 
+
 class FREDatabase:
-    def __init__(self):
+    def __init__(self, database_uri='sqlite:///instance/fre_database.db'):
         #path = os.path.dirname(os.path.abspath('fre_database.py'))
         #db = os.path.join(path, 'fre_database.db')
         #self.engine = create_engine('sqlite:///' + 'FRE_Platform\\database\\fre_database.db')
-        self.engine = create_engine('sqlite:///fre_database.db')
+        #self.engine = create_engine('sqlite:///fre_database.db')
+        self.engine = create_engine(database_uri)
         self.conn = self.engine.connect()
         self.conn.execute("PRAGMA foreign_keys = ON")
         
@@ -20,6 +22,7 @@ class FREDatabase:
     def create_table(self, table_list):
         tables = self.metadata.tables.keys()
         for table_name in table_list:
+            '''
             if table_name == "users" and table_name not in tables:
                 table = Table(table_name, self.metadata,
                               Column('user_id', Integer, primary_key=True),
@@ -32,20 +35,22 @@ class FREDatabase:
                               sqlite_autoincrement=True,
                               extend_existing=True)
                 table.create(self.engine)
-
-            elif table_name == "fre_users" and table_name not in tables:
+            '''
+            if table_name == "users" and table_name not in tables:
                 table = Table(table_name, self.metadata,
-                              Column('id', Integer, primary_key=True),
+                              Column('user_id', Integer, primary_key=True),
                               Column('email', VARCHAR, unique=True, nullable=False),
+                              Column('first_name', VARCHAR, nullable=False),
+                              Column('last_name', VARCHAR, nullable=False),
                               Column('_password', BLOB, nullable=False),
                               Column('authenticated', BOOLEAN, default=False),
-                              Column('email_confirmation_sent_on', DATETIME, nullable=True),
                               Column('email_confirmed', BOOLEAN, nullable=True, default=False),
                               Column('email_confirmed_on', DATETIME, nullable=True),
                               Column('registered_on', DATETIME, nullable=True),
                               Column('last_logged_in', DATETIME, nullable=True),
                               Column('current_logged_in', DATETIME, nullable=True),
                               Column('role', VARCHAR, default='user'),
+                              Column('cash', Numeric, nullable=False, server_default='10000.00'),
                               sqlite_autoincrement=True,
                               extend_existing=True)
                 table.create(self.engine)
@@ -268,12 +273,12 @@ class FREDatabase:
             sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
         return sp500_symbol_map
 
-    def get_user(self, usr, uid):
+    def get_user(self, email_address, uid):
         data = []
-        user = {'user_id': '', 'username': '', 'password': '', 'cash' : 0.0, 'last_name' : '', 'first_name' : '', 'email_address' : ''}
+        user = {'user_id': '', 'cash' : 0.0, 'last_name' : '', 'first_name' : '', 'email' : ''}
 
-        if len(usr) > 0:
-            result = self.engine.execute("SELECT * FROM users WHERE username = :username", username=usr)
+        if len(email_address) > 0:
+            result = self.engine.execute("SELECT * FROM users WHERE email = :email", email=email_address)
             data = result.fetchall()
         elif uid > 0:
             result = self.engine.execute("SELECT * FROM users WHERE user_id = :user_id", user_id=uid)
@@ -282,25 +287,24 @@ class FREDatabase:
         #TODO! Improve the logic for getting users
         if len(data) > 0:
             user['user_id'] = data[0]['user_id']
-            user['username'] = data[0]['username']
-            user['password'] = data[0]['password']
             user['cash'] = data[0]['cash']
-            #user['last_name'] = data[0]['last_name']
-            #user['first_name'] = data[0]['first_name']
-            #user['email_address'] = data[0]['email_address']
+            user['last_name'] = data[0]['last_name']
+            user['first_name'] = data[0]['first_name']
+            user['email'] = data[0]['email']
 
         return user
 
-    def create_user(self, user, pwd):
-        self.engine.execute("INSERT INTO users (username,password) VALUES (:username,:password)", username=user, password=pwd)
-
     def get_portfolio(self, uid, symbol=""):
         data = []
-        portfolio = {'username': '', 'cash': 0, 'symbol': [], 'name': [], 'shares': [], 'price': [], 'total': []}
+        portfolio = {'email': '', 'cash': 0, 'symbol': [], 'name': [], 'shares': [], 'price': [], 'total': []}
 
         result = self.engine.execute('SELECT * FROM users WHERE user_id=:user_id', user_id=uid)
         data = result.fetchall()
-        username = data[0]["username"]
+        if len(data) == 0:
+            return portfolio
+
+        email = data[0]["email"]
+        username = data[0]['first_name'] + ' ' + data[0]['last_name']
         cash = float(data[0]["cash"])
 
         if len(symbol) > 0:
@@ -310,6 +314,10 @@ class FREDatabase:
             result = self.engine.execute('SELECT * FROM portfolios WHERE user_id=:user_id', user_id=uid)
             data = result.fetchall()
 
+        if len(data) == 0:
+            portfolio['cash'] = cash
+            return portfolio
+
         for row in data:
             portfolio['symbol'].append(row['symbol'])
             portfolio['shares'].append(row['shares'])
@@ -317,6 +325,7 @@ class FREDatabase:
             portfolio['price'].append(0.0)
             portfolio['total'].append(0.0)
 
+        portfolio['email'] = email
         portfolio['username'] = username
         portfolio['cash'] = cash
 

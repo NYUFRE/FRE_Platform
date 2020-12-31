@@ -59,3 +59,12 @@ main img
 	display: display: inline-block
 }
 
+.alert-error {
+  background-color: deepskyblue;
+  color: black;
+}
+
+.alert-info {
+  background-color: lightyellow;
+  color: black;
+}

@@ -14,12 +14,13 @@
 		{{ form.csrf_token }}
 		<dl>
 		{{ render_field(form.email, placeholder="Email address") }}
+        {{ render_field(form.first_name, placeholder="First Name") }}
+        {{ render_field(form.last_name, placeholder="Last Name") }}
 		{{ render_field(form.password, placeholder="Password") }}
 		{{ render_field(form.confirm, placeholder="Confirm password") }}
+
 		</dl>
-		<!--button class="btn btn-sm btn-success" type="submit">Create New Account</button-->
         <div class="form-group">
-            <!--the button-->
             <button class="btn btn-default" type="submit">Register</button>
         </div>
 	</form>

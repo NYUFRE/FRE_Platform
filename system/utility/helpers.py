@@ -2,11 +2,12 @@ import os
 import requests
 import urllib.parse
 
-from flask import redirect, render_template, request, session
+from flask import flash, redirect, render_template, session
 from functools import wraps
+from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 
 
-def apology(message, code=400):
+def error_page(message, code=400):
     """Render message as an apology to user."""
     def escape(s):
         """
@@ -19,7 +20,15 @@ def apology(message, code=400):
             s = s.replace(old, new)
         return s
     error_code = 'error code: ' + str(code)
-    return render_template("apology.html", top=error_code, bottom=escape(message)), code
+    flash('ERROR! ' + message, error_code)
+    return render_template("error_page.html"), code
+
+
+def errorhandler(e):
+    """Handle error"""
+    if not isinstance(e, HTTPException):
+        e = InternalServerError()
+    return error_page(e.name, e.code)
 
 
 def login_required(f):

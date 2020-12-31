@@ -2,14 +2,7 @@
 #### imports ####
 #################
 
-from flask import Flask, redirect, render_template, request, session, url_for, make_response
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.dates import DateFormatter
-from matplotlib.figure import Figure
-from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
-from passlib.apps import custom_app_context as pwd_context
-
+from datetime import datetime
 import os
 import sys
 import subprocess
@@ -19,31 +12,88 @@ import io
 import numpy as np
 import time
 
-from system import app, database, iex_market_data, eod_market_data
+from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
+from flask_login import login_required,login_user,current_user,logout_user
+from itsdangerous import URLSafeTimedSerializer
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from sqlalchemy.exc import IntegrityError
 
-#TODO consolidate into FREDatabase
-#from system.portfolio.users import create_user_table
+from system.portfolio.models import User
+from system.portfolio.forms import RegisterForm, LoginForm, EmailForm, PasswordForm
+from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
+from system import app, db, bcrypt, database, iex_market_data, eod_market_data, process_list
 
-from system.utility.helpers import apology, login_required, usd
+from system.utility.helpers import error_page, login_required, usd
 from system.utility.config import trading_queue, trading_event
 
 from system.sim_trading.network import PacketTypes, Packet
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, wait_for_an_event, join_trading_network, quit_connection
-#from system.sim_trading.server import *
-#from system.sim_trading.client import *
 
-from system.ai_modeling.ga_portfolio import *
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test
 from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
+
 from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, back_testing_start_date, back_testing_end_date
 
-process_list = []
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            try:
+                new_user = User(form.email.data, form.first_name.data, form.last_name.data, form.password.data)
+                new_user.authenticated = True
+                db.session.add(new_user)
+                db.session.commit()
+                login_user(new_user)
+                send_confirmation_email(new_user.email)
+                flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
+                return redirect(url_for('login'))
+            except IntegrityError:
+                db.session.rollback()
+                flash('ERROR! Email ({}) already exists.'.format(form.email.data), 'error')
+    return render_template('register.html', form=form)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=form.email.data).first()
+            if user is not None and user.is_correct_password(form.password.data):
+                user.authenticated = True
+                user.last_logged_in = user.current_logged_in
+                user.current_logged_in = datetime.now()
+                db.session.add(user)
+                db.session.commit()
+                login_user(user)
+                user = database.get_user(request.form.get("email"), '')
+                session["user_id"] = user["user_id"]
+                return redirect(url_for('index'))
+            else:
+                flash('ERROR! Incorrect login credentials.', 'error')
+    return render_template('login.html', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    user = current_user
+    user.authenticated = False
+    db.session.add(user)
+    db.session.commit()
+    logout_user()
+    flash('Goodbye!', 'info')
+    session.clear()
+    return redirect(url_for('login'))
+
 
 @app.route("/")
 @login_required
 def index():
-
     # List the python processes before launching the server
     # Window env/UNIX env
     output = os.popen('wmic process get description, processid').read()
@@ -53,7 +103,6 @@ def index():
         if target_process in str(line):
             process_list.append(int(line.split(' ', 1)[1].strip()))
 
-    session['user_id'] = 1
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
     total = cash
@@ -63,7 +112,7 @@ def index():
         for i in range(len(portfolio['symbol'])):
             price, error = iex_market_data.get_price(portfolio['symbol'][i])
             if len(error) > 0:
-                return apology(error)
+                return error_page(error)
             portfolio['name'][i] = price['name']
             portfolio['price'][i] = usd(price['price'])
             cost = price['price'] * portfolio['shares'][i]
@@ -76,32 +125,57 @@ def index():
         return render_template("index.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
 
 
+@app.route("/quote", methods=["GET", "POST"])
+def get_quote():
+    if request.method == 'POST':
+        if not request.form.get("symbol"):
+            flash('ERROR! symbol missing.', 'error')
+            return render_template("get_quote.html")
+
+        quote, error = iex_market_data.get_quote(request.form.get("symbol"))
+
+        if len(error) > 0:
+            flash('ERROR! Invalid symbol.', 'error')
+            return render_template("get_quote.html")
+        else:
+            return render_template("quote.html", dict=quote)
+
+    else:
+        return render_template("get_quote.html")
+
+
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
     if request.method == "POST":
         symbol = request.form.get('symbol')
         if not symbol:
-            return apology('Symbol can not be blank.')
+            flash('ERROR! Symbol can not be blank.', 'error')
+            return render_template("buy.html")
 
         input_shares = request.form.get('shares')
         if not input_shares:
-            return apology("Shares cannot be blank.")
+            flash('ERROR! Shares cannot be blank.', 'error')
+            return render_template("buy.html")
+
         shares = int(input_shares)
         if not shares > 0:
-            return apology("Shares must be positive.")
+            flash('ERROR! Shares must be positive.', 'error')
+            return render_template("buy.html")
 
         price = 0.0
         input_price = request.form.get('price')
         if not input_price:
             latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
-                return apology(error)
+                flash('ERROR! ' + error, 'error')
+                return render_template("buy.html")
             price = latest_price['price']
         else:
             price = float(input_price)
             if not price > 0:
-                return apology("price must be positive.")
+                flash('ERROR! Price must be positive.', 'error')
+                return render_template("buy.html")
 
         uid = session['user_id']
         user = database.get_user('', uid)
@@ -110,10 +184,12 @@ def buy():
         total = price * shares
         timestamp = time.strftime("%Y/%m/%d %H:%M:%S")
 
-        # ensure that the user can afford the stocks
+        # ensure that the user has sufficient fund
         if total > cash:
-            return apology("Insufficient fund")
-        # if the user can afford, update the cash and insert the purchase data into the history table
+            flash('ERROR! Insufficient fund.', 'error')
+            return render_template("buy.html")
+
+        # update the cash balance
         else:
             cash = cash - total
             database.create_buy_transaction(uid, cash, symbol, shares, price, timestamp)
@@ -129,36 +205,47 @@ def sell():
     if request.method == "POST":
         symbol = request.form.get('symbol')
         if not symbol:
-            return apology('Symbol can not be blank.')
+            flash('ERROR! Symbol can not be blank.', 'error')
+            return render_template("sell.html")
 
         input_shares = request.form.get('shares')
         if not input_shares:
-            return apology("Shares cannot be blank.")
+            flash('ERROR! Shares can not be blank.', 'error')
+            return render_template("sell.html")
+
         shares = int(input_shares)
         if not shares > 0:
-            return apology("Shares must be positive.")
+            flash('ERROR! Shares must be positive.', 'error')
+            return render_template("sell.html")
 
         price = 0.0
         input_price = request.form.get('price')
         if not input_price:
             latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
-                return apology(error)
+                flash('ERROR! ' + error, 'error')
+                return render_template("sell.html")
             price = latest_price['price']
         else:
             price = float(input_price)
             if not price > 0:
-                return apology("price must be positive.")
+                flash('ERROR! Price must be positive.', 'error')
+                return render_template("sell.html")
 
         uid = session['user_id']
         portfolio = database.get_portfolio(session['user_id'], symbol)
         existing_shares = 0
         if len(portfolio['symbol']) == 1 and portfolio['symbol'][0] == symbol:
             existing_shares = portfolio['shares'][0]
+        else:
+            flash('ERROR! Stock not in your portfolio.', 'error')
+            return render_template("sell.html")
+
         cash = portfolio['cash']
 
         if shares > existing_shares:
-            return apology("No enough shares to sell.")
+            flash('ERROR! No enough shares to sell.', 'error')
+            return render_template("sell.html")
 
         updated_shares = existing_shares - shares
 
@@ -181,76 +268,6 @@ def history():
     length = len(transactions['symbol'])
     return render_template("history.html", length=length, dict=transactions)
 
-from flask import render_template
-from flask import flash, abort, redirect, url_for
-from flask import request
-from system.portfolio.models import User
-from system.portfolio.forms import RegisterForm, LoginForm, EmailForm, PasswordForm
-from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
-from system import db
-from system import app
-from sqlalchemy.exc import IntegrityError
-from flask_login import login_required,login_user,current_user,logout_user
-from itsdangerous import URLSafeTimedSerializer
-from datetime import datetime
-from system import bcrypt
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm(request.form)
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            try:
-                new_user = User(form.email.data, form.password.data)
-                new_user.authenticated = True
-                db.session.add(new_user)
-                db.session.commit()
-                login_user(new_user)
-                # send_email('Registration',['stangny@gmail.com'], 'Thanks for registering with Kennedy Family Recipes!',
-                #           '<h3>Thanks for registering with Kennedy Family Recipes!</h3>')
-                send_confirmation_email(new_user.email)
-                flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
-                return redirect(url_for('index'))
-            except IntegrityError:
-                db.session.rollback()
-                flash('ERROR! Email ({}) already exists.'.format(form.email.data), 'error')
-    return render_template('register.html', form=form)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm(request.form)
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            user = User.query.filter_by(email=form.email.data).first()
-            if user is not None and user.is_correct_password(form.password.data):
-                user.authenticated = True
-                user.last_logged_in = user.current_logged_in
-                user.current_logged_in = datetime.now()
-                db.session.add(user)
-                db.session.commit()
-                login_user(user)
-                #flash('Thanks for logging in, {}'.format(current_user.email))
-                session['user_id'] = 1
-                #return redirect("/")
-                return redirect(url_for('index'))
-            else:
-                flash('ERROR! Incorrect login credentials.', 'error')
-    return render_template('login.html', form=form)
-
-
-@app.route('/logout')
-@login_required
-def logout():
-    user = current_user
-    user.authenticated = False
-    db.session.add(user)
-    db.session.commit()
-    logout_user()
-    flash('Goodbye!', 'info')
-    session.clear()
-    return redirect(url_for('login'))
-
 
 @app.route('/confirm/<token>')
 def confirm_email(token):
@@ -271,6 +288,9 @@ def confirm_email(token):
         db.session.add(user)
         db.session.commit()
         flash('Thank you for confirming your email address!')
+
+        # TODO
+        session['user_id'] = 1
 
     return redirect(url_for('index'))
 
@@ -362,7 +382,6 @@ def user_password_change():
         if form.validate_on_submit():
             user = current_user
             user._password = bcrypt.generate_password_hash(form.password.data)
-            # user.password = form.password.data
             db.session.add(user)
             db.session.commit()
             flash('Password has been updated!', 'success')
@@ -392,101 +411,6 @@ def admin_view_users():
         users = User.query.order_by(User.id).all()
         return render_template('admin_view_users.html', users=users)
     return redirect(url_for('user_profile'))
-
-'''
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    table_list = ["users", "portfolios", "transactions"]
-    database.create_table(table_list)
-
-    session.clear()
-    if request.method == "POST":
-        if not request.form.get("username"):
-            return apology("Must provide username", 403)
-
-        elif not request.form.get("password"):
-            return apology("Must provide password", 403)
-
-        user = database.get_user(request.form.get("username"), '')
-        if len(user['username']) == 0 or not pwd_context.verify(request.form.get("password"), user["password"]):
-            return apology("invalid username and/or password", 403)
-
-        session["user_id"] = user["user_id"]
-        return redirect("/")
-
-    else:
-        return render_template("login.html")
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
-'''
-
-'''
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    #TODO Should create all 3 tables before registration
-    table_list = ["users", "portfolios", "transactions"]
-    database.create_table(table_list)
-
-    if request.method == 'POST':
-        if not request.form.get("username"):
-            return apology("Missing username")
-
-        username = request.form.get("username")
-        user = database.get_user(username, '')
-        if len(user['username']) > 0:
-            return apology("This username is already exists")
-
-        if not request.form.get("password"):
-            return apology("Missing password!")
-
-        password = request.form.get("password")
-        confirmation = request.form.get("confirmation")
-        if password != confirmation:
-            return apology("Passwords do not match!")
-        else:
-            encrypted_password = pwd_context.hash(request.form.get("password"))
-            database.create_user(username, encrypted_password)
-
-        user = database.get_user(username, '')
-        session["user_id"] = user["user_id"]
-        return redirect(url_for("index"))
-
-    else:
-        return render_template("register.html")
-'''
-
-
-@app.route("/quote", methods=["GET", "POST"])
-def get_quote():
-    if request.method == 'POST':
-        if not request.form.get("symbol"):
-            return apology("symbol missing")
-
-        quote, error = iex_market_data.get_quote(request.form.get("symbol"))
-
-        if len(error) > 0:
-            return apology("Invalid symbol")
-        else:
-            return render_template("quote.html", dict=quote)
-
-    else:
-        return render_template("get_quote.html")
-
-
-def errorhandler(e):
-    """Handle error"""
-    if not isinstance(e, HTTPException):
-        e = InternalServerError()
-    return apology(e.name, e.code)
-
-
-# Listen for errors
-for code in default_exceptions:
-    app.errorhandler(code)(errorhandler)
 
 
 # Statistical Arbitrage
@@ -573,7 +497,6 @@ def ai_build_model():
 
     stocks = []
     for stock in best_portfolio.stocks:
-        #print(stock.symbol, end=",")
         print(stock.symbol, stock.name, stock.sector, stock.category_pct)
         stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct*100, 4))))
     length = len(stocks)
@@ -665,23 +588,10 @@ def start_server_process():
             time.sleep(10)
             client_config.server_ready = True
 
-       #eturn_code = process.poll()
-       #if return_code is not None:
-       #    print('RETURN CODE', return_code)
           
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
-    '''
-    if not server_config.server_thread_started:
-        server_config.server_thread_started = True
-        server_thread = threading.Thread(target=launch_server())
-        server_thread.start()
-        return render_template("sim_launch_server.html")
-    else:
-        return render_template("sim_launch_server.html")
-    '''
-
     server_thread = threading.Thread(target=(start_server_process))
     server_thread.start()
     
@@ -689,7 +599,6 @@ def sim_server_up():
         pass
 
     return render_template("sim_launch_server.html")
-
 
 
 @app.route('/sim_server_down')
@@ -700,7 +609,7 @@ def sim_server_down():
         client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         status = client_config.client_socket.connect_ex(client_config.ADDR)
         if status != 0:
-            return apology("Fail in connecting to server")
+            return error_page("Fail in connecting to server")
 
         client_config.receiver_stop = False
         client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
@@ -744,7 +653,7 @@ def sim_auto_trading():
         client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         status = client_config.client_socket.connect_ex(client_config.ADDR)
         if status != 0:
-            return apology("Fail in connecting to server")
+            return error_page("Fail in connecting to server")
 
         client_config.client_up = True
         client_config.orders = []
@@ -777,8 +686,6 @@ def sim_auto_trading():
         #client_config.receiver_stop = True
         client_config.trade_complete = False
         client_config.client_socket.close()
-
-        #print(client_config.orders, sep="\n")
 
     return render_template("sim_auto_trading.html", trading_results=client_config.orders)
 
@@ -897,9 +804,6 @@ def market_data_stock():
     else:
         return render_template("md_get_stock.html")
 
-#app.secret_key = os.urandom(24)
-#app.config.from_pyfile('flask.cfg')
-#app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 if __name__ == "__main__":
     table_list = ["users", "fre_users", "portfolios", "transactions"]
@@ -907,7 +811,6 @@ if __name__ == "__main__":
     add_admin_user()
 
     try:
-        #app.run(host='127.0.0.1', port=80, debug=False)
         app.run(host='127.0.0.1', port=80, debug=True, use_reloader=False)
         if client_config.client_thread.is_alive() is True:
             client_config.client_thread.join()
