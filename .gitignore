@@ -2,6 +2,8 @@
 *.pyc
 *.log
 *.whl
+*.doc
+*.docx
 /venv/Include/*
 /venv/Lib/*
 /venv/Scripts/*

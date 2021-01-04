@@ -618,6 +618,7 @@ def create_market_interest(symbols):
 
 # The logic need to be optimized
 def close_trades(symbols):
+    server_config.mutex.acquire()
     for symbol in symbols:
         side = 'Buy' if random.randint(1,11) % 2 == 0 else 'Sell'
         if ((server_config.order_table['Symbol'] == symbol) & (server_config.order_table['Side'] == side)).any():
@@ -651,7 +652,8 @@ def close_trades(symbols):
         
         server_config.order_table = server_config.order_table.sort_values(['Side', 'Symbol', 'Price', 'Qty'])
         print(server_config.order_table, file=server_config.server_output)
-         
+
+    server_config.mutex.release()
             
 def update_market_status(status, day):
     server_config.market_status = status
