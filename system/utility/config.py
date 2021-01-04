@@ -44,12 +44,12 @@ class ServerConfig:
         self.stock_daily_data = "server_daily_data"
         self.stock_intraday_data = "server_intraday_data"
 
-        self.market_open_time = 50
-        self.market_pending_close_time = 10
+        self.market_open_time = 75  # 1 second for 5 mins (we use 5-min intraday data)
+        self.market_pending_close_time = 3
         self.market_close_time = 10
-        self.order_interval_time = 5
-        self.low_price_scale = 0.05
-        self.high_price_scale = 5
+        self.order_interval_time = 1
+        self.low_price_scale = 0.01
+        self.high_price_scale = 1
         self.high_price_min = 1000
         self.price_unit = 100
         self.intraday_order_map = {}

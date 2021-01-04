@@ -570,14 +570,23 @@ def create_market_interest(symbols):
                             best_sell_index = sell_prices.idxmin()
                             best_buy_price = server_config.order_table.loc[best_buy_index, 'Price']
                             best_sell_price = server_config.order_table.loc[best_sell_index, 'Price']
-
-                            if best_buy_price > best_sell_price:
-                                if len(buy_prices) >= len(sell_prices):
+                            # TODO Avoid floating point issue
+                            if best_buy_price >= best_sell_price:
+                                if server_config.order_table.loc[best_buy_index, 'Qty'] == server_config.order_table.loc[best_sell_index, 'Qty']:
                                     server_config.order_table.loc[best_buy_index, 'Qty'] = 0
                                     server_config.order_table.loc[best_buy_index, 'Status'] = 'Filled'
-                                else:
                                     server_config.order_table.loc[best_sell_index, 'Qty'] = 0
                                     server_config.order_table.loc[best_sell_index, 'Status'] = 'Filled'
+                                elif server_config.order_table.loc[best_buy_index, 'Qty'] > server_config.order_table.loc[best_sell_index, 'Qty']:
+                                    server_config.order_table.loc[best_buy_index, 'Qty'] -= server_config.order_table.loc[best_sell_index, 'Qty']
+                                    server_config.order_table.loc[best_buy_index, 'Status'] = 'Partial Filled'
+                                    server_config.order_table.loc[best_sell_index, 'Qty'] = 0
+                                    server_config.order_table.loc[best_sell_index, 'Status'] = 'Filled'
+                                else:
+                                    server_config.order_table.loc[best_sell_index, 'Qty'] -= server_config.order_table.loc[best_buy_index, 'Qty']
+                                    server_config.order_table.loc[best_sell_index, 'Status'] = 'Partial Filled'
+                                    server_config.order_table.loc[best_buy_index, 'Qty'] = 0
+                                    server_config.order_table.loc[best_buy_index, 'Status'] = 'Filled'
                             else:
                                 server_config.order_table = server_config.order_table.sort_values(['Side', 'Symbol', 'Price', 'Qty'])
                                 print(server_config.order_table, file=server_config.server_output)

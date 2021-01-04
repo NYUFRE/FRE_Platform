@@ -38,21 +38,21 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) Each trading day is 60 seconds, followed by 10 seconds of market close, and then a new trading day.
+							1) Each trading day is 78 seconds, followed by 10 seconds of market close, and then a new trading day.
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							2) Market open time = 50 seconds, status: Open.
+							2) Market open time = 75 seconds, status: Open.
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							3) Market pending close time = 10 seconds, status: Pending Closing.
+							3) Market pending close time = 3 seconds, status: Pending Closing.
 						</p>
 					</td>
 				</tr>
@@ -74,7 +74,7 @@
 					<td width="881" valign="top">
 						<p>
 							1) Number of orders = (high_price - low_price)/price scale, 
-							price_scale is either 0.05 or 5 based stock price >= 1000 or not.
+							price_scale is either $0.01 or $1 based stock price >= 1000 or not.
 						</p>
 					</td>
 				</tr>
@@ -208,3 +208,4 @@
 <br></br>
 
 {% endblock %}
+<br></br>
