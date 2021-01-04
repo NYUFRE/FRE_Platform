@@ -16,6 +16,8 @@ import datetime
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
+import pandas_market_calendars as mcal
+
 import threading
 
 sys.path.append('../')
@@ -185,7 +187,13 @@ def handle_client(client, q=None):
                 elif msg_type == PacketTypes.BOOK_INQUIRY_REQ.value:
                     server_packet.m_type = PacketTypes.BOOK_INQUIRY_RSP.value
                     if "Symbol" in msg_data and msg_data["Symbol"] != "":
-                        server_msg = json.dumps(server_config.order_table.loc[server_config.order_table['Symbol'].isin(list(msg_data["Symbol"].split(',')))].to_json(orient='table'))
+                        if server_config.order_table.empty:
+                            print("Server order book is empty\n", file=server_config.server_output)
+                            text = "Server order book is empty"
+                            server_msg = json.dumps({'Server': server_config.server_id, 'Response': text, 'Status': 'Done'})
+                        else:
+                            server_msg = json.dumps(
+                                server_config.order_table.loc[server_config.order_table['Symbol'].isin(list(msg_data["Symbol"].split(',')))].to_json(orient='table'))
                     else:
                         print("Bad message, missing symbol\n", file=server_config.server_output)
                         text = "Bad message, missing symbol"
@@ -694,15 +702,19 @@ def launch_server():
     # end_date = datetime.datetime.today() - datetime.timedelta(days = 1) # yesterday
     start_date = end_date + datetime.timedelta(-server_config.total_market_days)
 
-    server_config.market_periods = pd.DatetimeIndex(
-        pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), freq=us_bd)).strftime("%Y-%m-%d").tolist()
+    #server_config.market_periods = pd.DatetimeIndex(
+    #    pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), freq=us_bd)).strftime("%Y-%m-%d").tolist()
+    trading_calendar = mcal.get_calendar('NYSE')
+    server_config.market_periods = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"),
+                                                             end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()
     print(server_config.market_periods, file=server_config.server_output)
     server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
 
-    market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"),
-                                                           end=end_date.replace(hour=23, minute=30).strftime(
-                                                               "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
+    #market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"),
+    #                                                       end=end_date.replace(hour=23, minute=30).strftime(
+    #                                                           "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
     # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
+    market_period_objects = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"), end_date=end_date.strftime("%Y-%m-%d")).index.tolist()
 
     for i in range(len(market_period_objects)):
         server_config.market_period_seconds.append(
