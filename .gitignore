@@ -5,6 +5,7 @@
 /venv/Include/*
 /venv/Lib/*
 /venv/Scripts/*
+/venv/*
 Notes.*
 
 # Byte-compiled / optimized / DLL files

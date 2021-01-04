@@ -56,7 +56,8 @@ def populate_intraday_order_map(symbols, intraday_data_table, market_periods):
             if (result_df['datetime'].str.contains(market_periods[i])).any():
                 mask = (result_df['datetime'].str.contains(market_periods[i])) & (result_df['symbol'] == symbol)
                 result = result_df.loc[mask.values]
-                server_config.intraday_order_map[market_periods[i]].append(result[['symbol', 'high', 'low', 'volume']])
+                server_config.intraday_order_map[market_periods[i]].append(
+                    result[['symbol', 'open', 'high', 'low', 'close', 'volume']])
                 stock_market_periods[symbol].append(market_periods[i])
 
     #print(intraday_order_map, file=intrday_order_file)
@@ -195,7 +196,7 @@ def handle_client(client, q=None):
                     print(data, file=server_config.server_output)
                     
                 elif msg_type == PacketTypes.MARKET_STATUS_REQ.value:
-                    server_packet.m_data = PacketTypes.MARKET_STATUS_RSP.value
+                    server_packet.m_type = PacketTypes.MARKET_STATUS_RSP.value
                     server_msg = json.dumps({'Server':server_config.server_id, 'Status':server_config.market_status, 'Market_Period':server_config.market_period})
                     server_packet.m_data = server_msg
                     client.send(server_packet.serialize())
@@ -520,8 +521,8 @@ def create_market_interest(symbols):
                         mask = (server_config.order_table['Symbol'] == symbol) & (server_config.order_table['Side'] == 'Buy')
                         
                         best_buy_index = server_config.order_table.loc[(mask.values), 'Price'].idxmax()
-                        close_price = server_config.order_table.loc[best_buy_index, 'Close']
-                        open_price = server_config.order_table.loc[best_buy_index, 'Open']
+                        close_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['close']
+                        open_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['open']
                         
                         new_buy_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['low']
                         new_buy_price = float("{:.2f}".format(new_buy_price))
@@ -541,8 +542,8 @@ def create_market_interest(symbols):
                         mask = (server_config.order_table['Symbol'] == symbol) & (server_config.order_table['Side'] == 'Sell')
                         
                         best_sell_index = server_config.order_table.loc[(mask.values), 'Price'].idxmin()
-                        close_price = server_config.order_table.loc[best_sell_index, 'Close']
-                        open_price = server_config.order_table.loc[best_sell_index, 'Open']
+                        close_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['close']
+                        open_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['open']
                         
                         new_sell_price = server_config.intraday_order_map[server_config.market_period][i].iloc[0]['high']
                         new_sell_price = float("{:.2f}".format(new_sell_price))
@@ -569,12 +570,14 @@ def create_market_interest(symbols):
                             best_sell_index = sell_prices.idxmin()
                             best_buy_price = server_config.order_table.loc[best_buy_index, 'Price']
                             best_sell_price = server_config.order_table.loc[best_sell_index, 'Price']
-                            # TODO for now, always fill buy order
-                            # should check which one is more close to closing price and not cross closing price
+
                             if best_buy_price > best_sell_price:
-                                server_config.order_table.loc[best_buy_index, 'Qty'] = 0
-                                server_config.order_table.loc[best_buy_index, 'Status'] = 'Filled'
-                               
+                                if len(buy_prices) >= len(sell_prices):
+                                    server_config.order_table.loc[best_buy_index, 'Qty'] = 0
+                                    server_config.order_table.loc[best_buy_index, 'Status'] = 'Filled'
+                                else:
+                                    server_config.order_table.loc[best_sell_index, 'Qty'] = 0
+                                    server_config.order_table.loc[best_sell_index, 'Status'] = 'Filled'
                             else:
                                 server_config.order_table = server_config.order_table.sort_values(['Side', 'Symbol', 'Price', 'Qty'])
                                 print(server_config.order_table, file=server_config.server_output)

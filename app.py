@@ -585,7 +585,7 @@ def start_server_process():
         output = process.stdout.readline()
         if output and not client_config.server_ready:
             print(output.strip())
-            time.sleep(10)
+            time.sleep(30)
             client_config.server_ready = True
 
           
