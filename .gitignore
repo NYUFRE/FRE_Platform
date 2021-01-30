@@ -22,6 +22,7 @@ __pycache__/
 .idea/
 
 /fre_instance
+/instance
 
 
 # C extensions

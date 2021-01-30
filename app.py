@@ -587,12 +587,17 @@ def start_server_process():
             print(output.strip())
             time.sleep(30)
             client_config.server_ready = True
+        elif client_config.server_tombstone:
+            return
+
 
           
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
+    client_config.server_tombstone = False
     server_thread = threading.Thread(target=(start_server_process))
+    client_config.start_server_thread = server_thread
     server_thread.start()
     
     while not client_config.server_ready:
@@ -612,6 +617,7 @@ def sim_server_down():
             return error_page("Fail in connecting to server")
 
         client_config.receiver_stop = False
+        client_config.server_tombstone = True
         client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
         client_config.client_receiver.start()
 
@@ -626,14 +632,16 @@ def sim_server_down():
             print("Server down confirmed!")
             client_config.client_socket.close()
 
-        output = os.popen('wmic process get description, processid').read()
-        target_process = "python"
-        for line in output.splitlines():
-            line = line.strip()
-            if target_process in str(line):
-                pid = int(line.split(' ', 1)[1].strip())
-                if pid not in process_list:
-                    os.kill(pid, 9)
+
+        with os.popen("wmic process get description, processid") as process_desc:
+            output = process_desc.read()
+            target_process = "python"
+            for line in output.splitlines():
+                line = line.strip()
+                if target_process in str(line):
+                    pid = int(line.split(' ', 1)[1].strip())
+                    if pid not in process_list:
+                        os.kill(pid, 9)
 
         client_config.server_ready = False
         client_config.client_thread_started = False
