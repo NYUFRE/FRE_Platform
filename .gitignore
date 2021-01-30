@@ -22,6 +22,7 @@ __pycache__/
 .idea/
 
 /fre_instance
+/instance
 
 
 # C extensions
@@ -157,3 +158,5 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+server_output.txt
