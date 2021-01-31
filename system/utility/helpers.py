@@ -1,7 +1,9 @@
 import os
+from typing import List, Set
+
 import requests
 import urllib.parse
-
+from sys import platform
 from flask import flash, redirect, render_template, session
 from functools import wraps
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
@@ -72,3 +74,24 @@ def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
 
+def get_python_pid() -> Set[int]:
+    process_list = set()
+
+    if platform == "win32":
+        with os.popen('wmic process get description, processid') as ps:
+            output = ps.read()
+            target_process = "python"
+            for line in output.splitlines():
+                line = line.strip()
+                if target_process in str(line):
+                    process_list.add(int(line.split(' ', 1)[1].strip()))
+
+    # Max
+    if platform == "darwin":
+        with os.popen("""ps aux | awk -v user="$USER" '$1==user' | grep python | awk '{print $2}'""") as ps:
+            output = ps.read().split("\n")
+            for pid in output:
+                if len(pid) > 0:
+                    process_list.add(int(pid))
+
+    return process_list
