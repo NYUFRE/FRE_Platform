@@ -87,8 +87,8 @@ def get_python_pid() -> Set[int]:
                     process_list.add(int(line.split(' ', 1)[1].strip()))
 
     # Max
-    if platform == "darwin":
-        with os.popen("""ps aux | awk -v user="$USER" '$1==user' | grep python | awk '{print $2}'""") as ps:
+    if platform == "darwin" or platform == "linux":
+        with os.popen("""ps aux | awk -v user=$(whoami) '$1==user' | grep python | awk '{print $2}'""") as ps:
             output = ps.read().split("\n")
             for pid in output:
                 if len(pid) > 0:

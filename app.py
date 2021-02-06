@@ -812,7 +812,7 @@ if __name__ == "__main__":
     add_admin_user()
 
     try:
-        app.run(host='127.0.0.1', port=80, debug=True, use_reloader=False)
+        app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
         if client_config.client_thread.is_alive() is True:
             client_config.client_thread.join()
 
