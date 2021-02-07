@@ -11,6 +11,7 @@ import socket
 import io
 import numpy as np
 import time
+from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
 from flask_login import login_required,login_user,current_user,logout_user
@@ -24,7 +25,7 @@ from system.portfolio.forms import RegisterForm, LoginForm, EmailForm, PasswordF
 from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
 from system import app, db, bcrypt, database, iex_market_data, eod_market_data, process_list
 
-from system.utility.helpers import error_page, login_required, usd
+from system.utility.helpers import error_page, login_required, usd, get_python_pid
 from system.utility.config import trading_queue, trading_event
 
 from system.sim_trading.network import PacketTypes, Packet
@@ -95,13 +96,9 @@ def logout():
 @login_required
 def index():
     # List the python processes before launching the server
-    # Window env/UNIX env
-    output = os.popen('wmic process get description, processid').read()
-    target_process = "python"
-    for line in output.splitlines():
-        line = line.strip()
-        if target_process in str(line):
-            process_list.append(int(line.split(' ', 1)[1].strip()))
+    # Window env
+
+    process_list.update(get_python_pid())
 
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
@@ -577,7 +574,7 @@ def sim_trading():
 
 
 def start_server_process():
-    cmd = "( python.exe server.py )"
+    cmd = "( python.exe server.py )" if platform == "win32" else "python server.py"
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
                                stderr=subprocess.PIPE,
                                universal_newlines=True)
@@ -587,11 +584,15 @@ def start_server_process():
             print(output.strip())
             time.sleep(30)
             client_config.server_ready = True
+        elif client_config.server_tombstone:
+            return
+
 
           
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
+    client_config.server_tombstone = False
     server_thread = threading.Thread(target=(start_server_process))
     server_thread.start()
     
@@ -612,6 +613,7 @@ def sim_server_down():
             return error_page("Fail in connecting to server")
 
         client_config.receiver_stop = False
+        client_config.server_tombstone = True
         client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
         client_config.client_receiver.start()
 
@@ -626,14 +628,13 @@ def sim_server_down():
             print("Server down confirmed!")
             client_config.client_socket.close()
 
-        output = os.popen('wmic process get description, processid').read()
-        target_process = "python"
-        for line in output.splitlines():
-            line = line.strip()
-            if target_process in str(line):
-                pid = int(line.split(' ', 1)[1].strip())
-                if pid not in process_list:
-                    os.kill(pid, 9)
+
+        existing_py_process = get_python_pid()
+
+        for item in existing_py_process:
+            if item not in process_list:
+                os.kill(item, 9)
+
 
         client_config.server_ready = False
         client_config.client_thread_started = False
