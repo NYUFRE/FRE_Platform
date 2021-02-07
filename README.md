@@ -63,10 +63,65 @@ pip install -r requirements.txt
 
 ## Run Project
 ### With Docker
+Either build from source or pull from docker cloud repository.
+
+Build from local source code:
 ```sh
-cd ./docker
-docker-compose up --build
+docker build -t fre .
 ```
+Pull from docker repository
+```sh
+docker pull <repository>/<image name>
+```
+Run single instance 
+```sh
+docker run --name test -p 5001:5000 -v "<instance folder>":/app/instance -d fre python app.py
+```
+Arguments explain:
+
+`--name test`: Name container to test
+
+`-p` 5001: 5000: mapping host 5001 port to container 5000 port. host 5001 port is an arbitrary choice, can be any port as long as it is available. (Mac may request perm to use some ports)
+
+`-v`:  "<instance folder>":/app/instance mapping host direactory to container direactory
+
+`-d`: run as daemon
+
+`fre`: image name, if pulled from docker repository, this should be <repository name>/<image name>
+
+`python app.py`: run "python app.py" in this container
+
+Helpful docker cmd:
+
+sh into a running container: `docker exec -it <container name> bash`
+
+show log: `docker logs <container name>`
+
+show all local image: `docker images`
+
+show all containers: `docker ps -a`
+
+stop container: `docker stop <container name>`
+
+remove container: `docker rm <container name>`
+(stop doesn't release the resource, rm is required if you want to permanently close the container)
+
+remove local image: `docker rmi <image name>`
+
+### Potential further improvements for containerizing this project 
+Although it is possible  to run multi-processes in one docker container, it is generally discouraged. 
+
+From [Docker 
+documentation](https://docs.docker.com/config/containers/multi-service_container/)
+
+> It is generally recommended that you separate areas of concern by using one service per container. 
+> That service may fork into multiple processes (for example, Apache web server starts multiple worker processes). 
+> It’s ok to have multiple processes, but to get the most benefit out of Docker, avoid one container 
+> being responsible for multiple aspects of your overall application. You can connect multiple containers 
+>using user-defined networks and shared volumes.  
+
+A further improvement could be decoupling server from client code and make server a long running daemon process.
+
 
 ### Without Docker
 ```sh
