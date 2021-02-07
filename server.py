@@ -725,10 +725,9 @@ def set_market_status(scheduler, time_in_seconds):
     value = datetime.datetime.fromtimestamp(time_in_seconds)
     print(value.strftime('%Y-%m-%d %H:%M:%S'), file=server_config.server_output)
     for day in range(server_config.total_market_days):
-        scheduler.enter((
-                                server_config.market_close_time + server_config.market_open_time + server_config.market_pending_close_time) * day + 1,
-                        1,
-                        update_market_status, argument=('Pending Open', day))
+        scheduler.enter(
+            (server_config.market_close_time + server_config.market_open_time + server_config.market_pending_close_time) * day + 1,
+                        1, update_market_status, argument=('Pending Open', day))
     scheduler.run()
 
 
@@ -756,9 +755,9 @@ def launch_server():
     # server_config.market_periods = pd.DatetimeIndex(
     #    pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), freq=us_bd)).strftime("%Y-%m-%d").tolist()
     trading_calendar = mcal.get_calendar('NYSE')
-    server_config.market_periods = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"),
-                                                             end_date=end_date.strftime("%Y-%m-%d")).index.strftime(
-        "%Y-%m-%d").tolist()
+    server_config.market_periods = trading_calendar.schedule(
+        start_date=start_date.strftime("%Y-%m-%d"),
+        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()
     print(server_config.market_periods, file=server_config.server_output)
     server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
 
