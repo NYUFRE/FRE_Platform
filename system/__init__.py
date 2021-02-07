@@ -59,7 +59,7 @@ database = FREDatabase(app.config["SQLALCHEMY_DATABASE_URI"])
 iex_market_data = IEXMarketData(os.environ.get("IEX_API_KEY"))
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
-process_list = []
+process_list = set()
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)

@@ -27,6 +27,8 @@ class ClientConfig:
         self.client_up = False
         self.client_symbols = "AAPL,XOM"
 
+        self.server_tombstone = True
+
 
 class ServerConfig:
     def __init__(self):
