@@ -1,8 +1,10 @@
 import os
+import sys
 from typing import List, Set
 
 import requests
 import urllib.parse
+
 from sys import platform
 from flask import flash, redirect, render_template, session
 from functools import wraps
@@ -11,6 +13,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 
 def error_page(message, code=400):
     """Render message as an apology to user."""
+
     def escape(s):
         """
         Escape special characters.
@@ -21,6 +24,7 @@ def error_page(message, code=400):
                          ("%", "~p"), ("#", "~h"), ("/", "~s"), ("\"", "''")]:
             s = s.replace(old, new)
         return s
+
     error_code = 'error code: ' + str(code)
     flash('ERROR! ' + message, error_code)
     return render_template("error_page.html"), code
@@ -39,11 +43,13 @@ def login_required(f):
 
     http://flask.pocoo.org/docs/1.0/patterns/viewdecorators/
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get("user_id") is None:
             return redirect("/login")
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -53,7 +59,8 @@ def lookup(symbol):
     # Contact API
     try:
         api_key = os.environ.get("API_KEY")
-        response = requests.get(f"https://cloud-sse.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}")
+        response = requests.get(
+            f"https://cloud-sse.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}")
         response.raise_for_status()
     except requests.RequestException:
         return None
@@ -74,6 +81,7 @@ def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
 
+  
 def get_python_pid() -> Set[int]:
     process_list = set()
 
@@ -86,7 +94,8 @@ def get_python_pid() -> Set[int]:
                 if target_process in str(line):
                     process_list.add(int(line.split(' ', 1)[1].strip()))
 
-    # Max
+
+    # Mac
     if platform == "darwin" or platform == "linux":
         with os.popen("""ps aux | awk -v user=$(whoami) '$1==user' | grep python | awk '{print $2}'""") as ps:
             output = ps.read().split("\n")
@@ -95,3 +104,21 @@ def get_python_pid() -> Set[int]:
                     process_list.add(int(pid))
 
     return process_list
+
+ class FREWriter:
+
+    def __init__(self, stdout, filename):
+        self.stdout = stdout
+        self.logfile = open(filename, 'a')
+
+    def write(self, text):
+        self.stdout.write(text)
+        self.logfile.write(text)
+
+    def close(self):
+        self.stdout.close()
+        self.logfile.close()
+
+
+sys.stdout = FREWriter(sys.stdout, 'FRE_Platform.log')
+sys.stderr = FREWriter(sys.stderr, 'FRE_Platform.log')
