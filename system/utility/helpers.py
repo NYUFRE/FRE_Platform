@@ -105,7 +105,8 @@ def get_python_pid() -> Set[int]:
 
     return process_list
 
- class FREWriter:
+
+class FREWriter:
 
     def __init__(self, stdout, filename):
         self.stdout = stdout
@@ -118,6 +119,9 @@ def get_python_pid() -> Set[int]:
     def close(self):
         self.stdout.close()
         self.logfile.close()
+
+    def flush(self):
+        pass
 
 
 sys.stdout = FREWriter(sys.stdout, 'FRE_Platform.log')
