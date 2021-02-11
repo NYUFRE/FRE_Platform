@@ -122,18 +122,3 @@ documentation](https://docs.docker.com/config/containers/multi-service_container
 
 A further improvement could be decoupling server from client code and make server a long running daemon process.
 
-
-### Without Docker
-```sh
-Please modify file path in fre_client/client.cfg from SocketConnectHost=acceptor to SocketConnectHost=<Your IP>
-```
-```sh
-cd ./fre_server
-python server.py -cfg server.cfg
-```
-```sh
-cd ./fre_client
-python client.py -cfg client.cfg
-```
-
-
