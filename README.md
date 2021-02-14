@@ -56,12 +56,31 @@
 * Werkzeug==1.0.1
 * WTForms==2.3.3
 
-## Installing Requirements
+## Launch FRE Platform
+### With Virtual Env
+After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
+```
+python -m venv venv
+```
+Install the required packages
 ```
 pip install -r requirements.txt
 ```
+Activate the virtual env
+```
+.\venv\Scripts\activate
+```
+Create the instance directory in FRE_Platform and load flask.cfg and fre_database.db into the instance directory
 
-## Run Project
+Launch the platform
+```
+flask run
+```
+Stop the platform by Ctrl-C and deactivate the virtualenv
+```
+.\venv\Script\deactivate.bat
+```
+
 ### With Docker
 Either build from source or pull from docker cloud repository.
 
