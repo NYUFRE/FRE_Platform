@@ -1,5 +1,5 @@
 # FRE Platform #
-* *Environment* run as a Python vritual env
+* *Environment* run in a Python vritual env or Docker container
 * *Authors* Song Tang <st290@nyu.edu>, Qijia Lou <qijia.lou@nyu.edu>, Zicheng He <zh1345@nyu.edu>, Albert Lee <al3406@nyu.edu>, Xiao Liu <xl2951@nyu.edu>, Koda Song <ks5416@nyu.edu>, Jiaxin Zhang <jz3796@nyu.edu> 
 * *Details:* FRE Platform has Flask web interface, historical and realtime market data feeds, integrated databases, messaging framework, and stock market simulation. It supports trading model plugin and machine learning logic development.
 
@@ -56,12 +56,31 @@
 * Werkzeug==1.0.1
 * WTForms==2.3.3
 
-## Installing Requirements
+## Launch FRE Platform
+### With Virtual Env
+After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
+```
+python -m venv venv
+```
+Install the required packages
 ```
 pip install -r requirements.txt
 ```
+Activate the virtual env
+```
+.\venv\Scripts\activate
+```
+Create the instance directory in FRE_Platform and load flask.cfg and fre_database.db into the instance directory
 
-## Run Project
+Launch the platform
+```
+flask run
+```
+Stop the platform by Ctrl-C and deactivate the virtualenv
+```
+.\venv\Script\deactivate.bat
+```
+
 ### With Docker
 Either build from source or pull from docker cloud repository.
 
