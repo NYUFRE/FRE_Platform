@@ -8,7 +8,10 @@
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
-            <a class="nav-link active" href="/">Portfolio</a>
+            <a class="nav-link active" href="/">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/portfolio">Portfolio</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="/quote">Stock Quote</a>
@@ -27,47 +30,22 @@
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
 	<h3>Trading Portfolio</h3>
-	<div class="table-responsive">
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th style="text-align:center">Symbol</th>
-					<th style="text-align:center">Company Name</th>
-					<th style="text-align:center">Shares</th>
-					<th style="text-align:center">Price</th>
-					<th style="text-align:center">Total</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for i in range(length) %}
-                <tr>
-                    <!--call the value from the dictionary-->
-                    <!--the double curly parentheses are for jinja-->
-                    <td>{{dict['symbol'][i]}}</td>
-                    <td>{{dict['name'][i]}}</td>
-                    <td>{{dict['shares'][i]}}</td>
-                    <td>{{dict['price'][i]}}</td>
-                    <td>{{dict['total'][i]}}</td>
-                </tr>
-                <tr>
-                    <!--;,is a place holder-->
-                
-                </tr>
-				{%endfor%}
-            
-				<tr>
-					<td>Cash</td>
-					<td colspan="3"></td>
-					<td>{{cash}}</td>
-				</tr>
-			</tbody>
-			<tfoot>
-				<tr>
-					<td colspan="4"></td>
-					<td>{{ total }}</td>
-				</tr>
-			</tfoot>
-		</table>
-    </div>
+	<p>
+        This is a paper trading system where you can perform manual trading.
+    </p>
+
+        <p>
+            Portfolio Section shows current holdings.
+        </p>
+        <p>
+            Stock Quote show quotes from data vendor.
+        </p>
+        <p>
+            Buy / Sell stock provides corresponding service.
+        </p>
+        <p>
+            History shows the trading history.
+        </p>
+
 </main>
 {% endblock %}

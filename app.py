@@ -14,7 +14,7 @@ import time
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
-from flask_login import login_required,login_user,current_user,logout_user
+from flask_login import login_required, login_user, current_user, logout_user
 from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -29,13 +29,15 @@ from system.utility.helpers import error_page, login_required, usd, get_python_p
 from system.utility.config import trading_queue, trading_event
 
 from system.sim_trading.network import PacketTypes, Packet
-from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, wait_for_an_event, join_trading_network, quit_connection
+from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
+    wait_for_an_event, join_trading_network, quit_connection
 
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test
 from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
 
-from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, back_testing_start_date, back_testing_end_date
+from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, \
+    back_testing_start_date, back_testing_end_date
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -99,6 +101,14 @@ def index():
     # Window env
 
     process_list.update(get_python_pid())
+    return render_template('index.html')
+
+
+@app.route("/portfolio")
+@login_required
+def portfolio():
+    # List the python processes before launching the server
+    # Window env
 
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
@@ -116,10 +126,10 @@ def index():
             portfolio['total'][i] = usd(cost)
             total += cost
 
-        return render_template('index.html', dict=portfolio, total=usd(total), cash=usd(cash), length=length)
+        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash), length=length)
 
     else:
-        return render_template("index.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
+        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -191,7 +201,7 @@ def buy():
             cash = cash - total
             database.create_buy_transaction(uid, cash, symbol, shares, price, timestamp)
 
-        return redirect(url_for("index"))
+        return redirect(url_for("portfolio"))
     else:
         return render_template("buy.html")
 
@@ -252,7 +262,7 @@ def sell():
 
         database.create_sell_transaction(uid, new_cash, symbol, updated_shares, -shares, price, timestamp)
 
-        return redirect(url_for("index"))
+        return redirect(url_for("portfolio"))
     else:
         return render_template("sell.html")
 
@@ -448,7 +458,7 @@ def model_back_testing():
     return render_template("pair_trade_back_test_result.html", trade_list=trade_results, total=usd(total))
 
 
-@app.route('/pair_trade_probation_test', methods = ['POST', 'GET'])
+@app.route('/pair_trade_probation_test', methods=['POST', 'GET'])
 @login_required
 def model_probation_testing():
     if request.method == 'POST':
@@ -495,7 +505,7 @@ def ai_build_model():
     stocks = []
     for stock in best_portfolio.stocks:
         print(stock.symbol, stock.name, stock.sector, stock.category_pct)
-        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct*100, 4))))
+        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct * 100, 4))))
     length = len(stocks)
     portfolio_yield = str(round(best_portfolio.portfolio_yield * 100, 4)) + '%'
     beta = str(round(best_portfolio.beta, 4))
@@ -533,15 +543,15 @@ def ai_back_test_plot():
     axis.plot(t, line, 'b')
 
     axis.set(xlabel="Date",
-           ylabel="Cumulative Returns",
-           title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
-           xlim=[0, n])
+             ylabel="Cumulative Returns",
+             title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
+             xlim=[0, n])
 
     axis.text(0.2, 0.9, 'Red - Portfolio, Blue - SPY',
-            verticalalignment='center',
-            horizontalalignment='center',
-            transform=axis.transAxes,
-            color='black', fontsize=10)
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
 
     axis.grid(True)
     fig.autofmt_xdate()
@@ -557,8 +567,8 @@ def ai_back_test_plot():
 @login_required
 def ai_probation_test():
     best_portfolio, spy, cash = ga_probation_test(database)
-    portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss/cash) * 100))
-    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss/cash) * 100))
+    portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
+    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
     length = len(best_portfolio.stocks)
     return render_template('ai_probation_test.html', stock_list=best_portfolio.stocks,
@@ -575,7 +585,7 @@ def sim_trading():
 
 def start_server_process():
     cmd = "( python.exe server.py )" if platform == "win32" else "python server.py"
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                universal_newlines=True)
     while True:
@@ -588,14 +598,13 @@ def start_server_process():
             return
 
 
-          
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
     client_config.server_tombstone = False
     server_thread = threading.Thread(target=(start_server_process))
     server_thread.start()
-    
+
     while not client_config.server_ready:
         pass
 
@@ -628,13 +637,11 @@ def sim_server_down():
             print("Server down confirmed!")
             client_config.client_socket.close()
 
-
         existing_py_process = get_python_pid()
 
         for item in existing_py_process:
             if item not in process_list:
                 os.kill(item, 9)
-
 
         client_config.server_ready = False
         client_config.client_thread_started = False
@@ -684,7 +691,7 @@ def sim_auto_trading():
         trading_queue.task_done()
         print(msg_data)
         client_config.client_thread_started = False
-        #client_config.receiver_stop = True
+        # client_config.receiver_stop = True
         client_config.trade_complete = False
         client_config.client_socket.close()
 
@@ -812,12 +819,10 @@ if __name__ == "__main__":
     add_admin_user()
 
     try:
-        app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+        app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
         if client_config.client_thread.is_alive() is True:
             client_config.client_thread.join()
 
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
-
-
