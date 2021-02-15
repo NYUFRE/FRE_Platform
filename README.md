@@ -3,58 +3,6 @@
 * *Authors* Song Tang <st290@nyu.edu>, Qijia Lou <qijia.lou@nyu.edu>, Zicheng He <zh1345@nyu.edu>, Albert Lee <al3406@nyu.edu>, Xiao Liu <xl2951@nyu.edu>, Koda Song <ks5416@nyu.edu>, Jiaxin Zhang <jz3796@nyu.edu> 
 * *Details:* FRE Platform has Flask web interface, historical and realtime market data feeds, integrated databases, messaging framework, and stock market simulation. It supports trading model plugin and machine learning logic development.
 
-## Requirements
-* Python 3.x
-* bcrypt==3.2.0
-* blinker==1.4
-* cachelib==0.1.1
-* certifi==2020.6.20
-* cffi==1.14.4
-* chardet==3.0.4
-* click==7.1.2
-* convertdate==2.2.1
-* cycler==0.10.0
-* dnspython==2.0.0
-* email-validator==1.1.2
-* fields==5.0.0
-* Flask==1.1.2
-* Flask-Bcrypt==0.7.1
-* Flask-Login==0.5.0
-* Flask-Mail==0.9.1
-* Flask-Session==0.3.2
-* Flask-SQLAlchemy==2.4.4
-* Flask-Uploads==0.2.1
-* Flask-WTF==0.14.3
-* holidays==0.10.3
-* idna==2.10
-* itsdangerous==1.1.0
-* Jinja2==2.11.2
-* kiwisolver==1.2.0
-* korean-lunar-calendar==0.2.1
-* MarkupSafe==1.1.1
-* matplotlib==3.3.0
-* numpy==1.19.1
-* pandas==1.0.5
-* pandas-market-calendars==1.6.1
-* passlib==1.7.2
-* patsy==0.5.1
-* Pillow==7.2.0
-* pycparser==2.20
-* PyMeeus==0.3.7
-* pyparsing==2.4.7
-* python-dateutil==2.8.1
-* pytz==2020.1
-* requests==2.24.0
-* scipy==1.5.2
-* six==1.15.0
-* SQLAlchemy==1.3.18
-* statsmodels==0.11.1
-* texttable==1.6.2
-* toolz==0.11.1
-* trading-calendars==2.1.0
-* urllib3==1.25.9
-* Werkzeug==1.0.1
-* WTForms==2.3.3
 
 ## Launch FRE Platform
 ### With Virtual Env
@@ -62,13 +10,13 @@ After clone the FRE_Platform repo from Github, create the virtualenv directory i
 ```
 python -m venv venv
 ```
-Install the required packages
-```
-pip install -r requirements.txt
-```
 Activate the virtual env
 ```
 .\venv\Scripts\activate
+```
+Install the required packages
+```
+pip install -r requirements.txt
 ```
 Create the instance directory in FRE_Platform and load flask.cfg and fre_database.db into the instance directory
 
@@ -142,10 +90,21 @@ documentation](https://docs.docker.com/config/containers/multi-service_container
 A further improvement could be decoupling server from client code and make server a long running daemon process.
 
 ## Git Instructions
+Fork a repo to your own account
+
 Create a directory called NYUFRE and Clone FRE_Platform Remote Repo
 ```
-git clone https://github.com/NYUFRE/FRE_Platform.git
+git clone https://github.com/<your username>/FRE_Platform
 ```
+Add upstream repo
+```
+git remote add upstream https://github.com/NYUFRE/FRE_Platform
+```
+Sync with upstream(recommend doing it every time before checking out a new branch) 
+```
+git fetch upstream
+```
+
 Check status of your current branch, should be master
 ```
 cd FRE_Platform
@@ -157,7 +116,7 @@ git pull
 ```
 Create a working branch for your changes 
 ```
-git checkout -b YourChange123
+git checkout -b feature/feature-name
 ```
 Diff between your changes and the original
 ```
@@ -165,15 +124,18 @@ git diff
 ```
 Add your changes to the staging area
 ```
-git add YourChange123
+git add some_file.py
+# or simply 
+git add .
 ```
 Commit your changes
 ```
-git commit -m "YourChange123"
+git commit -m "Add feature-xyz"
 ```
 Push your change to the remote repo
 ```
-git push -u origin YourChange123
+git push -u origin feature/feature-name
 ```
 Create a Pull Request on Github
-
+## Issue report
+From upstream repo's [GitHub Issue](https://github.com/NYUFRE/FRE_Platform/issues)
