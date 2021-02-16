@@ -739,15 +739,15 @@ def launch_server():
     server_config.symbol_list = get_stock_list()
 
     # USFederalHolidayCalendar has a bug, GoodFriday is not excluded
-    us_bd = CustomBusinessDay(holidays=['2020-04-10'], calendar=USFederalHolidayCalendar())
+    # us_bd = CustomBusinessDay(holidays=['2020-04-10'], calendar=USFederalHolidayCalendar())
 
-    lastBusDay = datetime.datetime.today()
-    if datetime.date.weekday(lastBusDay) == 5:  # if it's Saturday
-        lastBusDay = lastBusDay - datetime.timedelta(days=1)  # then make it Friday
-    elif datetime.date.weekday(lastBusDay) == 6:  # if it's Sunday
-        lastBusDay = lastBusDay - datetime.timedelta(days=2)  # then make it Friday
+    # lastBusDay = datetime.datetime.today()
+    # if datetime.date.weekday(lastBusDay) == 5:  # if it's Saturday
+    #     lastBusDay = lastBusDay - datetime.timedelta(days=1)  # then make it Friday
+    # elif datetime.date.weekday(lastBusDay) == 6:  # if it's Sunday
+    #     lastBusDay = lastBusDay - datetime.timedelta(days=2)  # then make it Friday
 
-    end_date = lastBusDay - datetime.timedelta(days=1)  # day before last trading day
+    end_date = datetime.datetime.today()  
 
     # end_date = datetime.datetime.today() - datetime.timedelta(days = 1) # yesterday
     start_date = end_date + datetime.timedelta(-server_config.total_market_days)
@@ -757,7 +757,7 @@ def launch_server():
     trading_calendar = mcal.get_calendar('NYSE')
     server_config.market_periods = trading_calendar.schedule(
         start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()
+        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-2]
     print(server_config.market_periods, file=server_config.server_output)
     server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
 
@@ -766,8 +766,7 @@ def launch_server():
     #                                                           "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
     # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
     market_period_objects = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"),
-                                                      end_date=end_date.strftime("%Y-%m-%d")).index.tolist()
-
+                                                      end_date=end_date.strftime("%Y-%m-%d")).index.tolist()[:-2]
     for i in range(len(market_period_objects)):
         server_config.market_period_seconds.append(
             int(time.mktime(market_period_objects[i].timetuple())))  # As timestamp is 12am of each day
