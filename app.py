@@ -75,6 +75,7 @@ def login():
                 login_user(user)
                 user = database.get_user(request.form.get("email"), '')
                 session["user_id"] = user["user_id"]
+                client_config.client_id = user['first_name']
                 return redirect(url_for('index'))
             else:
                 flash('ERROR! Incorrect login credentials.', 'error')
@@ -653,49 +654,53 @@ def sim_server_down():
 @app.route('/sim_auto_trading')
 @login_required
 def sim_auto_trading():
-    if not client_config.client_thread_started:
-        client_config.client_thread_started = True
-        client_config.receiver_stop = False
+    if client_config.server_ready == True:
+        if not client_config.client_thread_started:
+            client_config.client_thread_started = True
+            client_config.receiver_stop = False
 
-        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        status = client_config.client_socket.connect_ex(client_config.ADDR)
-        if status != 0:
-            return error_page("Fail in connecting to server")
+            client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+            status = client_config.client_socket.connect_ex(client_config.ADDR)
+            if status != 0:
+                return error_page("Fail in connecting to server")
 
-        client_config.client_up = True
-        client_config.orders = []
-        client_packet = Packet()
-        msg_data = {}
+            client_config.client_up = True
+            client_config.orders = []
+            client_packet = Packet()
+            msg_data = {}
 
-        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-        client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+            client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+            client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
 
-        client_config.client_receiver.start()
-        client_config.client_thread.start()
+            client_config.client_receiver.start()
+            client_config.client_thread.start()
 
-    while not client_config.trade_complete:
-        pass
+        while not client_config.trade_complete:
+            pass
 
-    if client_config.client_up == True:
-        client_config.client_up = False
-        client_packet = Packet()
-        msg_data = {}
-        set_event(trading_event)
-        send_msg(quit_connection(client_packet))
-        wait_for_an_event(trading_event)
-        msg_type, msg_data = trading_queue.get()
-        if msg_type != PacketTypes.END_RSP.value:
-            client_config.orders.append(msg_data)
+        if client_config.client_up == True:
+            client_config.client_up = False
+            client_packet = Packet()
+            msg_data = {}
+            set_event(trading_event)
+            send_msg(quit_connection(client_packet))
+            wait_for_an_event(trading_event)
             msg_type, msg_data = trading_queue.get()
-        trading_queue.task_done()
-        print(msg_data)
-        client_config.client_thread_started = False
-        # client_config.receiver_stop = True
-        client_config.trade_complete = False
-        client_config.client_socket.close()
+            if msg_type != PacketTypes.END_RSP.value:
+                client_config.orders.append(msg_data)
+                msg_type, msg_data = trading_queue.get()
+            trading_queue.task_done()
+            print(msg_data)
+            client_config.client_thread_started = False
+            # client_config.receiver_stop = True
+            client_config.trade_complete = False
+            client_config.client_socket.close()
 
-    return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+
+    else:
+        return error_page("Please launch server first: SimTrading >> Launch Server >> Auto Trading")
 
 
 # Market Data
