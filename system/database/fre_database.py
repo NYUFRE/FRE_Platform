@@ -20,22 +20,14 @@ class FREDatabase:
         self.metadata.reflect(bind=self.engine)
 
     def create_table(self, table_list):
+        """
+        This function is for creating all kinds of tables if that table not exists in database.
+        :param table_list: a list of string of table names
+        :return: None
+        """
         tables = self.metadata.tables.keys()
         for table_name in table_list:
-            '''
-            if table_name == "users" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('user_id', Integer, primary_key=True),
-                              Column('username', Text, nullable=False),
-                              #Column('first_name', Text, nullable=False),
-                              #Column('last_name', Text, nullable=False),
-                              #Column('email_address', Text, nullable=False),
-                              Column('password', Text, nullable=False),
-                              Column('cash', Numeric, nullable=False, server_default='10000.00'),
-                              sqlite_autoincrement=True,
-                              extend_existing=True)
-                table.create(self.engine)
-            '''
+            
             if table_name == "users" and table_name not in tables:
                 table = Table(table_name, self.metadata,
                               Column('user_id', Integer, primary_key=True),
@@ -227,6 +219,9 @@ class FREDatabase:
         self.engine.execute(sql_stmt)
 
     def check_table_empty(self, table_name):
+        """
+        Returns True if the table is empty, returns false if the table is not empty
+        """
         sql_stmt = 'select count(*) from ' + table_name + ';'
         result_set = self.engine.execute(sql_stmt)
         result = result_set.fetchone()

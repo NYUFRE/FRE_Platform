@@ -104,6 +104,14 @@ class EODMarketData:
             return data  
         
     def populate_stock_data(self, tickers, table_name, start_date, end_date, category='US', action='append', output_file=sys.stderr):
+        """
+        Update database.
+        :param tickers: a list of tickers
+        :param table_name: a string of table name
+        :param start_date: string ('%Y-%m-%d')
+        :param end_date: string ('%Y-%m-%d')
+        :return: None
+        """
         column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
         price_data = []
         for ticker in tickers:
@@ -112,7 +120,7 @@ class EODMarketData:
                 price_data.append(
                     [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
                      stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
-            print(price_data[-1], file=output_file)
+            #print(price_data[-1], file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
@@ -131,12 +139,18 @@ class EODMarketData:
                         price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'],
                                            stock_data['low'], stock_data['close'], stock_data['volume']])
 
-            print(price_data, file=output_file)
+            #print(price_data, file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks = stocks.dropna()
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
     def populate_sp500_data(self, spy, category):
+        """
+        Store SP500 index components and SP500
+        :param something: a string to repeat
+        :param times: how many times to repeat, must be > 0, otherwise repeat once.
+        :return: Repeated string
+        """
         data = self.get_fundamental_data(spy, category)
         sp500_column_names = ['symbol', 'name', 'sector', 'industry', 'weight']
         sp500_data = []
@@ -187,7 +201,7 @@ class EODMarketData:
                      data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
                      data['Technicals']['52WeekLow'],
                      data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
-            print(fundamental_data[-1])
+            #print(fundamental_data[-1])
         fundamentals = pd.DataFrame(fundamental_data, columns=column_names)
         fundamentals.fillna(0, inplace=True)
         fundamentals.to_sql("fundamentals", con=self.database.engine, if_exists='append', index=False)
