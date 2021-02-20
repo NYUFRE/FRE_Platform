@@ -741,7 +741,6 @@ def market_data_spy():
         begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
         if(begin_date <= today):
             eod_market_data.populate_stock_data(['SPY'], "spy", begin_date, today, 'US')
-    
     #Change made: display the data in descending order of dates
     select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
                   'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
@@ -836,9 +835,11 @@ def market_data_stock():
 def update_market_data():
     """
     This function is for updating the MatketData database. 
-    #Note: Not used yet. Run this function to update database manually.
-    #TODO: automatically trigger this function once everyday, then delete the update part in 
+    # Note: Not used yet. Run this function to update database manually.
+    # TODOs: 
+        1.automatically trigger this function once everyday, then delete the update part in 
         market_data_sp500(), market_data_spy(), and market_data_us10y().
+        2. Make the retrieval of fundamentals and stock prices faster
     """
     today = datetime.today().strftime('%Y-%m-%d')
 
@@ -884,7 +885,6 @@ def update_market_data():
             tickers = database.get_sp500_symbols()
             eod_market_data.populate_stock_data(tickers, "stocks", begin_date_stocks, today, 'US')
 
-
     #sp500 index & sectors
     table_list = ['sp500', 'sp500_sectors']
     database.create_table(table_list)
@@ -894,8 +894,6 @@ def update_market_data():
         #update tables
         database.clear_table(table_list)
         eod_market_data.populate_sp500_data('SPY', 'US')
-
-
 
 
 if __name__ == "__main__":
