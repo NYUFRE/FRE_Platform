@@ -654,7 +654,7 @@ def sim_server_down():
 @app.route('/sim_auto_trading')
 @login_required
 def sim_auto_trading():
-    if client_config.server_ready == True:
+    if client_config.server_ready:
         if not client_config.client_thread_started:
             client_config.client_thread_started = True
             client_config.receiver_stop = False
@@ -679,7 +679,7 @@ def sim_auto_trading():
         while not client_config.trade_complete:
             pass
 
-        if client_config.client_up == True:
+        if client_config.client_up:
             client_config.client_up = False
             client_packet = Packet()
             msg_data = {}
