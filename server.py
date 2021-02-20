@@ -13,8 +13,8 @@ import numpy as np
 import sched, time
 import datetime
 
-from pandas.tseries.holiday import USFederalHolidayCalendar
-from pandas.tseries.offsets import CustomBusinessDay
+# from pandas.tseries.holiday import USFederalHolidayCalendar
+# from pandas.tseries.offsets import CustomBusinessDay
 
 import pandas_market_calendars as mcal
 
@@ -36,7 +36,7 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-pd.set_option("display.max_rows", None, "display.max_columns", None)
+# pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
 
@@ -49,6 +49,7 @@ eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 def populate_intraday_order_map(symbols: Iterable[str], intraday_data_table: str, market_periods: List[str]) -> Dict[
     str, List]:
+
     for i in range(len(market_periods)):
         server_config.intraday_order_map[market_periods[i]] = []
 
@@ -732,6 +733,8 @@ def set_market_status(scheduler, time_in_seconds):
 
 
 def launch_server():
+    if os.path.exists("server_output.txt"):
+        os.remove("server_output.txt")
     server_config.server_output = open("server_output.txt", "w")
     # server_config.server_output = sys.stderr
     # server_config.server_output = sys.stdout
@@ -757,7 +760,8 @@ def launch_server():
     trading_calendar = mcal.get_calendar('NYSE')
     server_config.market_periods = trading_calendar.schedule(
         start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-2]
+        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-1]
+
     print(server_config.market_periods, file=server_config.server_output)
     server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
 
@@ -766,13 +770,14 @@ def launch_server():
     #                                                           "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
     # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
     market_period_objects = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"),
-                                                      end_date=end_date.strftime("%Y-%m-%d")).index.tolist()[:-2]
+                                                      end_date=end_date.strftime("%Y-%m-%d")).index.tolist()[:-1]
+
     for i in range(len(market_period_objects)):
         server_config.market_period_seconds.append(
             int(time.mktime(market_period_objects[i].timetuple())))  # As timestamp is 12am of each day
     server_config.market_period_seconds.append(int(time.mktime(
         market_period_objects[len(market_period_objects) - 1].timetuple())) + 24 * 3600)  # For last day intraday data
-    # print(market_period_objects)
+    # print(market_period_objects, file=server_config.server_output)
 
     # TODO! probably it is better to harden delete table function and use it here
     # database.drop_table(server_config.stock_intraday_data)
