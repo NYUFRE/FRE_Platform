@@ -21,7 +21,7 @@ class FREDatabase:
 
     def create_table(self, table_list):
         """
-        This function is for creating all kinds of tables.
+        This function is for creating all kinds of tables if that table not exists in database.
         :param table_list: a list of string of table names
         :return: None
         """
@@ -219,6 +219,9 @@ class FREDatabase:
         self.engine.execute(sql_stmt)
 
     def check_table_empty(self, table_name):
+        """
+        Returns True if the table is empty, returns false if the table is not empty
+        """
         sql_stmt = 'select count(*) from ' + table_name + ';'
         result_set = self.engine.execute(sql_stmt)
         result = result_set.fetchone()
