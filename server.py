@@ -50,8 +50,8 @@ eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 def populate_intraday_order_map(symbols: Iterable[str], intraday_data_table: str, market_periods: List[str]) -> Dict[
     str, List]:
 
-    for i in range(len(market_periods)):
-        server_config.intraday_order_map[market_periods[i]] = []
+    for period in market_periods:
+        server_config.intraday_order_map[period] = []
 
     stock_market_periods = defaultdict(list)
     for symbol in symbols:
@@ -733,8 +733,6 @@ def set_market_status(scheduler, time_in_seconds):
 
 
 def launch_server():
-    if os.path.exists("server_output.txt"):
-        os.remove("server_output.txt")
     server_config.server_output = open("server_output.txt", "w")
     # server_config.server_output = sys.stderr
     # server_config.server_output = sys.stdout
