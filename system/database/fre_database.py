@@ -290,6 +290,12 @@ class FREDatabase:
         return user
 
     def get_portfolio(self, uid, symbol=""):
+        """
+        Get portfolio info or position info(if symbol is provided)
+        :param uid: user id
+        :param symbol: stock symbol
+        :return: Portfolio (or symbol's position) info in a dictionary
+        """
         data = []
         portfolio = {'email': '', 'cash': 0, 'symbol': [], 'name': [], 'shares': [], 'price': [], 'total': []}
 
@@ -302,13 +308,15 @@ class FREDatabase:
         username = data[0]['first_name'] + ' ' + data[0]['last_name']
         cash = float(data[0]["cash"])
 
+        # if symbol is provided, select the info on that stock position
         if len(symbol) > 0:
             result = self.engine.execute('SELECT * FROM portfolios WHERE user_id=:user_id AND symbol=:symbol', user_id=uid, symbol=symbol)
             data = result.fetchall()
+        # if no symbol is provided, select the entire portfolio info
         else:
             result = self.engine.execute('SELECT * FROM portfolios WHERE user_id=:user_id', user_id=uid)
             data = result.fetchall()
-
+        # no record: only cash
         if len(data) == 0:
             portfolio['cash'] = cash
             return portfolio
@@ -327,6 +335,11 @@ class FREDatabase:
         return portfolio
 
     def get_transaction(self, uid):
+        """
+        Extract the transaction record from transactions table
+        :param uid: user id
+        :return: Transaction info in a dictionary
+        """
         transactions = {'symbol': [], 'price': [], 'shares': [], 'price': [], 'timestamp': []}
 
         result = self.engine.execute('SELECT * FROM transactions WHERE user_id=:user_id', user_id=uid)
@@ -340,32 +353,59 @@ class FREDatabase:
         return transactions
 
     def create_buy_transaction(self, uid, cash, symbol, shares, price, timestamp):
+        """
+        Record the buying transaction info into database
+        :param uid: user id
+        :param cash: new cash after buying
+        :param symbol: stock ticker
+        :param shares: shares to buy
+        :param price: price to buy at
+        :param timestamp: when the transaction happens
+        :return: None
+        """
+        # Update the cash
         self.engine.execute("UPDATE users SET cash=:cash WHERE user_id=:user_id", cash=cash, user_id=uid)
 
+        # Insert the buying record into transactions table
         self.engine.execute("INSERT INTO transactions (symbol, price, shares, timestamp, user_id) VALUES (:symbol, :price, :shares, :timestamp, :user_id)",
                             symbol=symbol, price=price, shares=shares, timestamp=timestamp, user_id=uid)
 
+        # Check position
         result = self.engine.execute("SELECT * FROM portfolios WHERE user_id=:user_id AND symbol=:symbol", user_id=uid, symbol=symbol)
         data = result.fetchall()
+        # When holding same stock
         if len(data) > 0:
             existing_shares = data[0]['shares']
+            # Add new shares to the existing position
             updated_shares = existing_shares + shares
             self.engine.execute('UPDATE portfolios SET shares=:shares WHERE user_id=:user_id AND symbol=:symbol',
                                 user_id=uid, symbol=symbol, shares=updated_shares)
-
+        # Without holding the stock
         else:
             self.engine.execute("INSERT INTO portfolios (user_id, shares, symbol) VALUES (:user_id, :shares, :symbol)",
                                user_id=uid, symbol=symbol, shares=shares)
 
     def create_sell_transaction(self, uid, new_cash, symbol, shares, new_shares, price, timestamp):
+        """
+        Record the selling transaction info into database.
+        :param uid: user id
+        :param new_cash: cash after selling
+        :param symbol: stock ticker
+        :param shares: shares holding after selling
+        :param new_shares: negative, shares to sell
+        :param price: price to sell at
+        :param timestamp: when the transaction happens
+        :return: None
+        """
+        # Insert the selling record into transactions table
         self.engine.execute(
             "INSERT INTO transactions (symbol,shares,price,timestamp,user_id) VALUES (:symbol,:shares,:price,:timestamp,:user_id)",
             symbol=symbol, shares=new_shares, price=price, timestamp=timestamp, user_id=uid)
-
+        # If selling all holding on certain stock, delete the record in portfolio and update the cash
         if shares == 0:
             self.engine.execute("DELETE FROM portfolios WHERE user_id=:user_id AND symbol=:symbol", symbol=symbol, user_id=uid)
             self.engine.execute("UPDATE users SET cash=:new_cash WHERE user_id=:user_id", user_id=uid, new_cash=new_cash)
-
+        # Still remain some holding position in the account, update the portfolios table also the cash
         else:
             self.engine.execute("UPDATE portfolios set shares=:shares WHERE user_id=:user_id AND symbol=:symbol",
                                 symbol=symbol, user_id=uid, shares=shares)

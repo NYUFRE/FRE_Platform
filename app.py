@@ -111,13 +111,16 @@ def portfolio():
     # List the python processes before launching the server
     # Window env
 
+    # Get portfolio data from database
     portfolio = database.get_portfolio(session['user_id'])
     cash = portfolio['cash']
     total = cash
 
     length = len(portfolio['symbol'])
+    # When holding stocks
     if length > 0:
         for i in range(len(portfolio['symbol'])):
+            # Get the latest price for each holding stocks
             price, error = iex_market_data.get_price(portfolio['symbol'][i])
             if len(error) > 0:
                 return error_page(error)
@@ -140,7 +143,10 @@ def get_quote():
             flash('ERROR! symbol missing.', 'error')
             return render_template("get_quote.html")
 
+        # Get quote data from IEX, quoted prices (Ask & Bid) are different from the latest price
         quote, error = iex_market_data.get_quote(request.form.get("symbol"))
+        price, error = iex_market_data.get_price(request.form.get("symbol"))
+        quote['Latest Price'] = price['price']
 
         if len(error) > 0:
             flash('ERROR! Invalid symbol.', 'error')
@@ -173,7 +179,9 @@ def buy():
 
         price = 0.0
         input_price = request.form.get('price')
+        # When no input price -> Market order
         if not input_price:
+            # Get latest price as price (Which means it is different Quoted price)
             latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
                 flash('ERROR! ' + error, 'error')
@@ -200,8 +208,10 @@ def buy():
         # update the cash balance
         else:
             cash = cash - total
+            # Record this buying trade in DB
             database.create_buy_transaction(uid, cash, symbol, shares, price, timestamp)
 
+        # When finish buying -> redirect the page to "Portfolio" page
         return redirect(url_for("portfolio"))
     else:
         return render_template("buy.html")
@@ -228,12 +238,15 @@ def sell():
 
         price = 0.0
         input_price = request.form.get('price')
+        # Market order
         if not input_price:
+            # Use the latest price as selling price
             latest_price, error = iex_market_data.get_price(symbol)
             if len(error) > 0:
                 flash('ERROR! ' + error, 'error')
                 return render_template("sell.html")
             price = latest_price['price']
+        # Sell at input price
         else:
             price = float(input_price)
             if not price > 0:
@@ -241,6 +254,7 @@ def sell():
                 return render_template("sell.html")
 
         uid = session['user_id']
+        # Get position info
         portfolio = database.get_portfolio(session['user_id'], symbol)
         existing_shares = 0
         if len(portfolio['symbol']) == 1 and portfolio['symbol'][0] == symbol:
@@ -260,9 +274,9 @@ def sell():
         total = price * shares
         new_cash = cash + total
         timestamp = time.strftime("%Y/%m/%d %H:%M:%S")
-
+        # Record this selling trade in DB:
         database.create_sell_transaction(uid, new_cash, symbol, updated_shares, -shares, price, timestamp)
-
+        # When finish buying -> redirect the page to "Portfolio" page
         return redirect(url_for("portfolio"))
     else:
         return render_template("sell.html")
@@ -272,6 +286,7 @@ def sell():
 @login_required
 def history():
     uid = session["user_id"]
+    # Extract transaction record from transactions table
     transactions = database.get_transaction(uid)
     length = len(transactions['symbol'])
     return render_template("history.html", length=length, dict=transactions)

@@ -32,6 +32,7 @@ class IEXMarketData:
                     quote["askPrice"] = data["iexAskPrice"]
                     quote["askSize"] = data["iexAskSize"]
                 else:
+                    ### Get confused here? Need to check the documentation
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
                     quote["bidSize"] = round(int(random_ratio * data["latestVolume"]), -2)
