@@ -302,7 +302,8 @@ class FREDatabase:
         :return: Portfolio (or symbol's position) info in a dictionary
         """
         data = []
-        portfolio = {'email': '', 'cash': 0, 'symbol': [], 'name': [], 'shares': [], 'price': [], 'total': []}
+        portfolio = {'email': '', 'cash': 0, 'symbol': [], 'name': [],
+                     'shares': [], 'price': [], 'total': [], 'proportion': []}
 
         result = self.engine.execute('SELECT * FROM users WHERE user_id=:user_id', user_id=uid)
         data = result.fetchall()
@@ -332,6 +333,7 @@ class FREDatabase:
             portfolio['name'].append('')
             portfolio['price'].append(0.0)
             portfolio['total'].append(0.0)
+            portfolio['proportion'].append(0.0)
 
         portfolio['email'] = email
         portfolio['username'] = username

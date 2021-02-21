@@ -23,7 +23,7 @@ class IEXMarketData:
                     return quote, error
                 # print(data)
                 quote["symbol"] = symbol
-
+                quote['Market'] = "Open" if data["isUSMarketOpen"] else "Closed"
                 if "iexBidPrice" in data.keys() and data["iexBidPrice"] != None and \
                         "iexAskPrice" in data.keys() and data["iexAskPrice"] != None:
                     quote["bidPrice"] = data["iexBidPrice"]
