@@ -39,6 +39,7 @@
 					<th style="text-align:center">Shares</th>
 					<th style="text-align:center">Price</th>
 					<th style="text-align:center">Total</th>
+                    <th style="text-align:center">Proportion</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -50,7 +51,8 @@
                     <td>{{dict['name'][i]}}</td>
                     <td>{{dict['shares'][i]}}</td>
                     <td>{{dict['price'][i]}}</td>
-                    <td>{{dict['total'][i]}}</td>
+                    <td>{{dict['total'][i]|usd}}</td>
+                    <td>{{dict['proportion'][i]}}</td>
                 </tr>
                 <tr>
                     <!--;,is a place holder-->
@@ -62,6 +64,7 @@
 					<td>Cash</td>
 					<td colspan="3"></td>
 					<td>{{cash}}</td>
+                    <td>{{cash_proportion}}</td>
 				</tr>
 			</tbody>
 			<tfoot>

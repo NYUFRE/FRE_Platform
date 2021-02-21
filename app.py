@@ -113,6 +113,7 @@ def portfolio():
 
     # Get portfolio data from database
     portfolio = database.get_portfolio(session['user_id'])
+
     cash = portfolio['cash']
     total = cash
 
@@ -127,10 +128,14 @@ def portfolio():
             portfolio['name'][i] = price['name']
             portfolio['price'][i] = usd(price['price'])
             cost = price['price'] * portfolio['shares'][i]
-            portfolio['total'][i] = usd(cost)
+            portfolio['total'][i] = cost
             total += cost
-
-        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash), length=length)
+        # Calculate proportion
+        for i in range(len(portfolio['symbol'])):
+            portfolio['proportion'][i] = "{:.2%}".format(portfolio['total'][i] / total)
+        cash_proportion = "{:.2%}".format(cash / total)
+        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
+                               cash_proportion=cash_proportion, length=length)
 
     else:
         return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
