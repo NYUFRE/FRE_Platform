@@ -755,7 +755,7 @@ def market_data_spy():
         select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
         last_date = database.execute_sql_statement(select_stmt)['date'][0]
         begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if(begin_date <= today):
+        if begin_date <= today:
             eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
     #Change made: display the data in descending order of dates
     select_stmt = """
@@ -788,7 +788,7 @@ def market_data_us10y():
         select_stmt = 'SELECT date FROM us10y ORDER BY date DESC limit 1'
         last_date = database.execute_sql_statement(select_stmt)['date'][0]
         begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-        if(begin_date <= today):
+        if begin_date <= today:
             eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
     #Change made: display the data in descending order of dates
     select_stmt = """
@@ -865,7 +865,7 @@ def market_data_stock():
             printf("%.2f", adjusted_close) as adjusted_close, 
             volume 
         FROM stocks
-        WHERE symbol = \"{ticker}\" AND strftime(\'%Y-%m-%d\', date) BETWEEN \"{date1}\" AND \"{date2}\"
+        WHERE symbol = "{ticker}" AND strftime('%Y-%m-%d', date) BETWEEN "{date1}" AND "{date2}"
         ORDER BY date;
         """
         result_df = database.execute_sql_statement(select_stmt)
@@ -886,7 +886,7 @@ def update_market_data():
         2. Make the retrieval of fundamentals and stock prices faster
     """
     today = datetime.today().strftime('%Y-%m-%d')
-    
+
     #fundamentals (takes a long time to run)
     table_list = ['fundamentals']
     database.create_table(table_list)
@@ -905,7 +905,7 @@ def update_market_data():
         last_date = database.execute_sql_statement(select_stmt)['date'][0]
         #define begin_date here. The rest updates will use the same begin date
         begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if(begin_date <= today):
+        if begin_date <= today:
             eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
       
     #us10y
@@ -913,7 +913,7 @@ def update_market_data():
     if database.check_table_empty('us10y'):
         eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
     else:
-        if(begin_date <= today):
+        if begin_date <= today:
             eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
     
     #stock daily data (takes a long time to run)
@@ -925,7 +925,7 @@ def update_market_data():
         select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
         last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
         begin_date_stocks = (datetime.strptime(last_date_stocks,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if(begin_date_stocks <= today):
+        if begin_date_stocks <= today:
             tickers = database.get_sp500_symbols()
             eod_market_data.populate_stock_data(tickers, "stocks", begin_date_stocks, today, 'US')
     
