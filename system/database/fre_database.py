@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, VARCHAR, BLOB, BOOLEAN
 from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
-
+from typing import Collection
 import pandas as pd
 
 
@@ -19,7 +19,7 @@ class FREDatabase:
         self.metadata = MetaData()
         self.metadata.reflect(bind=self.engine)
 
-    def create_table(self, table_list):
+    def create_table(self, table_list: Collection[str]) -> None:
         """
         This function is for creating all kinds of tables if that table not exists in database.
         :param table_list: a list of string of table names
@@ -218,11 +218,11 @@ class FREDatabase:
         sql_stmt = 'Drop Table if exists ' + table_name + ';'
         self.engine.execute(sql_stmt)
 
-    def check_table_empty(self, table_name):
+    def check_table_empty(self, table_name: str) -> bool:
         """
         Returns True if the table is empty, returns false if the table is not empty
         """
-        sql_stmt = 'select count(*) from ' + table_name + ';'
+        sql_stmt = f"SELECT COUNT(*) FROM {table_name};"
         result_set = self.engine.execute(sql_stmt)
         result = result_set.fetchone()
         if result[0] == 0:
