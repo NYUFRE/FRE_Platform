@@ -2,7 +2,7 @@
 #### imports ####
 #################
 
-from datetime import datetime
+from datetime import datetime,timedelta
 import os
 import sys
 import subprocess
@@ -706,7 +706,15 @@ def market_data_sp500():
     database.create_table(table_list)
     if database.check_table_empty('sp500'):
         eod_market_data.populate_sp500_data('SPY', 'US')
-    select_stmt = 'SELECT symbol, name as company_name, sector, industry, printf("%.2f", weight) as weight FROM sp500 ORDER BY symbol ASC;'
+    else:
+        #update tables
+        database.clear_table(table_list)
+        eod_market_data.populate_sp500_data('SPY', 'US')
+    select_stmt = """
+    SELECT symbol, name as company_name, sector, industry, 
+            printf("%.2f", weight) as weight 
+    FROM sp500 ORDER BY symbol ASC;
+    """
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_stocks = [result_df[i] for i in result_df]
@@ -718,9 +726,15 @@ def market_data_sp500():
 def market_data_sp500_sectors():
     table_list = ['sp500', 'sp500_sectors']
     database.create_table(table_list)
+    #don't need to update table again, table already updated in sp500 tab
     if database.check_table_empty('sp500_sectors'):
         eod_market_data.populate_sp500_data('SPY', 'US')
-    select_stmt = 'SELECT sector as sector_name, printf("%.4f", equity_pct) as equity_pct, printf("%.4f", category_pct) as category_pct FROM sp500_sectors ORDER BY sector ASC;'
+    select_stmt = """
+    SELECT sector as sector_name, 
+            printf("%.4f", equity_pct) as equity_pct, 
+            printf("%.4f", category_pct) as category_pct 
+    FROM sp500_sectors ORDER BY sector ASC;
+    """
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_sectors = [result_df[i] for i in result_df]
@@ -732,11 +746,28 @@ def market_data_sp500_sectors():
 def market_data_spy():
     table_list = ['spy']
     database.create_table(table_list)
+    today = datetime.today().strftime('%Y-%m-%d')
     if database.check_table_empty('spy'):
-        eod_market_data.populate_stock_data(['SPY'], "spy", start_date, end_date, 'US')
-    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
-                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
-                  'printf("%.2f", adjusted_close) as adjusted_close, volume FROM spy ORDER BY date;'
+        #if the table is empty, insert data from start date to today
+        eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
+    else:
+        #if the table is not empty, insert data from the last date in the existing table to today.
+        select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
+        last_date = database.execute_sql_statement(select_stmt)['date'][0]
+        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
+        if begin_date <= today:
+            eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
+    #Change made: display the data in descending order of dates
+    select_stmt = """
+    SELECT symbol, date, 
+            printf("%.2f", open) as open, 
+            printf("%.2f", high) as high, 
+            printf("%.2f", low) as low, 
+            printf("%.2f", close) as close,
+            printf("%.2f", adjusted_close) as adjusted_close, 
+            volume 
+    FROM spy ORDER BY date DESC;
+    """
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_spy = [result_df[i] for i in result_df]
@@ -748,11 +779,27 @@ def market_data_spy():
 def market_data_us10y():
     table_list = ['us10y']
     database.create_table(table_list)
+    #update the database to today
+    today = datetime.today().strftime('%Y-%m-%d')
     if database.check_table_empty('us10y'):
-        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, end_date, 'INDX')
-    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
-                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
-                  'printf("%.2f", adjusted_close) as adjusted_close FROM us10y ORDER BY date;'
+        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
+    else:
+        #if the table is not empty, insert data from the last date in the existing table to today.
+        select_stmt = 'SELECT date FROM us10y ORDER BY date DESC limit 1'
+        last_date = database.execute_sql_statement(select_stmt)['date'][0]
+        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+        if begin_date <= today:
+            eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
+    #Change made: display the data in descending order of dates
+    select_stmt = """
+    SELECT symbol, date, 
+            printf("%.2f", open) as open, 
+            printf("%.2f", high) as high, 
+            printf("%.2f", low) as low, 
+            printf("%.2f", close) as close,
+            printf("%.2f", adjusted_close) as adjusted_close 
+    FROM us10y ORDER BY date DESC;
+    """
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_us10y = [result_df[i] for i in result_df]
@@ -764,13 +811,23 @@ def market_data_us10y():
 def market_data_fundamentals():
     table_list = ['fundamentals']
     database.create_table(table_list)
+
     if database.check_table_empty('fundamentals'):
         tickers = database.get_sp500_symbols()
         tickers.append('SPY')
         eod_market_data.populate_fundamental_data(tickers, 'US')
-    select_stmt = 'SELECT symbol, printf("%.4f", pe_ratio) as pe_ratio, printf("%.4f", dividend_yield) as dividend_yield, ' \
-                  'printf("%.4f", beta) as beta, printf("%.2f", high_52weeks) as high_52weeks, printf("%.2f", low_52weeks) as low_52weeks, ' \
-                  'printf("%.2f", ma_50days) as ma_50days, printf("%.2f", ma_200days) as ma_200days FROM fundamentals ORDER BY symbol;'
+
+    select_stmt = """
+    SELECT symbol, 
+            printf("%.4f", pe_ratio) as pe_ratio, 
+            printf("%.4f", dividend_yield) as dividend_yield,
+            printf("%.4f", beta) as beta, 
+            printf("%.2f", high_52weeks) as high_52weeks, 
+            printf("%.2f", low_52weeks) as low_52weeks,
+            printf("%.2f", ma_50days) as ma_50days, 
+            printf("%.2f", ma_200days) as ma_200days 
+    FROM fundamentals ORDER BY symbol;
+    """
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_stocks = [result_df[i] for i in result_df]
@@ -799,23 +856,93 @@ def market_data_stock():
         if request.form.get("end_date"):
             date2 = request.form.get("end_date")
 
-        select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
-                      'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
-                      'printf("%.2f", adjusted_close) as adjusted_close, volume FROM stocks ' \
-                      'WHERE symbol = \"' + ticker + '\" AND strftime(\'%Y-%m-%d\', date) BETWEEN \"' + date1 + '\" AND \"' + date2 + '\"' + \
-                      'ORDER BY date;'
+        select_stmt = f"""
+        SELECT symbol, date, 
+            printf("%.2f", open) as open, 
+            printf("%.2f", high) as high, 
+            printf("%.2f", low) as low, 
+            printf("%.2f", close) as close,
+            printf("%.2f", adjusted_close) as adjusted_close, 
+            volume 
+        FROM stocks
+        WHERE symbol = "{ticker}" AND strftime('%Y-%m-%d', date) BETWEEN "{date1}" AND "{date2}"
+        ORDER BY date;
+        """
         result_df = database.execute_sql_statement(select_stmt)
         result_df = result_df.transpose()
         list_of_stock = [result_df[i] for i in result_df]
         return render_template("md_stock.html", stock_list=list_of_stock)
-
     else:
         return render_template("md_get_stock.html")
 
 
+def update_market_data():
+    """
+    This function is for updating the MatketData database. 
+    # Note: Not used yet. Run this function to update database manually.
+    # TODOs: 
+        1.automatically trigger this function once everyday, then delete the update part in 
+        market_data_sp500(), market_data_spy(), and market_data_us10y().
+        2. Make the retrieval of fundamentals and stock prices faster
+    """
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    #fundamentals (takes a long time to run)
+    table_list = ['fundamentals']
+    database.create_table(table_list)
+    database.clear_table(table_list)
+    tickers = database.get_sp500_symbols()
+    tickers.append('SPY')
+    eod_market_data.populate_fundamental_data(tickers, 'US')
+    
+    #spy price data
+    if database.check_table_empty('spy'):
+        #if the table is empty, insert data from start date to today
+        eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
+    else:
+        #if the table is not empty, insert data from the last date in the existing table to today.
+        select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
+        last_date = database.execute_sql_statement(select_stmt)['date'][0]
+        #define begin_date here. The rest updates will use the same begin date
+        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
+        if begin_date <= today:
+            eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
+      
+    #us10y
+    database.create_table(['us10y'])
+    if database.check_table_empty('us10y'):
+        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
+    else:
+        if begin_date <= today:
+            eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
+    
+    #stock daily data (takes a long time to run)
+    database.create_table(['stocks'])
+    tickers = database.get_sp500_symbols()
+    if database.check_table_empty('stocks'):
+        eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
+    else:
+        select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
+        last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
+        begin_date_stocks = (datetime.strptime(last_date_stocks,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
+        if begin_date_stocks <= today:
+            tickers = database.get_sp500_symbols()
+            eod_market_data.populate_stock_data(tickers, "stocks", begin_date_stocks, today, 'US')
+    
+    #sp500 index & sectors
+    table_list = ['sp500', 'sp500_sectors']
+    database.create_table(table_list)
+    if database.check_table_empty('sp500'):
+        eod_market_data.populate_sp500_data('SPY', 'US')
+    else:
+        #update tables
+        database.clear_table(table_list)
+        eod_market_data.populate_sp500_data('SPY', 'US')
+
 if __name__ == "__main__":
     table_list = ["users", "fre_users", "portfolios", "transactions"]
     database.create_table(table_list)
+    update_market_data()
     add_admin_user()
 
     try:
