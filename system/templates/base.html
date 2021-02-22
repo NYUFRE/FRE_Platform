@@ -28,14 +28,15 @@
 			<div class="collapse navbar-collapse" id="navbar">
 				{% if session.user_id %}
 					<ul class="navbar-nav mr-auto mt-2">
-						<li class="nav-item"><a class="nav-link" href="/">ManualTrading</a></li>
-						<li class="nav-item"><a class="nav-link" href="/pair_trading">StatArb</a></li>
-						<li class="nav-item"><a class="nav-link" href="/ai_modeling">AIModeling</a></li>
-						<li class="nav-item"><a class="nav-link" href="/sim_trading">SimTrading</a></li>
-						<li class="nav-item"><a class="nav-link" href="/md_sp500">MarketData</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/">ManualTrading</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/pair_trading">StatArb</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/ai_modeling">AIModeling</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/sim_trading">SimTrading</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/md_sp500">MarketData</a></li>
 					</ul>
+					
 					<ul class="navbar-nav ml-auto mt-2">
-						<li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+						<li class="nav-item font-weight-bold"><a class="nav-link" href="/logout">Log Out</a></li>
 					</ul>
 				{% else %}
 					<ul class="navbar-nav ml-auto mt-2">
