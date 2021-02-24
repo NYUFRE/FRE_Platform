@@ -47,7 +47,7 @@ def build_ga_model(database):
     for sector in sp500_sectors:
         sp500_stock_map[sector] = []
 
-    modeling_testing_start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
     modeling_testing_end_date = dt.date(2019, 12, 31).strftime('%Y-%m-%d')
 
     spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
