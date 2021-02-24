@@ -493,9 +493,14 @@ def ai_trading():
 @app.route('/ai_build_model')
 @login_required
 def ai_build_model():
-    database.drop_table('best_portfolio')
+    # database.drop_table('best_portfolio')
+    """
+    While drop the table, table name "best_portfolio" still in metadata
+    Therefore, everytime only clear table instead of drop it.
+    """
     table_list = ['best_portfolio']
     database.create_table(table_list)
+    database.clear_table(table_list)
     best_portfolio = build_ga_model(database)
     print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
           ((best_portfolio.portfolio_yield * 100), best_portfolio.beta, (best_portfolio.volatility * 100),
