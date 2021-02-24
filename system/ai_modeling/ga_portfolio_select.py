@@ -13,7 +13,7 @@ import random
 #SP500_NUM_OF_STOCKS = 505
 #PORTFOLIO_NUM_OF_STOCK = 11
 
-start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 def create_populate_tables(database, eod_market_data):
