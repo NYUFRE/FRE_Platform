@@ -32,9 +32,12 @@ from system.sim_trading.network import PacketTypes, Packet
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
 
-from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
-from system.ai_modeling.ga_portfolio_back_test import ga_back_test
-from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
+# from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
+# from system.ai_modeling.ga_portfolio_back_test import ga_back_test
+# from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
+from system.ai_modeling.ga_portfolio_select_new import build_ga_model, start_date, end_date
+from system.ai_modeling.ga_portfolio_back_test_new import ga_back_test
+from system.ai_modeling.ga_portfolio_probation_test_new import ga_probation_test
 
 from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, \
     back_testing_start_date, back_testing_end_date
@@ -507,12 +510,13 @@ def ai_build_model():
            (best_portfolio.expected_daily_return * 100)))
     print("trend: %8.4f, sharpe_ratio:%8.4f, score:%8.4f" %
           (best_portfolio.trend, best_portfolio.sharpe_ratio, best_portfolio.score))
-
+    # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock.symbol, stock.name, stock.sector, stock.category_pct)
-        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct * 100, 4))))
+        print(stock)    # (symbol, name, sector,weight)
+        stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
+    # Show portfolio's score metrics
     portfolio_yield = str(round(best_portfolio.portfolio_yield * 100, 4)) + '%'
     beta = str(round(best_portfolio.beta, 4))
     volatility = str(round(best_portfolio.volatility * 100, 4)) + '%'
@@ -530,9 +534,9 @@ def ai_build_model():
 def ai_back_test():
     global portfolio_ys, spy_ys, n
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
-    spy_ys = list(spy.daily_cumulative_returns.values())
-    n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
+    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
+    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
+    n = len(portfolio_ys)
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -572,12 +576,13 @@ def ai_back_test_plot():
 @app.route('/ai_probation_test')
 @login_required
 def ai_probation_test():
-    best_portfolio, spy, cash = ga_probation_test(database)
+    best_portfolio, spy_profit_loss, cash = ga_probation_test(database)
     portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
-    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss / cash) * 100))
+    spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
-    length = len(best_portfolio.stocks)
-    return render_template('ai_probation_test.html', stock_list=best_portfolio.stocks,
+    stock_list = [val[0] for val in best_portfolio.stocks]
+    length = len(stock_list)
+    return render_template('ai_probation_test.html', stock_list=stock_list,
                            portfolio_profit=portfolio_profit, spy_profit=spy_profit,
                            profit=usd(profit), length=length)
 
