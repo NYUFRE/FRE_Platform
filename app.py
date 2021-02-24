@@ -186,18 +186,31 @@ def buy():
         input_price = request.form.get('price')
         # When no input price -> Market order
         if not input_price:
-            # Get latest price as price (Which means it is different Quoted price)
-            latest_price, error = iex_market_data.get_price(symbol)
+            # Get quote price -> ask price
+            quote, error = iex_market_data.get_quote(symbol)
             if len(error) > 0:
                 flash('ERROR! ' + error, 'error')
                 return render_template("buy.html")
-            price = latest_price['price']
+            price = quote["askPrice"]
+        # When input price exists
         else:
+            quote, error = iex_market_data.get_quote(symbol)
+            if len(error) > 0:
+                flash('ERROR! ' + error, 'error')
+            best_ask = quote["askPrice"]
             price = float(input_price)
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
                 return render_template("buy.html")
-
+            # When input price is lower than best ask, prompt out info
+            if price < best_ask:
+                flash('Order Rejected! Your price is lower than the best Offer price at '+usd(best_ask), 'error')
+                return render_template("buy.html")
+            # When input price is higher than best ask, prompt out info and buy at best ask
+            if price > best_ask:
+                flash('Order Executed. Your price is higher than the best Ask price at ' + usd(best_ask) + '.'
+                      'Now you bought ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_ask), 'Notice')
+                price = best_ask
         uid = session['user_id']
         user = database.get_user('', uid)
         cash = user["cash"]
@@ -245,19 +258,32 @@ def sell():
         input_price = request.form.get('price')
         # Market order
         if not input_price:
-            # Use the latest price as selling price
-            latest_price, error = iex_market_data.get_price(symbol)
+            # Use the best bid price as selling price
+            quote, error = iex_market_data.get_quote(symbol)
             if len(error) > 0:
                 flash('ERROR! ' + error, 'error')
                 return render_template("sell.html")
-            price = latest_price['price']
+            price = quote["bidPrice"]
         # Sell at input price
         else:
+            quote, error = iex_market_data.get_quote(symbol)
+            if len(error) > 0:
+                flash('ERROR! ' + error, 'error')
+                return render_template("sell.html")
+            best_bid = quote["bidPrice"]
             price = float(input_price)
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
                 return render_template("sell.html")
-
+            # When input price is higher than best bid, prompt out info
+            if price > best_bid:
+                flash('Order Rejected! Your price is higher than the best Bid price at ' + usd(best_bid), 'error')
+                return render_template("sell.html")
+            # When input price is lower than best bid, prompt out info and sell at best bid
+            if price < best_bid:
+                flash('Order Executed. Your price is lower than the best Bid price at ' + usd(best_bid) + '.'
+                      'Now you sold ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_bid), 'Notice')
+                price = best_bid
         uid = session['user_id']
         # Get position info
         portfolio = database.get_portfolio(session['user_id'], symbol)

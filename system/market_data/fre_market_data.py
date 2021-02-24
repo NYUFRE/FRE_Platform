@@ -35,9 +35,9 @@ class IEXMarketData:
                     ### Get confused here? Need to check the documentation
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
-                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"]), -2)
+                    quote["bidSize"] = int(random_ratio * data["latestVolume"])
                     quote["askPrice"] = data["high"]
-                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"]), -2)
+                    quote["askSize"] = int((1 - random_ratio) * data["latestVolume"])
 
             return quote, error
 
