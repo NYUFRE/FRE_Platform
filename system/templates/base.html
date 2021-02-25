@@ -16,7 +16,38 @@
 		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+		
+		<!-- https://www.codexworld.com/export-html-table-data-to-csv-using-javascript/ -->
+		<script>
+			function downloadCSV(csv, filename) {
+				var csvFile;
+				var downloadLink;
 
+				csvFile = new Blob([csv], {type: "text/csv"});
+				downloadLink = document.createElement("a");
+				downloadLink.download = filename;
+				downloadLink.href = window.URL.createObjectURL(csvFile);
+				downloadLink.style.display = "none";
+				document.body.appendChild(downloadLink);
+				downloadLink.click();
+			}
+
+			function exportTableToCSV(filename) {
+				var csv = [];
+				var rows = document.querySelectorAll("table tr");
+				
+				for (var i = 0; i < rows.length; i++) {
+					var row = [], cols = rows[i].querySelectorAll("td, th");
+					
+					for (var j = 0; j < cols.length; j++) 
+						row.push(cols[j].innerText);
+					
+					csv.push(row.join(","));        
+				}
+
+				downloadCSV(csv.join("\n"), filename);
+			}
+		</script>
 	</head>
 
 	<body>
@@ -64,6 +95,7 @@
 		</div>
 
 		<footer class="small text-center text-muted">
+			<br>
 			Developed by <a href="https://engineering.nyu.edu/academics/departments/finance-and-risk-engineering">NYU FRE Department</a>. View <a href="https://engineering.nyu.edu/academics/departments/finance-and-risk-engineering">NYU FRE Terms of Use</a>.
 		</footer>
 

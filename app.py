@@ -602,12 +602,13 @@ def start_server_process():
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
-    client_config.server_tombstone = False
-    server_thread = threading.Thread(target=(start_server_process))
-    server_thread.start()
+    if not client_config.server_ready:
+        client_config.server_tombstone = False
+        server_thread = threading.Thread(target=(start_server_process))
+        server_thread.start()
 
-    while not client_config.server_ready:
-        pass
+        while not client_config.server_ready:
+            pass
 
     return render_template("sim_launch_server.html")
 
@@ -615,40 +616,43 @@ def sim_server_up():
 @app.route('/sim_server_down')
 @login_required
 def sim_server_down():
-    try:
-        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        status = client_config.client_socket.connect_ex(client_config.ADDR)
-        if status != 0:
-            return error_page("Fail in connecting to server")
+    if client_config.server_ready: 
+        try:
+            client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+            status = client_config.client_socket.connect_ex(client_config.ADDR)
+            if status != 0:
+                return error_page("Fail in connecting to server")
 
-        client_config.receiver_stop = False
-        client_config.server_tombstone = True
-        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-        client_config.client_receiver.start()
+            client_config.receiver_stop = False
+            client_config.server_tombstone = True
+            client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+            client_config.client_receiver.start()
 
-        set_event(trading_event)
-        client_packet = Packet()
-        send_msg(server_down(client_packet))
-        wait_for_an_event(trading_event)
-        msg_type, msg_data = trading_queue.get()
-        print(msg_data)
-        if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
-            time.sleep(2)
-            print("Server down confirmed!")
-            client_config.client_socket.close()
+            set_event(trading_event)
+            client_packet = Packet()
+            send_msg(server_down(client_packet))
+            wait_for_an_event(trading_event)
+            msg_type, msg_data = trading_queue.get()
+            print(msg_data)
+            if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
+                time.sleep(2)
+                print("Server down confirmed!")
+                client_config.client_socket.close()
 
-        existing_py_process = get_python_pid()
+            existing_py_process = get_python_pid()
 
-        for item in existing_py_process:
-            if item not in process_list:
-                os.kill(item, 9)
+            for item in existing_py_process:
+                if item not in process_list:
+                    os.kill(item, 9)
 
-        client_config.server_ready = False
-        client_config.client_thread_started = False
-        return render_template("sim_server_down.html")
-    except(OSError, Exception):
-        return render_template("sim_server_down.html")
+            client_config.server_ready = False
+            client_config.client_thread_started = False
+            
+        except(OSError, Exception):
+            return render_template("sim_server_down.html")
+
+    return render_template("sim_server_down.html")
 
 
 @app.route('/sim_auto_trading')
@@ -700,7 +704,7 @@ def sim_auto_trading():
         return render_template("sim_auto_trading.html", trading_results=client_config.orders)
 
     else:
-        return error_page("Please launch server first: SimTrading >> Launch Server >> Auto Trading")
+        return render_template("error_auto_trading.html")
 
 
 # Market Data
