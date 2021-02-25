@@ -43,12 +43,17 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
     best_portfolio_symbols = list(best_portfolio_df['symbol'])
 
     # Extract stock price data from table stocks
-    stock_select = "SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight\
-                    FROM stocks, sp500, sp500_sectors\
-                    WHERE stocks.symbol = sp500.symbol\
-                    AND sp500.sector = sp500_sectors.sector\
-                    AND strftime(\'%Y-%m-%d\', date) BETWEEN \"" + probation_testing_start_date + "\" AND \"" + \
-                    probation_testing_end_date + "\" AND open > 0 AND close > 0;"
+    stock_select = f"""
+    SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight
+    FROM stocks
+            JOIN sp500
+                    ON stocks.symbol = sp500.symbol
+            JOIN sp500_sectors
+                    ON sp500.sector = sp500_sectors.sector
+    WHERE DATE(date) BETWEEN Date('{probation_testing_start_date}') AND Date('{probation_testing_end_date}')
+        AND open  > 0
+        AND close  > 0;
+    """
     price_df = database.execute_sql_statement(stock_select)
 
     best_portfolio = GAPortfolio()
@@ -68,16 +73,22 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
         profit_loss = (close_price - open_price) * shares
         best_portfolio.profit_loss += profit_loss
 
-        update_stmt = "UPDATE best_portfolio SET open_date = \"" + str(open_date) + "\", open_price = " + str(open_price) + ", close_date = \"" + \
-                      str(close_date) + "\", close_price = " + str(close_price) + ", shares = " + str(shares) + ", profit_loss = " + str(round(profit_loss, 2)) + \
-                      " WHERE symbol = \"" + symbol + "\";"
+        #TODO
+        update_stmt = f"""
+            UPDATE best_portfolio 
+            SET open_date = '{str(open_date)}', open_price = '{str(open_price)}', close_date = '{str(close_date)}',
+                close_price = '{str(close_price)}', shares = '{str(shares)}', profit_loss = '{str(round(profit_loss, 2))}'
+            WHERE symbol = '{symbol}';
+        """
         print(update_stmt)
         conn.execute(update_stmt)
 
     # make SPY captical in spy table
-    spy_select = "SELECT date, open, close FROM spy WHERE strftime(\'%Y-%m-%d\', date) " \
-                "BETWEEN \"" + probation_testing_start_date + "\" AND \"" + probation_testing_end_date + \
-                "\" AND open > 0 AND close > 0 AND symbol = 'spy';"
+    spy_select = f"""
+        SELECT date, open, close
+        FROM spy
+        WHERE Date(date) BETWEEN Date('{probation_testing_start_date}') AND Date('{probation_testing_end_date}');
+    """
     spy_df = database.execute_sql_statement(spy_select)
 
     spy_open_price = spy_df.open.iloc[0]

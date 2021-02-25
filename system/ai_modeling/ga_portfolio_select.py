@@ -50,8 +50,11 @@ def extract_spy(database, start_date: str, end_date: str, include_fundamental: b
     spy.symbol = 'spy'
 
     # Extract price data from table spy
-    spy_select = "SELECT date, open, close FROM spy WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
-                 start_date + "\" AND \"" + end_date + "\";"
+    spy_select = f"""
+        SELECT date, open, close
+        FROM spy
+        WHERE Date(date) BETWEEN Date('{start_date}') AND Date('{end_date}');
+    """
     price_df = database.execute_sql_statement(spy_select)
 
     # Calculate daily return
@@ -86,8 +89,10 @@ def extract_us10y(database, start_date: str, end_date: str) -> Stock:
     us10y = Stock()
     us10y.symbol = 'us10y'
     # Extract data from db
-    us10y_select = "SELECT date, close FROM us10y WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
-                 start_date + "\" AND \"" + end_date + "\";"
+    us10y_select = f"""
+        SELECT date, close FROM us10y 
+        WHERE Date(date) BETWEEN Date('{start_date}') AND Date('{end_date}');
+    """
     price_df = database.execute_sql_statement(us10y_select)
     # Calculation
     price_df['rate'] = price_df['close'] / 100
@@ -147,7 +152,7 @@ def build_ga_model(database) -> GAPortfolio:
     return:
         best_portfolio
     """
-    modeling_testing_start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
+    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
     modeling_testing_end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 
     # Extract SPY & us10y data from db 
@@ -159,11 +164,14 @@ def build_ga_model(database) -> GAPortfolio:
 
     # Extract fundamental data from table fundamentals
     # Merge with sector and sector weight
-    fundamental_select = "SELECT fundamentals.symbol, pe_ratio, dividend_yield, beta,\
-                        ma_50days, ma_200days, sp500_sectors.sector, sp500_sectors.category_pct AS weight\
-                        FROM fundamentals, sp500, sp500_sectors\
-                        WHERE fundamentals.symbol = sp500.symbol\
-                        AND sp500.sector = sp500_sectors.sector;"
+    fundamental_select = f"""
+        SELECT fundamentals.symbol, pe_ratio, dividend_yield, beta, ma_50days, ma_200days, sp500_sectors.sector, sp500_sectors.category_pct AS weight
+        FROM fundamentals
+            JOIN sp500
+                ON fundamentals.symbol = sp500.symbol 
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector;
+    """
     fundamental_df = database.execute_sql_statement(fundamental_select)
     if fundamental_df.empty:
         exit("fundamental_df is empty")
@@ -171,12 +179,17 @@ def build_ga_model(database) -> GAPortfolio:
 
     # Extract stock prices from table stocks
     # Merge name, with sector, sector weight
-    stock_select = "SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight\
-                    FROM stocks, sp500, sp500_sectors\
-                    WHERE stocks.symbol = sp500.symbol\
-                    AND sp500.sector = sp500_sectors.sector\
-                    AND strftime(\'%Y-%m-%d\', date) BETWEEN \"" + modeling_testing_start_date + "\" AND \"" + \
-                    modeling_testing_end_date + "\" AND open > 0 AND close > 0;"
+    stock_select = f"""
+        SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight
+        FROM stocks
+            JOIN sp500
+                ON stocks.symbol = sp500.symbol
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector
+        WHERE Date(date) BETWEEN Date('{modeling_testing_start_date}') AND Date('{modeling_testing_end_date}')
+            AND open > 0 
+            AND close > 0;
+    """
     price_df = database.execute_sql_statement(stock_select)
     if price_df.empty:
         exit("price_df is empty")

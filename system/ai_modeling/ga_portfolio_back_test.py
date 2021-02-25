@@ -36,12 +36,17 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     best_portfolio_symbols = list(best_portfolio_df['symbol'])
 
     # Extract stock price data from table stocks
-    stock_select = "SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight\
-                    FROM stocks, sp500, sp500_sectors\
-                    WHERE stocks.symbol = sp500.symbol\
-                    AND sp500.sector = sp500_sectors.sector\
-                    AND strftime(\'%Y-%m-%d\', date) BETWEEN \"" + back_testing_start_date + "\" AND \"" + \
-                    back_testing_end_date + "\" AND open > 0 AND close > 0;"
+    stock_select = f"""
+        SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight
+        FROM stocks
+            JOIN sp500
+                ON stocks.symbol = sp500.symbol
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector
+        WHERE Date(date) BETWEEN Date('{back_testing_start_date}') AND Date('{back_testing_end_date}')
+            AND open > 0 
+            AND close > 0;
+    """
     price_df = database.execute_sql_statement(stock_select)
 
     best_portfolio = GAPortfolio()
@@ -56,7 +61,7 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     return best_portfolio, spy
 
 
-def ga_back_test_plot(database):
+def ga_back_test_plot(database) -> None:
     best_portfolio, spy = ga_back_test(database)
     portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
     spy_ys = list(spy.price_df['spy_daily_cumulative_return'])

@@ -181,7 +181,7 @@ class GAPortfolio:
         """
         return self.stocks[index]
 
-    def update_stock(self, index: int, stock: Tuple[str, str, float, str]):
+    def update_stock(self, index: int, stock: Tuple[str, str, float, str]) -> None:
         """
         description:
             Update stock with a new stock
@@ -196,7 +196,7 @@ class GAPortfolio:
     def add_beta(self, date, beta):
         self.betas[date] = beta
 
-    def populate_portfolio(self, sp500_symbol_map: Dict[str, Tuple[str, str]], sp500_sector_map: Dict[str, float]):
+    def populate_portfolio(self, sp500_symbol_map: Dict[str, Tuple[str, str]], sp500_sector_map: Dict[str, float]) -> None:
         """
         description:
             randomly select 11 symbols from each sector
@@ -215,7 +215,7 @@ class GAPortfolio:
             self.stocks.append((sector, symbol, weight, name))
         self.stocks.sort()  # Sort the list according to sectors
 
-    def calculate_portfolio_return(self, price_df: pd.DataFrame):
+    def calculate_portfolio_return(self, price_df: pd.DataFrame) -> None:
         """
         description:
             Calculate portfolio daily return 
@@ -230,7 +230,7 @@ class GAPortfolio:
             None
         """
         # Keep only data of stocks in the portfolio
-        select_query = ' or '.join("symbol == '" + val[1] + "'" for val in self.stocks)
+        select_query = ' or '.join(f"symbol == '{val[1]}'" for val in self.stocks)
         self.price_df = price_df.query(select_query)      
         # Calculate returns
         self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
@@ -238,7 +238,7 @@ class GAPortfolio:
         self.expected_daily_return = self.portfolio_daily_returns.mean()
         self.volatility = self.portfolio_daily_returns.std()
 
-    def populate_portfolio_by_symbols(self, symbols: List[str], price_df: pd.DataFrame):
+    def populate_portfolio_by_symbols(self, symbols: List[str], price_df: pd.DataFrame) -> None:
         """
         description:
             Given symbols and prices dataframe, populate portfolio
@@ -252,7 +252,7 @@ class GAPortfolio:
             None
         """
         # Keep only portfolio stocks' data
-        select_query = ' or '.join("symbol == '" + symbol + "'" for symbol in symbols)
+        select_query = ' or '.join(f"symbol == '{symbol}'" for symbol in symbols)
         self.price_df = price_df.query(select_query) 
 
         # Calculate stocks' daily return
@@ -266,7 +266,7 @@ class GAPortfolio:
         self.portfolio_daily_cumulative_returns = (self.portfolio_daily_returns + 1.0).cumprod() - 1.0
         self.cumulative_return = self.portfolio_daily_cumulative_returns[-1]  # last day's cumulative return
 
-    def calculate_expected_beta(self, spy_df: pd.DataFrame):
+    def calculate_expected_beta(self, spy_df: pd.DataFrame) -> None:
         """
         description:
             Calculate portfolio expected_beta by cov(r, rm) / var(rm)
@@ -281,7 +281,7 @@ class GAPortfolio:
         self.expected_beta = df['weighted_ret'].cov(df['spy_dailyret']) / df['spy_dailyret'].var()
         
 
-    def populate_portfolio_fundamentals(self, fundamental_df: pd.DataFrame):
+    def populate_portfolio_fundamentals(self, fundamental_df: pd.DataFrame) -> None:
         """
         description:
             Extract stocks' fundamental data from db and store in self.fundamental_df
@@ -295,29 +295,34 @@ class GAPortfolio:
         select_query = ' or '.join("symbol == '" + val[1] + "'" for val in self.stocks)
         self.fundamental_df = fundamental_df.query(select_query)      
 
-    def calculate_sharpe_ratio(self, us10y: Stock):
-        self.sharpe_ratio = (self.expected_daily_return - us10y.expected_daily_return) / self.volatility
+    def calculate_sharpe_ratio(self, us10y: Stock) -> None:
+        # self.sharpe_ratio = (self.expected_daily_return - us10y.expected_daily_return) / self.volatility
+        self.sharpe_ratio = (self.expected_daily_return * 252 - us10y.expected_daily_return) / (self.volatility * np.sqrt(252)) # annualized
 
-    def calculate_treynor_measure(self, us10y: Stock):
-        self.treynor_measure = (self.expected_daily_return - us10y.expected_daily_return) / self.expected_beta
+    def calculate_treynor_measure(self, us10y: Stock) -> None:
+        # self.treynor_measure = (self.expected_daily_return - us10y.expected_daily_return) / self.expected_beta
+        self.treynor_measure = (self.expected_daily_return * 252 - us10y.expected_daily_return) / self.expected_beta
 
-    def calculate_jensen_measure(self, spy: Stock, us10y: Stock):
+    def calculate_jensen_measure(self, spy: Stock, us10y: Stock) -> None:
         #TODO make sense? what is spy.fundamental.beta? Wrong?
         # r = rf + stock_beta * (rm - rf) 
         # benchmark_return = us10y.expected_daily_return + spy.fundamental.beta * (
         #             spy.expected_daily_return - us10y.expected_daily_return)
+        # benchmark_return = us10y.expected_daily_return + self.expected_beta * (
+        #              spy.expected_daily_return - us10y.expected_daily_return)
+        # self.jensen_measure = self.expected_daily_return - benchmark_return
         benchmark_return = us10y.expected_daily_return + self.expected_beta * (
-                     spy.expected_daily_return - us10y.expected_daily_return)
-        self.jensen_measure = self.expected_daily_return - benchmark_return
+                     spy.expected_daily_return * 252 - us10y.expected_daily_return)
+        self.jensen_measure = self.expected_daily_return * 252 - benchmark_return   # Annualize
 
-    def calculate_yield(self):
+    def calculate_yield(self) -> None:
         """
         description:
             Sum of stock's yield * weight
         """
         self.portfolio_yield = sum(self.fundamental_df['dividend_yield'] * self.fundamental_df['weight'])
 
-    def calculate_beta_and_trend(self):
+    def calculate_beta_and_trend(self) -> None:
         """
         description:
             Calculate portfolio's fundamental beta by sum(stock_beta * stock weight)
@@ -328,9 +333,7 @@ class GAPortfolio:
         self.trend = sum(self.fundamental_df['indicator'] * self.fundamental_df['weight'])
 
 
-    def calculate_score(self, spy: Stock):
-        # spy_yield = spy.fundamental.dividend_yield
-        # spy_beta = spy.fundamental.beta
+    def calculate_score(self, spy: Stock) -> None:
         spy_yield = spy.fundamental_df['dividend_yield'].iloc[0]
         spy_beta = spy.fundamental_df['beta'].iloc[0]
         spy_volatility = spy.volatility
@@ -338,7 +341,7 @@ class GAPortfolio:
                      self.volatility / spy_volatility + \
                      self.sharpe_ratio + self.treynor_measure + self.jensen_measure
     
-    def calculate_daily_cumulative_return(self, start_date:str, end_date:str):
+    def calculate_daily_cumulative_return(self, start_date: str, end_date: str) -> None:
         """
         description:
             Correct cumulative sum to cumulative product 
