@@ -11,6 +11,9 @@ import socket
 import io
 import numpy as np
 import time
+import matplotlib.pyplot as plt
+import base64
+import plotly.express as px
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -118,6 +121,11 @@ def portfolio():
     total = cash
 
     length = len(portfolio['symbol'])
+
+    # Initializing Chart
+    labels = ['Cash']
+    sizes = [1.0]
+
     # When holding stocks
     if length > 0:
         for i in range(len(portfolio['symbol'])):
@@ -134,11 +142,64 @@ def portfolio():
         for i in range(len(portfolio['symbol'])):
             portfolio['proportion'][i] = "{:.2%}".format(portfolio['total'][i] / total)
         cash_proportion = "{:.2%}".format(cash / total)
-        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
-                               cash_proportion=cash_proportion, length=length)
 
+        # Pie Chart Plot
+        labels = portfolio['symbol'] + ['Cash']
+        sizes = portfolio['proportion'] + [cash_proportion]
+        sizes = [float(num[:-1]) for num in sizes]
+        # Method 1 with matplotlib
+        # fig = Figure()
+        # axis = fig.add_subplot(1, 1, 1)
+        # explode = [0] * length + [0.1]
+        # axis.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', pctdistance=0.85, startangle=90)
+        # centre_circle = plt.Circle((0, 0), 0.70, fc='white')
+        # fig.gca().add_artist(centre_circle)
+        # axis.axis('equal')
+        # canvas = FigureCanvas(fig)
+        # output = io.BytesIO()
+        # canvas.print_png(output)
+        # pngImageB64String = "data:image/png;base64,"
+        # pngImageB64String += base64.b64encode(output.getvalue()).decode('utf8')
+
+        # Method 2 with plotly
+        graph_values = [{
+            'labels': labels,
+            'values': sizes,
+            'type': 'pie',
+            'textinfo': 'label+percent',
+            'insidetextfont': {'color': '#FFFFFF',
+                               'size': '14',},
+            'textfont': {'color': '#FFFFFF',
+                         'size': '14',},
+            'hole': '.6',
+            'marker': {'colors': px.colors.qualitative.Bold}
+        }]
+        layout = {
+            'title': '<b>Portfolio Holdings</b>',
+        }
+        # return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
+        #                        cash_proportion=cash_proportion, length=length, url=pngImageB64String)
+        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
+                               cash_proportion=cash_proportion, length=length, graph_values=graph_values, layout=layout)
     else:
-        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
+        # Method 2 with plotly
+        graph_values = [{
+            'labels': labels,
+            'values': sizes,
+            'type': 'pie',
+            'textinfo': 'label+percent',
+            'insidetextfont': {'color': '#FFFFFF',
+                               'size': '14'},
+            'textfont': {'color': '#FFFFFF',
+                         'size': '14'},
+            'hole': '.6',
+            'marker': {'colors': px.colors.qualitative.Bold}
+        }]
+        layout = {'title': '<b>Portfolio Holdings</b>'}
+        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion=1.0,
+                               length=0, graph_values=graph_values, layout=layout)
+
+
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -182,22 +243,24 @@ def buy():
             flash('ERROR! Shares must be positive.', 'error')
             return render_template("buy.html")
 
+        # Get quote ask price -> potential buy price
+        quote, error = iex_market_data.get_quote(symbol)
+        if len(error) > 0:
+            flash('ERROR! ' + error, 'error')
+            return render_template("buy.html")
+        best_ask = quote["askPrice"]
+        # When best ask is not positive, cannot buy in
+        if not best_ask > 0 or not quote["askSize"] > 0:
+            flash('Order Rejected! No Selling Orders in the Market Now. Please Try Later.', 'error')
+            return render_template("buy.html")
+
         price = 0.0
         input_price = request.form.get('price')
         # When no input price -> Market order
         if not input_price:
-            # Get quote price -> ask price
-            quote, error = iex_market_data.get_quote(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-                return render_template("buy.html")
             price = quote["askPrice"]
         # When input price exists
         else:
-            quote, error = iex_market_data.get_quote(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-            best_ask = quote["askPrice"]
             price = float(input_price)
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
@@ -207,7 +270,7 @@ def buy():
                 flash('Order Rejected! Your price is lower than the best Offer price at '+usd(best_ask), 'error')
                 return render_template("buy.html")
             # When input price is higher than best ask, prompt out info and buy at best ask
-            if price > best_ask:
+            if price >= best_ask:
                 flash('Order Executed. Your price is higher than the best Ask price at ' + usd(best_ask) + '.'
                       'Now you bought ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_ask), 'Notice')
                 price = best_ask
@@ -254,23 +317,24 @@ def sell():
             flash('ERROR! Shares must be positive.', 'error')
             return render_template("sell.html")
 
+        # Get quote bid price -> potential sell price
+        quote, error = iex_market_data.get_quote(symbol)
+        if len(error) > 0:
+            flash('ERROR! ' + error, 'error')
+            return render_template("sell.html")
+        best_bid = quote["bidPrice"]
+        # When best bid is not positive, cannot sell to others
+        if not best_bid > 0 or not quote["bidSize"] > 0:
+            flash('Order Rejected! No Buying Orders in the Market Now. Please Try Later.', 'error')
+            return render_template("sell.html")
+
         price = 0.0
         input_price = request.form.get('price')
-        # Market order
+        # Market order, Use the best bid price as selling price
         if not input_price:
-            # Use the best bid price as selling price
-            quote, error = iex_market_data.get_quote(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-                return render_template("sell.html")
             price = quote["bidPrice"]
         # Sell at input price
         else:
-            quote, error = iex_market_data.get_quote(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-                return render_template("sell.html")
-            best_bid = quote["bidPrice"]
             price = float(input_price)
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
@@ -280,7 +344,7 @@ def sell():
                 flash('Order Rejected! Your price is higher than the best Bid price at ' + usd(best_bid), 'error')
                 return render_template("sell.html")
             # When input price is lower than best bid, prompt out info and sell at best bid
-            if price < best_bid:
+            if price <= best_bid:
                 flash('Order Executed. Your price is lower than the best Bid price at ' + usd(best_bid) + '.'
                       'Now you sold ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_bid), 'Notice')
                 price = best_bid

@@ -27,17 +27,34 @@ class IEXMarketData:
                 quote['Market'] = "Open" if data["isUSMarketOpen"] else "Closed"
                 if "iexBidPrice" in data.keys() and data["iexBidPrice"] != None and \
                         "iexAskPrice" in data.keys() and data["iexAskPrice"] != None:
-                    quote["bidPrice"] = data["iexBidPrice"]
-                    quote["bidSize"] = data["iexBidSize"]
-                    quote["askPrice"] = data["iexAskPrice"]
-                    quote["askSize"] = data["iexAskSize"]
+                    print(data)
+                    random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
+                    # BidPrice & Size exists
+                    if data["iexBidPrice"] != 0:
+                        quote["bidPrice"] = data["iexBidPrice"]
+                        quote["bidSize"] = data["iexBidSize"]
+                    # Bid Price is 0 in Market Closed, generate bid price and size
+                    elif quote['Market'] == "Closed":
+                        quote["bidPrice"] = data["low"]
+                        quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                    # AskPrice & Size exists
+                    if data["iexAskPrice"] != 0:
+                        quote["askPrice"] = data["iexAskPrice"]
+                        quote["askSize"] = data["iexAskSize"]
+                    # Ask Price is 0 in Market Closed, generate ask price and size
+                    elif quote['Market'] == "Closed":
+                        quote["askPrice"] = data["high"]
+                        quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
+
                 else:
-                    ### Get confused here? Need to check the documentation
+                    # When data form not containing keys, generate price and size
+                    print('Not right form data')
+                    print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
-                    quote["bidSize"] = int(random_ratio * data["latestVolume"])
+                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"]), -2)
                     quote["askPrice"] = data["high"]
-                    quote["askSize"] = int((1 - random_ratio) * data["latestVolume"])
+                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"]), -2)
 
             return quote, error
 
