@@ -140,4 +140,4 @@ Create a Pull Request on Github
 ## Issue report
 From upstream repo's [GitHub Issue](https://github.com/NYUFRE/FRE_Platform/issues)
 ## Documentation
-[FRE Platform Documentation](https://github.com/NYUFRE/FRE_Platform)
+[FRE Platform Documentation](https://nyufre.github.io/FRE_Platform/)
