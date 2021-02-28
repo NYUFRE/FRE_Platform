@@ -493,21 +493,26 @@ def ai_trading():
 @app.route('/ai_build_model')
 @login_required
 def ai_build_model():
-    database.drop_table('best_portfolio')
+    # database.drop_table('best_portfolio') 
+    # While drop the table, table name "best_portfolio" still in metadata
+    # herefore, everytime only clear table instead of drop it.
+
     table_list = ['best_portfolio']
     database.create_table(table_list)
+    database.clear_table(table_list)
     best_portfolio = build_ga_model(database)
     print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
           ((best_portfolio.portfolio_yield * 100), best_portfolio.beta, (best_portfolio.volatility * 100),
            (best_portfolio.expected_daily_return * 100)))
     print("trend: %8.4f, sharpe_ratio:%8.4f, score:%8.4f" %
           (best_portfolio.trend, best_portfolio.sharpe_ratio, best_portfolio.score))
-
+    # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock.symbol, stock.name, stock.sector, stock.category_pct)
-        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct * 100, 4))))
+        print(stock)    # (symbol, name, sector,weight)
+        stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
+    # Show portfolio's score metrics
     portfolio_yield = str(round(best_portfolio.portfolio_yield * 100, 4)) + '%'
     beta = str(round(best_portfolio.beta, 4))
     volatility = str(round(best_portfolio.volatility * 100, 4)) + '%'
@@ -525,9 +530,9 @@ def ai_build_model():
 def ai_back_test():
     global portfolio_ys, spy_ys, n
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
-    spy_ys = list(spy.daily_cumulative_returns.values())
-    n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
+    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
+    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
+    n = len(portfolio_ys)
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -567,12 +572,13 @@ def ai_back_test_plot():
 @app.route('/ai_probation_test')
 @login_required
 def ai_probation_test():
-    best_portfolio, spy, cash = ga_probation_test(database)
+    best_portfolio, spy_profit_loss, cash = ga_probation_test(database)
     portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
-    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss / cash) * 100))
+    spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
-    length = len(best_portfolio.stocks)
-    return render_template('ai_probation_test.html', stock_list=best_portfolio.stocks,
+    stock_list = [val[0] for val in best_portfolio.stocks]
+    length = len(stock_list)
+    return render_template('ai_probation_test.html', stock_list=stock_list,
                            portfolio_profit=portfolio_profit, spy_profit=spy_profit,
                            profit=usd(profit), length=length)
 
