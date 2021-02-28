@@ -27,7 +27,7 @@ class FREDatabase:
         """
         tables = self.metadata.tables.keys()
         for table_name in table_list:
-            
+
             if table_name == "users" and table_name not in tables:
                 table = Table(table_name, self.metadata,
                               Column('user_id', Integer, primary_key=True),

@@ -150,7 +150,7 @@ class EODMarketData:
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
-    def populate_intraday_stock_data(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str, category: str = 'US', 
+    def populate_intraday_stock_data(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str, category: str = 'US',
                                     action: str = 'append', output_file: TextIOWrapper = sys.stderr) -> None:
         """
         Retrieve stock(s)'s intraday historical data and store the data into a desired table.
