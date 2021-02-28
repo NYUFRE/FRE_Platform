@@ -20,7 +20,7 @@ from flask import Flask
 from system.market_data.fre_market_data import EODMarketData
 from system.database.fre_database import FREDatabase
 
-from typing import Collection, List
+from typing import Collection, List, Union
 
 
 start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
@@ -53,15 +53,15 @@ def populate_stock_data(tickers: Collection[str], table_name: str, start_date: s
     stocks.to_sql(table_name, con=database.engine, if_exists='append', index=False)
 
 
-def cointegration_test(ticker1: str, ticker2: str) -> List[str or float]:
+def cointegration_test(ticker1: str, ticker2: str) -> List[Union[str, float]]:
     """
     This function calculate the cointegration of two tickers
     :param ticker1: name of the firts ticker
     :param ticker1: name of the second ticker
     :return: a list of the linear regression results
     """
-    select1_stmt = f"""SELECT * FROM sector_stocks WHERE symbol = '{ticker1}';"""
-    select2_stmt = f"""SELECT * FROM sector_stocks WHERE symbol = '{ticker2}';"""
+    select1_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker1}';"
+    select2_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker2}';"
     symbol1_df = database.execute_sql_statement(select1_stmt)
     symbol2_df = database.execute_sql_statement(select2_stmt)
     symbol1_log_close_prices = np.log(symbol1_df['close'].values)
@@ -113,7 +113,7 @@ def create_stock_pairs(sector: str) -> None:
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
 
-    select_stmt = f"""SELECT symbol FROM sp500 WHERE sector ='{sector}' ORDER BY symbol;"""
+    select_stmt = f"SELECT symbol FROM sp500 WHERE sector ='{sector}' ORDER BY symbol;"
     result_df = database.execute_sql_statement(select_stmt)
     symbol_list = result_df['symbol'].tolist()
     if database.check_table_empty('sector_stocks'):
