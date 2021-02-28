@@ -25,9 +25,17 @@ class IEXMarketData:
                 # print(data)
                 quote["symbol"] = symbol
                 quote['Market'] = "Open" if data["isUSMarketOpen"] else "Closed"
-                if "iexBidPrice" in data.keys() and data["iexBidPrice"] != None and \
-                        "iexAskPrice" in data.keys() and data["iexAskPrice"] != None:
-                    print(data)
+                # When latestVolume is None -> use previousVolume
+                if data["latestVolume"] is None:
+                    data["latestVolume"] = data["previousVolume"]
+                # When high, low are None -> Use week52Low and week52High
+                if data["low"] is None:
+                    data["low"] = data["week52Low"]
+                if data["high"] is None:
+                    data["high"] = data["week52High"]
+                if "iexBidPrice" in data.keys() and data["iexBidPrice"] is not None and \
+                        "iexAskPrice" in data.keys() and data["iexAskPrice"] is not None:
+                    # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     # BidPrice & Size exists
                     if data["iexBidPrice"] != 0:
@@ -48,14 +56,13 @@ class IEXMarketData:
 
                 else:
                     # When data form not containing keys, generate price and size
-                    print('Not right form data')
-                    print(data)
+                    # print('Not right form data.')
+                    # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
-                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"]), -2)
+                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
                     quote["askPrice"] = data["high"]
-                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"]), -2)
-
+                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
             return quote, error
 
         except(OSError, Exception):

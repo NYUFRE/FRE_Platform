@@ -2,7 +2,7 @@
 #### imports ####
 #################
 
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import os
 import sys
 import subprocess
@@ -11,9 +11,12 @@ import socket
 import io
 import numpy as np
 import time
+import json
 import matplotlib.pyplot as plt
 import base64
+import plotly
 import plotly.express as px
+import plotly.graph_objs as go
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -134,7 +137,8 @@ def portfolio():
             if len(error) > 0:
                 return error_page(error)
             portfolio['name'][i] = price['name']
-            portfolio['price'][i] = usd(price['price'])
+            portfolio['price'][i] = price['price']
+            portfolio['pnl'][i] = (price['price'] - portfolio['avg_cost'][i]) * portfolio['shares'][i]
             cost = price['price'] * portfolio['shares'][i]
             portfolio['total'][i] = cost
             total += cost
@@ -147,40 +151,24 @@ def portfolio():
         labels = portfolio['symbol'] + ['Cash']
         sizes = portfolio['proportion'] + [cash_proportion]
         sizes = [float(num[:-1]) for num in sizes]
-        # Method 1 with matplotlib
-        # fig = Figure()
-        # axis = fig.add_subplot(1, 1, 1)
-        # explode = [0] * length + [0.1]
-        # axis.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', pctdistance=0.85, startangle=90)
-        # centre_circle = plt.Circle((0, 0), 0.70, fc='white')
-        # fig.gca().add_artist(centre_circle)
-        # axis.axis('equal')
-        # canvas = FigureCanvas(fig)
-        # output = io.BytesIO()
-        # canvas.print_png(output)
-        # pngImageB64String = "data:image/png;base64,"
-        # pngImageB64String += base64.b64encode(output.getvalue()).decode('utf8')
+        graph_values = [{'labels': labels, 'values': sizes, 'type': 'pie', 'textinfo': 'label+percent',
+                         'insidetextfont': {'color': '#FFFFFF', 'size': '14'},
+                         'textfont': {'color': '#FFFFFF', 'size': '14'},
+                         'hole': '.6', 'marker': {'colors': px.colors.qualitative.Bold}}]
+        layout = {'title': '<b>Portfolio Holdings</b>'}
 
-        # Method 2 with plotly
-        graph_values = [{
-            'labels': labels,
-            'values': sizes,
-            'type': 'pie',
-            'textinfo': 'label+percent',
-            'insidetextfont': {'color': '#FFFFFF',
-                               'size': '14',},
-            'textfont': {'color': '#FFFFFF',
-                         'size': '14',},
-            'hole': '.6',
-            'marker': {'colors': px.colors.qualitative.Bold}
-        }]
-        layout = {
-            'title': '<b>Portfolio Holdings</b>',
-        }
-        # return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
-        #                        cash_proportion=cash_proportion, length=length, url=pngImageB64String)
+        # PnL Bar_plot
+        trace2 = go.Bar(x=portfolio['symbol'], y=portfolio['pnl'], marker={'color': px.colors.qualitative.Bold},
+                        width=0.5, opacity=0.85, text=portfolio['pnl'], textposition='auto', texttemplate='%{text:.2f}')
+        layout2 = dict(title="<b>Portfolio Holdings</b>", xaxis=dict(title="Symbol"), yaxis=dict(title="PnL"), )
+        pnl_plot = [trace2]
+        fig = go.Figure(data=pnl_plot, layout=layout2)
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
-                               cash_proportion=cash_proportion, length=length, graph_values=graph_values, layout=layout)
+                               cash_proportion=cash_proportion, length=length, graph_values=graph_values, layout=layout,
+                               graphJSON=graphJSON)
+
+    # Only cash
     else:
         # Method 2 with plotly
         graph_values = [{
@@ -196,7 +184,7 @@ def portfolio():
             'marker': {'colors': px.colors.qualitative.Bold}
         }]
         layout = {'title': '<b>Portfolio Holdings</b>'}
-        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion=1.0,
+        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion="100%",
                                length=0, graph_values=graph_values, layout=layout)
 
 

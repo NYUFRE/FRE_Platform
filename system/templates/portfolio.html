@@ -38,7 +38,9 @@
 					<th style="text-align:center">Company Name</th>
 					<th style="text-align:center">Shares</th>
 					<th style="text-align:center">Price</th>
-					<th style="text-align:center">Total</th>
+                    <th style="text-align:center">AvgCost</th>
+                    <th style="text-align:center">Unrealized PnL</th>
+					<th style="text-align:center">Market Value</th>
                     <th style="text-align:center">Proportion</th>
 				</tr>
 			</thead>
@@ -50,7 +52,9 @@
                     <td>{{dict['symbol'][i]}}</td>
                     <td>{{dict['name'][i]}}</td>
                     <td>{{dict['shares'][i]}}</td>
-                    <td>{{dict['price'][i]}}</td>
+                    <td>{{dict['price'][i]|usd}}</td>
+                    <td>{{dict['avg_cost'][i]|usd}}</td>
+                    <td>{{dict['pnl'][i]|usd}}</td>
                     <td>{{dict['total'][i]|usd}}</td>
                     <td>{{dict['proportion'][i]}}</td>
                 </tr>
@@ -62,29 +66,33 @@
             
 				<tr>
 					<td>Cash</td>
-					<td colspan="3"></td>
+					<td colspan="5"></td>
 					<td>{{cash}}</td>
                     <td>{{cash_proportion}}</td>
 				</tr>
 			</tbody>
 			<tfoot>
 				<tr>
-					<td colspan="4"></td>
+					<td colspan="6"></td>
 					<td>{{ total }}</td>
 				</tr>
 			</tfoot>
 		</table>
     </div>
-<!--    <div>-->
-<!--        <img src={{ url }} alt="Image Placeholder" height="500" width="800">-->
-<!--    </div>-->
-    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <div id="pie" d3pie="0.2.1" style="margin: auto; text-align: center;">
       <script>
         var data = {{ graph_values|safe }};
         layout = {{ layout|safe }};
         Plotly.newPlot('pie', data, layout);
+      </script>
+    </div>
+    <div id="bar" style="margin: auto; text-align: center;">
+      <script>
+        var graph = {{ graphJSON|safe }};
+        Plotly.newPlot('bar', graph.data, graph.layout);
       </script>
     </div>
 </main>

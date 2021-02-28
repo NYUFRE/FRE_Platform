@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, VARCHAR, BLOB, BOOLEAN
 from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
-from typing import Collection
+from typing import Collection, List, Dict, Union
 import pandas as pd
 
 
@@ -52,6 +52,7 @@ class FREDatabase:
                               Column('portfolio_id', Integer, primary_key=True),
                               Column('symbol', Text, nullable=False),
                               Column('shares', Integer, nullable=False),
+                              Column('avg_cost', Numeric, nullable=True),
                               Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
                               sqlite_autoincrement=True,
                               extend_existing=True)
@@ -268,15 +269,17 @@ class FREDatabase:
             sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
         return sp500_symbol_map
 
-    def get_user(self, email_address, uid):
+    def get_user(self, email_address: str, uid: int) -> Dict[str, Union[int, float, str]]:
         data = []
-        user = {'user_id': '', 'cash' : 0.0, 'last_name' : '', 'first_name' : '', 'email' : ''}
+        user = {'user_id': '', 'cash': 0.0, 'last_name': '', 'first_name': '', 'email': ''}
 
         if len(email_address) > 0:
-            result = self.engine.execute("SELECT * FROM users WHERE email = :email", email=email_address)
+            result = self.engine.execute(f"SELECT user_id, cash, last_name, first_name, email FROM users "
+                                         f"WHERE email = '{email_address}'")
             data = result.fetchall()
         elif uid > 0:
-            result = self.engine.execute("SELECT * FROM users WHERE user_id = :user_id", user_id=uid)
+            result = self.engine.execute(f"SELECT user_id, cash, last_name, first_name, email FROM users "
+                                         f"WHERE user_id = {uid}")
             data = result.fetchall()
 
         #TODO! Improve the logic for getting users
@@ -289,7 +292,7 @@ class FREDatabase:
 
         return user
 
-    def get_portfolio(self, uid, symbol=""):
+    def get_portfolio(self, uid: int, symbol: str = "") -> Dict[str, Union[List[float], List[str], str, float]]:
         """
         Get portfolio info or position info(if symbol is provided)
         :param uid: user id
@@ -297,10 +300,11 @@ class FREDatabase:
         :return: Portfolio (or symbol's position) info in a dictionary
         """
         data = []
-        portfolio = {'email': '', 'cash': 0, 'symbol': [], 'name': [],
-                     'shares': [], 'price': [], 'total': [], 'proportion': []}
+        portfolio = {'email': '', 'cash': 0.0, 'symbol': [], 'name': [], 'shares': [],
+                     'price': [], 'avg_cost': [], 'total': [], 'pnl': [], 'proportion': []}
 
-        result = self.engine.execute('SELECT * FROM users WHERE user_id=:user_id', user_id=uid)
+        result = self.engine.execute(f'SELECT user_id, cash, last_name, first_name, email FROM users '
+                                     f'WHERE user_id = {uid}')
         data = result.fetchall()
         if len(data) == 0:
             return portfolio
@@ -311,11 +315,13 @@ class FREDatabase:
 
         # if symbol is provided, select the info on that stock position
         if len(symbol) > 0:
-            result = self.engine.execute('SELECT * FROM portfolios WHERE user_id=:user_id AND symbol=:symbol', user_id=uid, symbol=symbol)
+            result = self.engine.execute(f"SELECT symbol, shares, avg_cost FROM portfolios "
+                                         f"WHERE user_id = {uid} AND symbol = '{symbol}'")
             data = result.fetchall()
         # if no symbol is provided, select the entire portfolio info
         else:
-            result = self.engine.execute('SELECT * FROM portfolios WHERE user_id=:user_id', user_id=uid)
+            result = self.engine.execute(f"SELECT symbol, shares, avg_cost FROM portfolios "
+                                         f"WHERE user_id = {uid}")
             data = result.fetchall()
         # no record: only cash
         if len(data) == 0:
@@ -325,8 +331,10 @@ class FREDatabase:
         for row in data:
             portfolio['symbol'].append(row['symbol'])
             portfolio['shares'].append(row['shares'])
+            portfolio['avg_cost'].append(row['avg_cost'])
             portfolio['name'].append('')
             portfolio['price'].append(0.0)
+            portfolio['pnl'].append(0.0)
             portfolio['total'].append(0.0)
             portfolio['proportion'].append(0.0)
 
@@ -336,15 +344,16 @@ class FREDatabase:
 
         return portfolio
 
-    def get_transaction(self, uid):
+    def get_transaction(self, uid: int) -> Dict[str, Union[List[str], List[float], List[int]]]:
         """
         Extract the transaction record from transactions table
         :param uid: user id
         :return: Transaction info in a dictionary
         """
-        transactions = {'symbol': [], 'price': [], 'shares': [], 'price': [], 'timestamp': []}
+        transactions = {'symbol': [], 'price': [], 'shares': [], 'timestamp': []}
 
-        result = self.engine.execute('SELECT * FROM transactions WHERE user_id=:user_id', user_id=uid)
+        result = self.engine.execute(f"SELECT symbol, price, shares, timestamp FROM transactions "
+                                     f"WHERE user_id = {uid}")
         data = result.fetchall()
         for row in data:
             transactions['symbol'].append(row['symbol'])
@@ -366,26 +375,29 @@ class FREDatabase:
         :return: None
         """
         # Update the cash
-        self.engine.execute("UPDATE users SET cash=:cash WHERE user_id=:user_id", cash=cash, user_id=uid)
+        self.engine.execute(f"UPDATE users SET cash = {cash} WHERE user_id = {uid}")
 
         # Insert the buying record into transactions table
-        self.engine.execute("INSERT INTO transactions (symbol, price, shares, timestamp, user_id) VALUES (:symbol, :price, :shares, :timestamp, :user_id)",
-                            symbol=symbol, price=price, shares=shares, timestamp=timestamp, user_id=uid)
+        self.engine.execute(f"INSERT INTO transactions (symbol, price, shares, timestamp, user_id) "
+                            f"VALUES ('{symbol}', {price}, {shares}, '{timestamp}', {uid})")
 
-        # Check position
-        result = self.engine.execute("SELECT * FROM portfolios WHERE user_id=:user_id AND symbol=:symbol", user_id=uid, symbol=symbol)
+        # Check position and cost
+        result = self.engine.execute(f"SELECT shares, avg_cost FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
         data = result.fetchall()
         # When holding same stock
         if len(data) > 0:
             existing_shares = data[0]['shares']
             # Add new shares to the existing position
             updated_shares = existing_shares + shares
-            self.engine.execute('UPDATE portfolios SET shares=:shares WHERE user_id=:user_id AND symbol=:symbol',
-                                user_id=uid, symbol=symbol, shares=updated_shares)
+            # calculate avg cost
+            existing_cost = data[0]['avg_cost']
+            updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
+            self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
+                                f"WHERE user_id = {uid} AND symbol = '{symbol}'")
         # Without holding the stock
         else:
-            self.engine.execute("INSERT INTO portfolios (user_id, shares, symbol) VALUES (:user_id, :shares, :symbol)",
-                               user_id=uid, symbol=symbol, shares=shares)
+            self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
+                                f"VALUES ({uid}, {shares}, '{symbol}',{price})")
 
     def create_sell_transaction(self, uid, new_cash, symbol, shares, new_shares, price, timestamp):
         """
@@ -400,15 +412,13 @@ class FREDatabase:
         :return: None
         """
         # Insert the selling record into transactions table
-        self.engine.execute(
-            "INSERT INTO transactions (symbol,shares,price,timestamp,user_id) VALUES (:symbol,:shares,:price,:timestamp,:user_id)",
-            symbol=symbol, shares=new_shares, price=price, timestamp=timestamp, user_id=uid)
+        self.engine.execute(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
+                            f"VALUES ('{symbol}',{new_shares},{price},'{timestamp}',{uid})")
         # If selling all holding on certain stock, delete the record in portfolio and update the cash
         if shares == 0:
-            self.engine.execute("DELETE FROM portfolios WHERE user_id=:user_id AND symbol=:symbol", symbol=symbol, user_id=uid)
-            self.engine.execute("UPDATE users SET cash=:new_cash WHERE user_id=:user_id", user_id=uid, new_cash=new_cash)
+            self.engine.execute(f"DELETE FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
         # Still remain some holding position in the account, update the portfolios table also the cash
         else:
-            self.engine.execute("UPDATE portfolios set shares=:shares WHERE user_id=:user_id AND symbol=:symbol",
-                                symbol=symbol, user_id=uid, shares=shares)
-            self.engine.execute("UPDATE users SET cash=:new_cash WHERE user_id=:user_id", user_id=uid, new_cash=new_cash)
+            self.engine.execute(f"UPDATE portfolios set shares = {shares} WHERE user_id = {uid} AND symbol = '{symbol}'")
+            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
