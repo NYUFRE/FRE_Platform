@@ -30,13 +30,6 @@ probation_testing_end_date = (dt.date(2021, 2, 19)).strftime('%Y-%m-%d')
 # probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
 
 def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
-    """
-    description:
-        Do probation test from 2020-07-01 till today
-    ---------------------------
-    return:
-        best_portfolio, spy_profit_loss, fund: Tuple[GAPortfolio, float, int]
-    """
     # Extract best portfolio's data from table best_portfolio
     best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
     best_portfolio_df = database.execute_sql_statement(best_portfolio_select)

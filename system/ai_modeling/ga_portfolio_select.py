@@ -35,17 +35,6 @@ def create_populate_tables(database, eod_market_data):
     """
 
 def extract_spy(database, start_date: str, end_date: str, include_fundamental: bool = True) -> Stock:
-    """
-    Extract SPY's data from database between start and end date
-    ------------------------------------------------------------
-    params:
-        database: 
-        start_date: str
-        end_date: str
-        include_fundamental: True if also include fundamental data; else not include
-    return:
-        spy: Stock object, with price dataframe (price_df) and fundamental dataframe (fundamental_df)
-    """
     spy = Stock()
     spy.symbol = 'spy'
 
@@ -76,16 +65,6 @@ def extract_spy(database, start_date: str, end_date: str, include_fundamental: b
     return spy 
 
 def extract_us10y(database, start_date: str, end_date: str) -> Stock:
-    """
-    Extract us10y's data from database between start and end date
-    ------------------------------------------------------------
-    params:
-        database:
-        start_date:
-        end_date:
-    return:
-        us10y: Stock Object, with price_df 
-    """
     us10y = Stock()
     us10y.symbol = 'us10y'
     # Extract data from db
@@ -103,21 +82,6 @@ def extract_us10y(database, start_date: str, end_date: str) -> Stock:
 
 
 def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutation: int, markedForParents: List[GAPortfolio], population: Dict[float, GAPortfolio]) -> List[GAPortfolio]:
-    """
-    description:
-        Do crossover and mutate; 2 parent portfolios will generate 1 child portfolio
-        child will inherit first 5 stocks of parent 1 and last 6 stocks of parent 2
-    ---------------------------
-    params:
-        num_of_parents: int, # of parents selected
-        num_of_children: int, # of children generated
-        num_of_mutation: int, # of mutation happens
-        markedForParents: List[GAPortfolio], a list of portfolios with highest score
-        population: Dict {score: portfolio}
-    ---------------------------
-    return:
-        children: List[GAPortfolio], children portfolios (metrics not calculated)
-    """
     # Generate children portfolios by crossover
     children = []
     for i in range(0, num_of_children):
@@ -142,16 +106,6 @@ def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutat
     return children
 
 def build_ga_model(database) -> GAPortfolio:
-    """
-    description:
-        Build GA Model, including prepare data, create GAPortfolio objects, crossover & mutate, calculate score
-    ---------------------------
-    params:
-        database:
-    ---------------------------
-    return:
-        best_portfolio
-    """
     modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
     modeling_testing_end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 
