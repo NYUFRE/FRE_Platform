@@ -7,87 +7,54 @@ sys.path.append('../')
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd 
 
 import datetime as dt
+from typing import Tuple
 
 from system.ai_modeling.ga_portfolio import GAPortfolio, Stock, Trade
+from system.ai_modeling.ga_portfolio_select import extract_spy, extract_us10y
 
-#database = FREDatabase()
-#eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
-
-def ga_back_test(database):
+def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
     back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
-    best_portfolio = GAPortfolio()
-
-    spy = Stock()
-    spy.symbol = 'SPY'
-
+    # Extract best portfolio's data from table best_portfolio
     best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
-    print(best_portfolio_select)
-    stock_df = database.execute_sql_statement(best_portfolio_select)
-    for index, stock_row in stock_df.iterrows():
-        stock = Stock()
-        stock.symbol = stock_row['symbol']
-        stock.sector = stock_row['sector']
-        stock.category_pct = stock_row['category_pct']
-        stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
-                        "BETWEEN \"" + back_testing_start_date + "\" AND \"" + back_testing_end_date + \
-                       "\" AND open > 0 AND close > 0 AND symbol = \'" + stock.symbol + "\';"
-        print(stock_select)
-        price_df = database.execute_sql_statement(stock_select)
-        if price_df.empty:
-            exit("back testing price_df is empty")
-        for index, trade_row in price_df.iterrows():
-            trade = Trade()
-            trade.date = trade_row['date']
-            trade.open = trade_row['open']
-            trade.high = trade_row['high']
-            trade.low = trade_row['low']
-            trade.close = trade_row['close']
-            trade.adjusted_close = trade_row['adjusted_close']
-            trade.volume = trade_row['volume']
-            stock.add_trade(trade)
+    best_portfolio_df = database.execute_sql_statement(best_portfolio_select)
+    best_portfolio_symbols = list(best_portfolio_df['symbol'])
 
-        stock.calculate_daily_return()
-        best_portfolio.stocks.append(stock)
+    # Extract stock price data from table stocks
+    stock_select = f"""
+        SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight
+        FROM stocks
+            JOIN sp500
+                ON stocks.symbol = sp500.symbol
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector
+        WHERE Date(date) BETWEEN Date('{back_testing_start_date}') AND Date('{back_testing_end_date}')
+            AND open > 0 
+            AND close > 0;
+    """
+    price_df = database.execute_sql_statement(stock_select)
 
-    best_portfolio.calculate_portfolio_daily_return()
-    best_portfolio.calculate_daily_cumulative_return(back_testing_start_date, back_testing_end_date)
+    best_portfolio = GAPortfolio()
+    best_portfolio.populate_portfolio_by_symbols(best_portfolio_symbols, price_df)  # Calculate returns
 
-    # make SPY captical in spy table
-    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) " \
-                "BETWEEN \"" + back_testing_start_date + "\" AND \"" + back_testing_end_date + \
-                "\" AND open > 0 AND close > 0 AND symbol = 'spy';"
-    print(spy_select)
-    price_df = database.execute_sql_statement(spy_select)
+    spy = extract_spy(database, back_testing_start_date, back_testing_end_date, include_fundamental=False)
 
-    for index, row in price_df.iterrows():
-        trade = Trade()
-        trade.date = row['date']
-        trade.open = row['open']
-        trade.high = row['high']
-        trade.low = row['low']
-        trade.close = row['close']
-        trade.adjusted_close = row['adjusted_close']
-        trade.volume = row['volume']
-        spy.add_trade(trade)
-
-    spy.calculate_daily_return()
-    spy.calculate_daily_cumulative_return(back_testing_start_date, back_testing_end_date)
-
+    
     print("Back Test:")
     print("best portfolio cumulative return: %4.2f%%" % (best_portfolio.cumulative_return*100))
     print("spy cumulative return: %4.2f%%" % (spy.cumulative_return*100))
     return best_portfolio, spy
 
 
-def ga_back_test_plot(database):
+def ga_back_test_plot(database) -> None:
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
-    spy_ys = list(spy.daily_cumulative_returns.values())
-    n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
+    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
+    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
+    n = len(portfolio_ys)
 
     fig, ax = plt.subplots()
     line = np.zeros(n)

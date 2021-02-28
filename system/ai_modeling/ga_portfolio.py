@@ -1,26 +1,16 @@
 import statistics
 import random
 
-#import pandas as pd
-#import numpy as np
+from typing import List, Dict, Tuple
+
+import pandas as pd
+import numpy as np
 
 # from numpy.core._multiarray_umath import ndarray
 
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
 
-#fund = 1000000
-
-#os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
-
-#if not os.environ.get("EOD_API_KEY"):
-#    raise RuntimeError("EOD_API_KEY not set")
-
-#start_date = dt.date(2010, 1, 1).strftime('%Y-%m-%d')
-#end_date = dt.datetime.today().strftime('%Y-%m-%d')
-
-#database = FREDatabase()
-#eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 
 class Trade:
@@ -167,7 +157,10 @@ class GAPortfolio:
         self.jensen_measure = 0.0
         self.cumulative_return = 0.0
 
-        self.stocks = []
+        self.symbols = []   # List[str]
+        self.weights = []   # List[float]
+
+        self.stocks = []    # list of tuple (sector, symbol, weight, name)        self.portfolio_daily_returns = {}
         self.portfolio_daily_returns = {}
         self.portfolio_daily_cumulative_returns = {}
         self.betas = {}
@@ -180,105 +173,98 @@ class GAPortfolio:
     def __repr__(self):
         return str(self.__class__) + ": " + str(self.__dict__) + "\n"
 
-    def get_stock(self, index):
+    def get_stock(self, index: int) -> Tuple[str, str, float, str]:
         return self.stocks[index]
 
-    def update_stock(self, index, stock):
+    def update_stock(self, index: int, stock: Tuple[str, str, float, str]) -> None:
         self.stocks[index] = stock
 
     def add_beta(self, date, beta):
         self.betas[date] = beta
 
-    def populate_portfolio(self, sp500_sector_list, sp500_stock_map):
-        for i in range(PORTFOLIO_NUM_OF_STOCK):
-            self.stocks.append(sp500_stock_map[sp500_sector_list[i]][random.randint(0, PORTFOLIO_NUM_OF_STOCK - 1)])
+    def populate_portfolio(self, sp500_symbol_map: Dict[str, Tuple[str, str]], sp500_sector_map: Dict[str, float]) -> None:
+        for sector, symbols in sp500_symbol_map.items():
+            symbol, name = symbols[random.randint(0, len(symbols)-1)]
+            weight = sp500_sector_map[sector]
+            self.stocks.append((sector, symbol, weight, name))
+        self.stocks.sort()  # Sort the list according to sectors
 
-    def calculate_portfolio_daily_returns(self, sp500_sector_map):
-        self.portfolio_daily_returns = self.stocks[0].daily_returns
-        stock_weight = sp500_sector_map[self.stocks[0].sector]
-        self.portfolio_daily_returns.update(
-            (date, daily_return * stock_weight) for date, daily_return in self.portfolio_daily_returns.items())
-        for i in range(1, PORTFOLIO_NUM_OF_STOCK):
-            stock_weight = sp500_sector_map[self.stocks[i].sector]
-            for date, daily_return in self.stocks[i].daily_returns.items():
-                if date not in self.portfolio_daily_returns.keys():
-                    self.portfolio_daily_returns[date] = 0
-                self.portfolio_daily_returns[date] += stock_weight * self.stocks[i].daily_returns[date]
+    def calculate_portfolio_return(self, price_df: pd.DataFrame) -> None:
+        # Keep only data of stocks in the portfolio
+        select_query = ' or '.join(f"symbol == '{val[1]}'" for val in self.stocks)
+        self.price_df = price_df.query(select_query)      
+        # Calculate returns
+        self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
+        self.portfolio_daily_returns = self.price_df.groupby('date')['weighted_ret'].sum()
+        self.expected_daily_return = self.portfolio_daily_returns.mean()
+        self.volatility = self.portfolio_daily_returns.std()
 
-    def calculate_portfolio_daily_return(self):
-        self.portfolio_daily_returns = self.stocks[0].daily_returns
-        stock_weight = self.stocks[0].category_pct
-        self.portfolio_daily_returns.update(
-            (date, daily_return * stock_weight) for date, daily_return in self.portfolio_daily_returns.items())
-        for i in range(1, PORTFOLIO_NUM_OF_STOCK):
-            stock_weight = self.stocks[i].category_pct
-            for date, daily_return in self.stocks[i].daily_returns.items():
-                if date not in self.portfolio_daily_returns.keys():
-                    self.portfolio_daily_returns[date] = 0
-                self.portfolio_daily_returns[date] += stock_weight * self.stocks[i].daily_returns[date]
+    def populate_portfolio_by_symbols(self, symbols: List[str], price_df: pd.DataFrame) -> None:
+        # Keep only portfolio stocks' data
+        select_query = ' or '.join(f"symbol == '{symbol}'" for symbol in symbols)
+        self.price_df = price_df.query(select_query) 
 
-    def calculate_portfolio_daily_beta(self, spy_daily_returns, daily_risk_free_returns):
-        for date, daily_return in self.portfolio_daily_returns.items():
-            if date in daily_risk_free_returns.keys() and date in daily_risk_free_returns.keys():
-                beta = abs((daily_return - daily_risk_free_returns[date]) / (
-                            spy_daily_returns[date] - daily_risk_free_returns[date]))
-                self.add_beta(date, beta)
+        # Calculate stocks' daily return
+        self.price_df['dailyret'] = self.price_df.groupby('symbol')['close'].pct_change()
+        self.price_df['dailyret'].fillna(self.price_df['close']/self.price_df['open']-1.0, inplace=True)
+        self.price_df.set_index('date', inplace=True)
 
-    def calculate_expected_beta(self):
-        daily_betas = self.betas.values()
-        self.expected_beta = sum(daily_betas) / len(daily_betas)
+        # Calculate portoflio daily return
+        self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
+        self.portfolio_daily_returns = self.price_df.groupby('date')['weighted_ret'].sum()
+        self.portfolio_daily_cumulative_returns = (self.portfolio_daily_returns + 1.0).cumprod() - 1.0
+        self.cumulative_return = self.portfolio_daily_cumulative_returns[-1]  # last day's cumulative return
 
-    def calculate_expected_return(self):
-        self.expected_daily_return = sum(self.portfolio_daily_returns.values()) / len(
-            self.portfolio_daily_returns.values())
+    def calculate_expected_beta(self, spy_df: pd.DataFrame) -> None:
+        df = pd.merge(pd.DataFrame(self.portfolio_daily_returns), spy_df, on = 'date', how = 'inner')
+        self.expected_beta = df['weighted_ret'].cov(df['spy_dailyret']) / df['spy_dailyret'].var()
+        
 
-    def calculate_volatility(self):
-        self.volatility = statistics.stdev(self.portfolio_daily_returns.values())
+    def populate_portfolio_fundamentals(self, fundamental_df: pd.DataFrame) -> None:
+        select_query = ' or '.join("symbol == '" + val[1] + "'" for val in self.stocks)
+        self.fundamental_df = fundamental_df.query(select_query)      
 
-    def calculate_sharpe_ratio(self, us10y):
-        self.sharpe_ratio = (self.expected_daily_return - us10y.expected_daily_return) / self.volatility
+    def calculate_sharpe_ratio(self, us10y: Stock) -> None:
+        # self.sharpe_ratio = (self.expected_daily_return - us10y.expected_daily_return) / self.volatility
+        self.sharpe_ratio = (self.expected_daily_return * 252 - us10y.expected_daily_return) / (self.volatility * np.sqrt(252)) # annualized
 
-    def calculate_treynor_measure(self, us10y):
-        self.treynor_measure = (self.expected_daily_return - us10y.expected_daily_return) / self.expected_beta
+    def calculate_treynor_measure(self, us10y: Stock) -> None:
+        # self.treynor_measure = (self.expected_daily_return - us10y.expected_daily_return) / self.expected_beta
+        self.treynor_measure = (self.expected_daily_return * 252 - us10y.expected_daily_return) / self.expected_beta
 
-    def calculate_jensen_measure(self, spy, us10y):
-        benchmark_return = us10y.expected_daily_return + spy.fundamental.beta * (
-                    spy.expected_daily_return - us10y.expected_daily_return)
-        self.jensen_measure = self.expected_daily_return - benchmark_return
+    def calculate_jensen_measure(self, spy: Stock, us10y: Stock) -> None:
+        #TODO make sense? what is spy.fundamental.beta? Wrong?
+        # r = rf + stock_beta * (rm - rf) 
+        # benchmark_return = us10y.expected_daily_return + spy.fundamental.beta * (
+        #             spy.expected_daily_return - us10y.expected_daily_return)
+        # benchmark_return = us10y.expected_daily_return + self.expected_beta * (
+        #              spy.expected_daily_return - us10y.expected_daily_return)
+        # self.jensen_measure = self.expected_daily_return - benchmark_return
+        benchmark_return = us10y.expected_daily_return + self.expected_beta * (
+                     spy.expected_daily_return * 252 - us10y.expected_daily_return)
+        self.jensen_measure = self.expected_daily_return * 252 - benchmark_return   # Annualize
 
-    def calculate_yield(self, sp500_sector_map):
-        for i in range(PORTFOLIO_NUM_OF_STOCK):
-            self.portfolio_yield += sp500_sector_map[self.stocks[i].sector] * self.stocks[i].fundamental.dividend_yield
+    def calculate_yield(self) -> None:
+        self.portfolio_yield = sum(self.fundamental_df['dividend_yield'] * self.fundamental_df['weight'])
 
-    def calculate_beta_and_trend(self, sp500_sector_map):
-        for i in range(len(self.stocks)):
-            self.beta += sp500_sector_map[self.stocks[i].sector] * self.stocks[i].fundamental.beta
-            if self.stocks[i].fundamental.ma_200days < self.stocks[i].fundamental.ma_50days:
-                self.trend += sp500_sector_map[self.stocks[i].sector]
-            else:
-                self.trend -= sp500_sector_map[self.stocks[i].sector]
+    def calculate_beta_and_trend(self) -> None:
+        self.beta = sum(self.fundamental_df['beta'] * self.fundamental_df['weight'])
+        self.fundamental_df['indicator'] = self.fundamental_df.apply(lambda row : 1 if row['ma_200days'] < row['ma_50days'] else -1, axis=1)
+        self.trend = sum(self.fundamental_df['indicator'] * self.fundamental_df['weight'])
 
-    def calculate_score(self, spy):
-        spy_yield = spy.fundamental.dividend_yield
-        spy_beta = spy.fundamental.beta
+
+    def calculate_score(self, spy: Stock) -> None:
+        spy_yield = spy.fundamental_df['dividend_yield'].iloc[0]
+        spy_beta = spy.fundamental_df['beta'].iloc[0]
         spy_volatility = spy.volatility
         self.score = (self.portfolio_yield - spy_yield) + (spy_beta - self.beta) + self.trend + \
                      self.volatility / spy_volatility + \
                      self.sharpe_ratio + self.treynor_measure + self.jensen_measure
-    '''
-    def calculate_cumulative_return(self, start_date, end_date):
-        for date, daily_return in self.portfolio_daily_returns.items():
-            if date >= start_date and date <= end_date:
-                self.cumulative_return += daily_return
-    '''
-
-    def calculate_daily_cumulative_return(self, start_date, end_date):
-        self.cumulative_return = 0
-        for date, daily_return in self.portfolio_daily_returns.items():
-            if date >= start_date and date <= end_date:
-                self.portfolio_daily_cumulative_returns[date] = self.portfolio_daily_returns[date] + self.cumulative_return
-                self.cumulative_return = self.portfolio_daily_cumulative_returns[date]
-
-    def calculate_profit_loss(self):
-        for stock in self.stocks:
-            self.profit_loss += stock.probation_test_trade.profit_loss
+    
+    def calculate_daily_cumulative_return(self, start_date: str, end_date: str) -> None:
+        df = self.price_df.query("date >= '" + start_date + "' and date <= '" + end_date + "'")
+        self.cumulative_return = ((df['weighted_ret'] + 1.0).cumprod() - 1.0).iloc[-1]
+        
+    # def calculate_profit_loss(self):
+    #     for stock in self.stocks:
+    #         self.profit_loss += stock.probation_test_trade.profit_loss
