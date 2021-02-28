@@ -19,7 +19,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'FRE Platform'
-copyright = '2021, Song Tang, Qijia Lou, Zicheng He, Albert Lee, Xiao Liu, Koda Song, Jiaxin Zhang'
+copyright = '2021, NYU FRE Department'
 author = 'Song Tang, Qijia Lou, Zicheng He, Albert Lee, Xiao Liu, Koda Song, Jiaxin Zhang'
 
 # The full version, including alpha/beta/rc tags

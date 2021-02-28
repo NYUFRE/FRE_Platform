@@ -42,6 +42,14 @@ from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_ba
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    This function is for new user registration.
+    It will take user inputs: email, firstname, lastname and password,
+    and create a new user in fre_database.
+    The new users are required to confirm their email addresses
+    through the links sent to their email addresses.\n
+    :return: register.html
+    """
     form = RegisterForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -62,6 +70,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    This function is for user to login FRE platform.\n
+    :return: login.html
+    """
     form = LoginForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
