@@ -33,8 +33,7 @@ class IEXMarketData:
                     data["low"] = data["week52Low"]
                 if data["high"] is None:
                     data["high"] = data["week52High"]
-                if "iexBidPrice" in data.keys() and data["iexBidPrice"] is not None and \
-                        "iexAskPrice" in data.keys() and data["iexAskPrice"] is not None:
+                if data.get("iexBidPrice", None) is not None and data.get("iexAskPrice", None) is not None:
                     # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     # BidPrice & Size exists
@@ -72,7 +71,7 @@ class IEXMarketData:
     def get_price(self, symbol: str):
         price = {}
         error = ""
-        url = self.url_common + symbol + "/quote?token=" + self.api_token
+        url = f"{self.url_common}{symbol}/quote?token={self.api_token}"
         print(url)
         try:
             with urllib.request.urlopen(url) as req:
@@ -99,31 +98,31 @@ class EODMarketData:
         self.database = database
 
     def get_daily_data(self, symbol: str, start: str, end: str, category: str):
-        symbolURL = str(symbol) + '.' + category + '?'
-        startURL = 'from=' + str(start)
-        endURL = 'to=' + str(end)
-        apiKeyURL = 'api_token=' + self.api_token
-        completeURL = self.url_common + 'eod/' + symbolURL + startURL + '&' + endURL + '&' + apiKeyURL + '&period=d&fmt=json'
+        symbolURL = f"{symbol}.{category}?"
+        startURL = f'from={start}'
+        endURL = f'to={end}'
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}eod/{symbolURL}{startURL}&{endURL}&{apiKeyURL}&period=d&fmt=json"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data
 
     def get_fundamental_data(self, symbol: str, category: str):
-        symbolURL = str(symbol) + '.' + category + '?'
-        apiKeyURL = 'api_token=' + self.api_token
-        completeURL = self.url_common + 'fundamentals/' + symbolURL + '&' + apiKeyURL
+        symbolURL = f"{symbol}.{category}?"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}fundamentals/{symbolURL}&{apiKeyURL}"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data
     
     def get_intraday_data(self, symbol: str, startTime: str ='1585800000', endTime: str ='1585886400', category: str ='US'):
-        symbolURL = str(symbol) + '.' + category + '?'
-        startURL = "from=" + str(startTime)
-        endURL = "to=" + str(endTime)
-        apiKeyURL = "api_token=" + self.api_token
-        completeURL = self.url_common + 'intraday/' + symbolURL + startURL + '&' + endURL + '&' + apiKeyURL + '&period=d&fmt=json'
+        symbolURL = f"{symbol}.{category}?"
+        startURL = f"from={startTime}"
+        endURL = f"to={endTime}"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}intraday/{symbolURL}{startURL}&{endURL}&{apiKeyURL}&period=d&fmt=json"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)

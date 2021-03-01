@@ -160,7 +160,7 @@ def portfolio():
         # PnL Bar_plot
         trace2 = go.Bar(x=portfolio['symbol'], y=portfolio['pnl'], marker={'color': px.colors.qualitative.Bold},
                         width=0.5, opacity=0.85, text=portfolio['pnl'], textposition='auto', texttemplate='%{text:.2f}')
-        layout2 = dict(title="<b>Portfolio Holdings</b>", xaxis=dict(title="Symbol"), yaxis=dict(title="PnL"), )
+        layout2 = dict(title="<b>Portfolio Unrealized PnL</b>", xaxis=dict(title="Symbol"), yaxis=dict(title="PnL"), )
         pnl_plot = [trace2]
         fig = go.Figure(data=pnl_plot, layout=layout2)
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -255,12 +255,12 @@ def buy():
                 return render_template("buy.html")
             # When input price is lower than best ask, prompt out info
             if price < best_ask:
-                flash('Order Rejected! Your price is lower than the best Offer price at '+usd(best_ask), 'error')
+                flash(f'Order Rejected! Your price is lower than the best Offer price at {usd(best_ask)}', 'error')
                 return render_template("buy.html")
             # When input price is higher than best ask, prompt out info and buy at best ask
             if price >= best_ask:
-                flash('Order Executed. Your price is higher than the best Ask price at ' + usd(best_ask) + '.'
-                      'Now you bought ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_ask), 'Notice')
+                flash(f'Order Executed. Your price is higher than the best Ask price at {usd(best_ask)}.'
+                      f'Now you bought {shares} share(s) of {symbol} at {usd(best_ask)}.', 'Notice')
                 price = best_ask
         uid = session['user_id']
         user = database.get_user('', uid)
@@ -329,12 +329,12 @@ def sell():
                 return render_template("sell.html")
             # When input price is higher than best bid, prompt out info
             if price > best_bid:
-                flash('Order Rejected! Your price is higher than the best Bid price at ' + usd(best_bid), 'error')
+                flash(f'Order Rejected! Your price is higher than the best Bid price at {usd(best_bid)}.', 'error')
                 return render_template("sell.html")
             # When input price is lower than best bid, prompt out info and sell at best bid
             if price <= best_bid:
-                flash('Order Executed. Your price is lower than the best Bid price at ' + usd(best_bid) + '.'
-                      'Now you sold ' + str(shares) + ' share(s) of ' + symbol + ' at ' + usd(best_bid), 'Notice')
+                flash(f'Order Executed. Your price is lower than the best Bid price at {usd(best_bid)}.'
+                      f'Now you sold {shares} share(s) of {symbol} at {usd(best_bid)}.', 'Notice')
                 price = best_bid
         uid = session['user_id']
         # Get position info
