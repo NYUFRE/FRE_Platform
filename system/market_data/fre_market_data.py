@@ -24,20 +24,44 @@ class IEXMarketData:
                     return quote, error
                 # print(data)
                 quote["symbol"] = symbol
+                quote['Market'] = "Open" if data["isUSMarketOpen"] else "Closed"
+                # When latestVolume is None -> use previousVolume
+                if data["latestVolume"] is None:
+                    data["latestVolume"] = data["previousVolume"]
+                # When high, low are None -> Use week52Low and week52High
+                if data["low"] is None:
+                    data["low"] = data["week52Low"]
+                if data["high"] is None:
+                    data["high"] = data["week52High"]
+                if data.get("iexBidPrice", None) is not None and data.get("iexAskPrice", None) is not None:
+                    # print(data)
+                    random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
+                    # BidPrice & Size exists
+                    if data["iexBidPrice"] != 0:
+                        quote["bidPrice"] = data["iexBidPrice"]
+                        quote["bidSize"] = data["iexBidSize"]
+                    # Bid Price is 0 in Market Closed, generate bid price and size
+                    elif quote['Market'] == "Closed":
+                        quote["bidPrice"] = data["low"]
+                        quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                    # AskPrice & Size exists
+                    if data["iexAskPrice"] != 0:
+                        quote["askPrice"] = data["iexAskPrice"]
+                        quote["askSize"] = data["iexAskSize"]
+                    # Ask Price is 0 in Market Closed, generate ask price and size
+                    elif quote['Market'] == "Closed":
+                        quote["askPrice"] = data["high"]
+                        quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
 
-                if "iexBidPrice" in data.keys() and data["iexBidPrice"] != None and \
-                        "iexAskPrice" in data.keys() and data["iexAskPrice"] != None:
-                    quote["bidPrice"] = data["iexBidPrice"]
-                    quote["bidSize"] = data["iexBidSize"]
-                    quote["askPrice"] = data["iexAskPrice"]
-                    quote["askSize"] = data["iexAskSize"]
                 else:
+                    # When data form not containing keys, generate price and size
+                    # print('Not right form data.')
+                    # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
-                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"]), -2)
+                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
                     quote["askPrice"] = data["high"]
-                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"]), -2)
-
+                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
             return quote, error
 
         except(OSError, Exception):
@@ -47,7 +71,7 @@ class IEXMarketData:
     def get_price(self, symbol: str):
         price = {}
         error = ""
-        url = self.url_common + symbol + "/quote?token=" + self.api_token
+        url = f"{self.url_common}{symbol}/quote?token={self.api_token}"
         print(url)
         try:
             with urllib.request.urlopen(url) as req:
@@ -74,31 +98,31 @@ class EODMarketData:
         self.database = database
 
     def get_daily_data(self, symbol: str, start: str, end: str, category: str):
-        symbolURL = str(symbol) + '.' + category + '?'
-        startURL = 'from=' + str(start)
-        endURL = 'to=' + str(end)
-        apiKeyURL = 'api_token=' + self.api_token
-        completeURL = self.url_common + 'eod/' + symbolURL + startURL + '&' + endURL + '&' + apiKeyURL + '&period=d&fmt=json'
+        symbolURL = f"{symbol}.{category}?"
+        startURL = f'from={start}'
+        endURL = f'to={end}'
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}eod/{symbolURL}{startURL}&{endURL}&{apiKeyURL}&period=d&fmt=json"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data
 
     def get_fundamental_data(self, symbol: str, category: str):
-        symbolURL = str(symbol) + '.' + category + '?'
-        apiKeyURL = 'api_token=' + self.api_token
-        completeURL = self.url_common + 'fundamentals/' + symbolURL + '&' + apiKeyURL
+        symbolURL = f"{symbol}.{category}?"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}fundamentals/{symbolURL}&{apiKeyURL}"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data
     
     def get_intraday_data(self, symbol: str, startTime: str ='1585800000', endTime: str ='1585886400', category: str ='US'):
-        symbolURL = str(symbol) + '.' + category + '?'
-        startURL = "from=" + str(startTime)
-        endURL = "to=" + str(endTime)
-        apiKeyURL = "api_token=" + self.api_token
-        completeURL = self.url_common + 'intraday/' + symbolURL + startURL + '&' + endURL + '&' + apiKeyURL + '&period=d&fmt=json'
+        symbolURL = f"{symbol}.{category}?"
+        startURL = f"from={startTime}"
+        endURL = f"to={endTime}"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}intraday/{symbolURL}{startURL}&{endURL}&{apiKeyURL}&period=d&fmt=json"
         print(completeURL)
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
@@ -125,7 +149,7 @@ class EODMarketData:
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
-    def populate_intraday_stock_data(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str, category: str = 'US', 
+    def populate_intraday_stock_data(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str, category: str = 'US',
                                     action: str = 'append', output_file: TextIOWrapper = sys.stderr) -> None:
         """
         Retrieve stock(s)'s intraday historical data and store the data into a desired table.
