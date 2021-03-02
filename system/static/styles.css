@@ -68,3 +68,15 @@ main img
   background-color: lightyellow;
   color: black;
 }
+
+#button-csv{
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+    outline: none;
+}
+
+#button-csv:hover{
+    background-color: #166128;
+    border-color: #166128;
+}

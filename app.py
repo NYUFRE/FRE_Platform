@@ -48,6 +48,14 @@ from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_ba
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    This function is for new user registration.
+    It will take user inputs: email, firstname, lastname and password,
+    and create a new user in fre_database.
+    The new users are required to confirm their email addresses
+    through the links sent to their email addresses.\n
+    :return: register.html
+    """
     form = RegisterForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -68,6 +76,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    This function is for user to login FRE platform.\n
+    :return: login.html
+    """
     form = LoginForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -591,21 +603,26 @@ def ai_trading():
 @app.route('/ai_build_model')
 @login_required
 def ai_build_model():
-    database.drop_table('best_portfolio')
+    # database.drop_table('best_portfolio') 
+    # While drop the table, table name "best_portfolio" still in metadata
+    # herefore, everytime only clear table instead of drop it.
+
     table_list = ['best_portfolio']
     database.create_table(table_list)
+    database.clear_table(table_list)
     best_portfolio = build_ga_model(database)
     print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
           ((best_portfolio.portfolio_yield * 100), best_portfolio.beta, (best_portfolio.volatility * 100),
            (best_portfolio.expected_daily_return * 100)))
     print("trend: %8.4f, sharpe_ratio:%8.4f, score:%8.4f" %
           (best_portfolio.trend, best_portfolio.sharpe_ratio, best_portfolio.score))
-
+    # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock.symbol, stock.name, stock.sector, stock.category_pct)
-        stocks.append((stock.symbol, stock.name, stock.sector, str(round(stock.category_pct * 100, 4))))
+        print(stock)    # (symbol, name, sector,weight)
+        stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
+    # Show portfolio's score metrics
     portfolio_yield = str(round(best_portfolio.portfolio_yield * 100, 4)) + '%'
     beta = str(round(best_portfolio.beta, 4))
     volatility = str(round(best_portfolio.volatility * 100, 4)) + '%'
@@ -623,9 +640,9 @@ def ai_build_model():
 def ai_back_test():
     global portfolio_ys, spy_ys, n
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns.values())
-    spy_ys = list(spy.daily_cumulative_returns.values())
-    n = len(best_portfolio.portfolio_daily_cumulative_returns.keys())
+    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
+    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
+    n = len(portfolio_ys)
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -665,12 +682,13 @@ def ai_back_test_plot():
 @app.route('/ai_probation_test')
 @login_required
 def ai_probation_test():
-    best_portfolio, spy, cash = ga_probation_test(database)
+    best_portfolio, spy_profit_loss, cash = ga_probation_test(database)
     portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
-    spy_profit = "{:.2f}".format((float(spy.probation_test_trade.profit_loss / cash) * 100))
+    spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
-    length = len(best_portfolio.stocks)
-    return render_template('ai_probation_test.html', stock_list=best_portfolio.stocks,
+    stock_list = [val[0] for val in best_portfolio.stocks]
+    length = len(stock_list)
+    return render_template('ai_probation_test.html', stock_list=stock_list,
                            portfolio_profit=portfolio_profit, spy_profit=spy_profit,
                            profit=usd(profit), length=length)
 
@@ -700,12 +718,13 @@ def start_server_process():
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
-    client_config.server_tombstone = False
-    server_thread = threading.Thread(target=(start_server_process))
-    server_thread.start()
+    if not client_config.server_ready:
+        client_config.server_tombstone = False
+        server_thread = threading.Thread(target=(start_server_process))
+        server_thread.start()
 
-    while not client_config.server_ready:
-        pass
+        while not client_config.server_ready:
+            pass
 
     return render_template("sim_launch_server.html")
 
@@ -713,88 +732,95 @@ def sim_server_up():
 @app.route('/sim_server_down')
 @login_required
 def sim_server_down():
-    try:
-        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        status = client_config.client_socket.connect_ex(client_config.ADDR)
-        if status != 0:
-            return error_page("Fail in connecting to server")
+    if client_config.server_ready: 
+        try:
+            client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+            status = client_config.client_socket.connect_ex(client_config.ADDR)
+            if status != 0:
+                return error_page("Fail in connecting to server")
 
-        client_config.receiver_stop = False
-        client_config.server_tombstone = True
-        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-        client_config.client_receiver.start()
+            client_config.receiver_stop = False
+            client_config.server_tombstone = True
+            client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+            client_config.client_receiver.start()
 
-        set_event(trading_event)
-        client_packet = Packet()
-        send_msg(server_down(client_packet))
-        wait_for_an_event(trading_event)
-        msg_type, msg_data = trading_queue.get()
-        print(msg_data)
-        if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
-            time.sleep(2)
-            print("Server down confirmed!")
-            client_config.client_socket.close()
+            set_event(trading_event)
+            client_packet = Packet()
+            send_msg(server_down(client_packet))
+            wait_for_an_event(trading_event)
+            msg_type, msg_data = trading_queue.get()
+            print(msg_data)
+            if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
+                time.sleep(2)
+                print("Server down confirmed!")
+                client_config.client_socket.close()
 
-        existing_py_process = get_python_pid()
+            existing_py_process = get_python_pid()
 
-        for item in existing_py_process:
-            if item not in process_list:
-                os.kill(item, 9)
+            for item in existing_py_process:
+                if item not in process_list:
+                    os.kill(item, 9)
 
-        client_config.server_ready = False
-        client_config.client_thread_started = False
-        return render_template("sim_server_down.html")
-    except(OSError, Exception):
-        return render_template("sim_server_down.html")
+            client_config.server_ready = False
+            client_config.client_thread_started = False
+            
+        except(OSError, Exception):
+            return render_template("sim_server_down.html")
+
+    return render_template("sim_server_down.html")
 
 
 @app.route('/sim_auto_trading')
 @login_required
 def sim_auto_trading():
-    if not client_config.client_thread_started:
-        client_config.client_thread_started = True
-        client_config.receiver_stop = False
+    if client_config.server_ready:
+        if not client_config.client_thread_started:
+            client_config.client_thread_started = True
+            client_config.receiver_stop = False
 
-        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        status = client_config.client_socket.connect_ex(client_config.ADDR)
-        if status != 0:
-            return error_page("Fail in connecting to server")
+            client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+            status = client_config.client_socket.connect_ex(client_config.ADDR)
+            if status != 0:
+                return error_page("Fail in connecting to server")
 
-        client_config.client_up = True
-        client_config.orders = []
-        client_packet = Packet()
-        msg_data = {}
+            client_config.client_up = True
+            client_config.orders = []
+            client_packet = Packet()
+            msg_data = {}
 
-        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-        client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+            client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+            client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
 
-        client_config.client_receiver.start()
-        client_config.client_thread.start()
+            client_config.client_receiver.start()
+            client_config.client_thread.start()
 
-    while not client_config.trade_complete:
-        pass
+        while not client_config.trade_complete:
+            pass
 
-    if client_config.client_up == True:
-        client_config.client_up = False
-        client_packet = Packet()
-        msg_data = {}
-        set_event(trading_event)
-        send_msg(quit_connection(client_packet))
-        wait_for_an_event(trading_event)
-        msg_type, msg_data = trading_queue.get()
-        if msg_type != PacketTypes.END_RSP.value:
-            client_config.orders.append(msg_data)
+        if client_config.client_up:
+            client_config.client_up = False
+            client_packet = Packet()
+            msg_data = {}
+            set_event(trading_event)
+            send_msg(quit_connection(client_packet))
+            wait_for_an_event(trading_event)
             msg_type, msg_data = trading_queue.get()
-        trading_queue.task_done()
-        print(msg_data)
-        client_config.client_thread_started = False
-        # client_config.receiver_stop = True
-        client_config.trade_complete = False
-        client_config.client_socket.close()
+            if msg_type != PacketTypes.END_RSP.value:
+                client_config.orders.append(msg_data)
+                msg_type, msg_data = trading_queue.get()
+            trading_queue.task_done()
+            print(msg_data)
+            client_config.client_thread_started = False
+            # client_config.receiver_stop = True
+            client_config.trade_complete = False
+            client_config.client_socket.close()
 
-    return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+
+    else:
+        return render_template("error_auto_trading.html")
 
 
 # Market Data

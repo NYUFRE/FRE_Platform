@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+		<li class="nav-item">
+            <a class="nav-link" href="/sim_server_up">Launch Server</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/sim_auto_trading">Auto Trading</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/sim_server_down">Stop Server</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Please launch server first!</strong></h3>
+	<hr>
+</main>
+{% endblock %}
