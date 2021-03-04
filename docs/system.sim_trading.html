@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>system.sim_trading package &#8212; FRE Platform 1.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="system.stat_arb package" href="system.stat_arb.html" />
+    <link rel="prev" title="system.portfolio package" href="system.portfolio.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.stat_arb.html" title="system.stat_arb package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.portfolio.html" title="system.portfolio package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" accesskey="U">system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.sim_trading package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-sim-trading-package">
+<h1>system.sim_trading package<a class="headerlink" href="#system-sim-trading-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-system.sim_trading.client">
+<span id="system-sim-trading-client-module"></span><h2>system.sim_trading.client module<a class="headerlink" href="#module-system.sim_trading.client" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="system.sim_trading.client.client_receive">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">client_receive</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.client_receive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.enter_a_new_order">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">enter_a_new_order</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qty</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.enter_a_new_order" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.get_client_list">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">get_client_list</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.get_client_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.get_market_status">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">get_market_status</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.get_market_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.get_order_book">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">get_order_book</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.get_order_book" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.get_response">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">get_response</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.get_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.get_stock_list">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">get_stock_list</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.get_stock_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.join_trading_network">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">join_trading_network</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.join_trading_network" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.logon">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">logon</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbols</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.logon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.quit_connection">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">quit_connection</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.quit_connection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.send_msg">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">send_msg</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.send_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.server_down">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">server_down</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_packet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.server_down" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.set_event">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">set_event</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.set_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.sim_trading.client.wait_for_an_event">
+<code class="sig-prename descclassname"><span class="pre">system.sim_trading.client.</span></code><code class="sig-name descname"><span class="pre">wait_for_an_event</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.client.wait_for_an_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-system.sim_trading.network">
+<span id="system-sim-trading-network-module"></span><h2>system.sim_trading.network module<a class="headerlink" href="#module-system.sim_trading.network" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.sim_trading.network.Packet">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.sim_trading.network.</span></code><code class="sig-name descname"><span class="pre">Packet</span></code><a class="headerlink" href="#system.sim_trading.network.Packet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="system.sim_trading.network.Packet.deserialize">
+<code class="sig-name descname"><span class="pre">deserialize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.network.Packet.deserialize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.sim_trading.network.Packet.serialize">
+<code class="sig-name descname"><span class="pre">serialize</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.network.Packet.serialize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="system.sim_trading.network.PacketTypes">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.sim_trading.network.</span></code><code class="sig-name descname"><span class="pre">PacketTypes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.sim_trading.network.PacketTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.BOOK_INQUIRY_REQ">
+<code class="sig-name descname"><span class="pre">BOOK_INQUIRY_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">9</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.BOOK_INQUIRY_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.BOOK_INQUIRY_RSP">
+<code class="sig-name descname"><span class="pre">BOOK_INQUIRY_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">10</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.BOOK_INQUIRY_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.CLIENT_LIST_REQ">
+<code class="sig-name descname"><span class="pre">CLIENT_LIST_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.CLIENT_LIST_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.CLIENT_LIST_RSP">
+<code class="sig-name descname"><span class="pre">CLIENT_LIST_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">4</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.CLIENT_LIST_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.CONNECTION_NONE">
+<code class="sig-name descname"><span class="pre">CONNECTION_NONE</span></code><em class="property"> <span class="pre">=</span> <span class="pre">0</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.CONNECTION_NONE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.CONNECTION_REQ">
+<code class="sig-name descname"><span class="pre">CONNECTION_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.CONNECTION_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.CONNECTION_RSP">
+<code class="sig-name descname"><span class="pre">CONNECTION_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.CONNECTION_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.END_REQ">
+<code class="sig-name descname"><span class="pre">END_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">15</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.END_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.END_RSP">
+<code class="sig-name descname"><span class="pre">END_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">16</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.END_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.MARKET_STATUS_REQ">
+<code class="sig-name descname"><span class="pre">MARKET_STATUS_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">13</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.MARKET_STATUS_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.MARKET_STATUS_RSP">
+<code class="sig-name descname"><span class="pre">MARKET_STATUS_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">14</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.MARKET_STATUS_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.NEW_ORDER_REQ">
+<code class="sig-name descname"><span class="pre">NEW_ORDER_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">11</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.NEW_ORDER_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.NEW_ORDER_RSP">
+<code class="sig-name descname"><span class="pre">NEW_ORDER_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">12</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.NEW_ORDER_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.SERVER_DOWN_REQ">
+<code class="sig-name descname"><span class="pre">SERVER_DOWN_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">17</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.SERVER_DOWN_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.SERVER_DOWN_RSP">
+<code class="sig-name descname"><span class="pre">SERVER_DOWN_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">18</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.SERVER_DOWN_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.STOCK_LIST_REQ">
+<code class="sig-name descname"><span class="pre">STOCK_LIST_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">5</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.STOCK_LIST_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.STOCK_LIST_RSP">
+<code class="sig-name descname"><span class="pre">STOCK_LIST_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">6</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.STOCK_LIST_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.STOCK_REQ">
+<code class="sig-name descname"><span class="pre">STOCK_REQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">7</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.STOCK_REQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.sim_trading.network.PacketTypes.STOCK_RSP">
+<code class="sig-name descname"><span class="pre">STOCK_RSP</span></code><em class="property"> <span class="pre">=</span> <span class="pre">8</span></em><a class="headerlink" href="#system.sim_trading.network.PacketTypes.STOCK_RSP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.sim_trading">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.sim_trading" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">system.sim_trading package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-system.sim_trading.client">system.sim_trading.client module</a></li>
+<li><a class="reference internal" href="#module-system.sim_trading.network">system.sim_trading.network module</a></li>
+<li><a class="reference internal" href="#module-system.sim_trading">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.portfolio.html"
+                        title="previous chapter">system.portfolio package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="system.stat_arb.html"
+                        title="next chapter">system.stat_arb package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/system.sim_trading.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.stat_arb.html" title="system.stat_arb package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="system.portfolio.html" title="system.portfolio package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" >system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.sim_trading package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, NYU FRE Department.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.0.
+    </div>
+  </body>
+</html>
