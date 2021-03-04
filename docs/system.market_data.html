@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>system.market_data package &#8212; FRE Platform 1.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="system.portfolio package" href="system.portfolio.html" />
+    <link rel="prev" title="system.database package" href="system.database.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.portfolio.html" title="system.portfolio package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.database.html" title="system.database package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" accesskey="U">system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.market_data package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-market-data-package">
+<h1>system.market_data package<a class="headerlink" href="#system-market-data-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-system.market_data.fre_market_data">
+<span id="system-market-data-fre-market-data-module"></span><h2>system.market_data.fre_market_data module<a class="headerlink" href="#module-system.market_data.fre_market_data" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.market_data.fre_market_data.EODMarketData">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.market_data.fre_market_data.</span></code><code class="sig-name descname"><span class="pre">EODMarketData</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.get_daily_data">
+<code class="sig-name descname"><span class="pre">get_daily_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.get_daily_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.get_fundamental_data">
+<code class="sig-name descname"><span class="pre">get_fundamental_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.get_fundamental_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.get_intraday_data">
+<code class="sig-name descname"><span class="pre">get_intraday_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startTime</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'1585800000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endTime</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'1585886400'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'US'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.get_intraday_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.populate_fundamental_data">
+<code class="sig-name descname"><span class="pre">populate_fundamental_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tickers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.populate_fundamental_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve fundamental data and store data into table: “fundamentals”
+:param tickers: a list of tickers
+:param category: a string, should be ‘US’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.populate_intraday_stock_data">
+<code class="sig-name descname"><span class="pre">populate_intraday_stock_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">tickers:</span> <span class="pre">Collection[str],</span> <span class="pre">table_name:</span> <span class="pre">str,</span> <span class="pre">start_date:</span> <span class="pre">str,</span> <span class="pre">end_date:</span> <span class="pre">str,</span> <span class="pre">category:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'US',</span> <span class="pre">action:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'append',</span> <span class="pre">output_file:</span> <span class="pre">_io.TextIOWrapper</span> <span class="pre">=</span> <span class="pre">&lt;system.utility.helpers.FREWriter</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.populate_intraday_stock_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve stock(s)’s intraday historical data and store the data into a desired table.
+:param tickers: a list of ticker(s)
+:param table_name: a string of table name (only one table)
+:param start_date: string (‘%Y-%m-%d’)
+:param end_date: string (‘%Y-%m-%d’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.populate_sp500_data">
+<code class="sig-name descname"><span class="pre">populate_sp500_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spy</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.populate_sp500_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve sp500 data and store data into tables: “sp500” and “sp500_sectors”
+:param spy: a string,  should be ‘spy’
+:param category: a string, should be ‘US’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.EODMarketData.populate_stock_data">
+<code class="sig-name descname"><span class="pre">populate_stock_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">tickers:</span> <span class="pre">Collection[str],</span> <span class="pre">table_name:</span> <span class="pre">str,</span> <span class="pre">start_date:</span> <span class="pre">str,</span> <span class="pre">end_date:</span> <span class="pre">str,</span> <span class="pre">category:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'US',</span> <span class="pre">action:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'append',</span> <span class="pre">output_file:</span> <span class="pre">_io.TextIOWrapper</span> <span class="pre">=</span> <span class="pre">&lt;system.utility.helpers.FREWriter</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.market_data.fre_market_data.EODMarketData.populate_stock_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve stock(s)’s daily historical data and store the data into a desired table.
+:param tickers: a list of ticker(s)
+:param table_name: a string of table name (only one table)
+:param start_date: string (‘%Y-%m-%d’)
+:param end_date: string (‘%Y-%m-%d’)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="system.market_data.fre_market_data.IEXMarketData">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.market_data.fre_market_data.</span></code><code class="sig-name descname"><span class="pre">IEXMarketData</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.IEXMarketData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.IEXMarketData.get_price">
+<code class="sig-name descname"><span class="pre">get_price</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.IEXMarketData.get_price" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.market_data.fre_market_data.IEXMarketData.get_quote">
+<code class="sig-name descname"><span class="pre">get_quote</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.market_data.fre_market_data.IEXMarketData.get_quote" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.market_data">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.market_data" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">system.market_data package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-system.market_data.fre_market_data">system.market_data.fre_market_data module</a></li>
+<li><a class="reference internal" href="#module-system.market_data">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.database.html"
+                        title="previous chapter">system.database package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="system.portfolio.html"
+                        title="next chapter">system.portfolio package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/system.market_data.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.portfolio.html" title="system.portfolio package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="system.database.html" title="system.database package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" >system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.market_data package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, NYU FRE Department.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.0.
+    </div>
+  </body>
+</html>

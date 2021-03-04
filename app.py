@@ -2,7 +2,7 @@
 #### imports ####
 #################
 
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import os
 import sys
 import subprocess
@@ -11,6 +11,12 @@ import socket
 import io
 import numpy as np
 import time
+import json
+import matplotlib.pyplot as plt
+import base64
+import plotly
+import plotly.express as px
+import plotly.graph_objs as go
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -42,6 +48,14 @@ from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_ba
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    This function is for new user registration.
+    It will take user inputs: email, firstname, lastname and password,
+    and create a new user in fre_database.
+    The new users are required to confirm their email addresses
+    through the links sent to their email addresses.\n
+    :return: register.html
+    """
     form = RegisterForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -62,6 +76,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    This function is for user to login FRE platform.\n
+    :return: login.html
+    """
     form = LoginForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -111,26 +129,77 @@ def portfolio():
     # List the python processes before launching the server
     # Window env
 
+    # Get portfolio data from database
     portfolio = database.get_portfolio(session['user_id'])
+
     cash = portfolio['cash']
     total = cash
 
     length = len(portfolio['symbol'])
+
+    # Initializing Chart
+    labels = ['Cash']
+    sizes = [1.0]
+
+    # When holding stocks
     if length > 0:
         for i in range(len(portfolio['symbol'])):
+            # Get the latest price for each holding stocks
             price, error = iex_market_data.get_price(portfolio['symbol'][i])
             if len(error) > 0:
                 return error_page(error)
             portfolio['name'][i] = price['name']
-            portfolio['price'][i] = usd(price['price'])
+            portfolio['price'][i] = price['price']
+            portfolio['pnl'][i] = (price['price'] - portfolio['avg_cost'][i]) * portfolio['shares'][i]
             cost = price['price'] * portfolio['shares'][i]
-            portfolio['total'][i] = usd(cost)
+            portfolio['total'][i] = cost
             total += cost
+        # Calculate proportion
+        for i in range(len(portfolio['symbol'])):
+            portfolio['proportion'][i] = "{:.2%}".format(portfolio['total'][i] / total)
+        cash_proportion = "{:.2%}".format(cash / total)
 
-        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash), length=length)
+        # Pie Chart Plot
+        labels = portfolio['symbol'] + ['Cash']
+        sizes = portfolio['proportion'] + [cash_proportion]
+        sizes = [float(num[:-1]) for num in sizes]
+        graph_values = [{'labels': labels, 'values': sizes, 'type': 'pie', 'textinfo': 'label+percent',
+                         'insidetextfont': {'color': '#FFFFFF', 'size': '14'},
+                         'textfont': {'color': '#FFFFFF', 'size': '14'},
+                         'hole': '.6', 'marker': {'colors': px.colors.qualitative.Bold}}]
+        layout = {'title': '<b>Portfolio Holdings</b>'}
 
+        # PnL Bar_plot
+        trace2 = go.Bar(x=portfolio['symbol'], y=portfolio['pnl'], marker={'color': px.colors.qualitative.Bold},
+                        width=0.5, opacity=0.85, text=portfolio['pnl'], textposition='auto', texttemplate='%{text:.2f}')
+        layout2 = dict(title="<b>Portfolio Unrealized PnL</b>", xaxis=dict(title="Symbol"), yaxis=dict(title="PnL"), )
+        pnl_plot = [trace2]
+        fig = go.Figure(data=pnl_plot, layout=layout2)
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return render_template('portfolio.html', dict=portfolio, total=usd(total), cash=usd(cash),
+                               cash_proportion=cash_proportion, length=length, graph_values=graph_values, layout=layout,
+                               graphJSON=graphJSON)
+
+    # Only cash
     else:
-        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), length=0)
+        # Method 2 with plotly
+        graph_values = [{
+            'labels': labels,
+            'values': sizes,
+            'type': 'pie',
+            'textinfo': 'label+percent',
+            'insidetextfont': {'color': '#FFFFFF',
+                               'size': '14'},
+            'textfont': {'color': '#FFFFFF',
+                         'size': '14'},
+            'hole': '.6',
+            'marker': {'colors': px.colors.qualitative.Bold}
+        }]
+        layout = {'title': '<b>Portfolio Holdings</b>'}
+        return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion="100%",
+                               length=0, graph_values=graph_values, layout=layout)
+
+
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -140,7 +209,10 @@ def get_quote():
             flash('ERROR! symbol missing.', 'error')
             return render_template("get_quote.html")
 
+        # Get quote data from IEX, quoted prices (Ask & Bid) are different from the latest price
         quote, error = iex_market_data.get_quote(request.form.get("symbol"))
+        price, error = iex_market_data.get_price(request.form.get("symbol"))
+        quote['Latest Price'] = price['price']
 
         if len(error) > 0:
             flash('ERROR! Invalid symbol.', 'error')
@@ -171,20 +243,40 @@ def buy():
             flash('ERROR! Shares must be positive.', 'error')
             return render_template("buy.html")
 
+        # Get quote ask price -> potential buy price
+        quote, error = iex_market_data.get_quote(symbol)
+        if len(error) > 0:
+            flash('ERROR! ' + error, 'error')
+            return render_template("buy.html")
+        best_ask = quote["askPrice"]
+        # When best ask is not positive, cannot buy in
+        if not best_ask > 0 or not quote["askSize"] > 0:
+            flash('Order Rejected! No Selling Orders in the Market Now. Please Try Later.', 'error')
+            return render_template("buy.html")
+        # Partial Fill
+        if quote["askSize"] < shares:
+            shares = quote["askSize"]
+            flash(f'Only {shares} share(s) of {symbol} available to buy from the market.', 'Notice')
         price = 0.0
         input_price = request.form.get('price')
+        # When no input price -> Market order
         if not input_price:
-            latest_price, error = iex_market_data.get_price(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-                return render_template("buy.html")
-            price = latest_price['price']
+            price = quote["askPrice"]
+        # When input price exists
         else:
             price = float(input_price)
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
                 return render_template("buy.html")
-
+            # When input price is lower than best ask, prompt out info
+            if price < best_ask:
+                flash(f'Order Rejected! Your price is lower than the best Offer price at {usd(best_ask)}', 'error')
+                return render_template("buy.html")
+            # When input price is higher than best ask, prompt out info and buy at best ask
+            if price >= best_ask:
+                flash(f'Order Executed. Your price is higher than the best Ask price at {usd(best_ask)}.'
+                      f'Now you bought {shares} share(s) of {symbol} at {usd(best_ask)}.', 'Notice')
+                price = best_ask
         uid = session['user_id']
         user = database.get_user('', uid)
         cash = user["cash"]
@@ -200,8 +292,10 @@ def buy():
         # update the cash balance
         else:
             cash = cash - total
+            # Record this buying trade in DB
             database.create_buy_transaction(uid, cash, symbol, shares, price, timestamp)
 
+        # When finish buying -> redirect the page to "Portfolio" page
         return redirect(url_for("portfolio"))
     else:
         return render_template("buy.html")
@@ -225,22 +319,7 @@ def sell():
         if not shares > 0:
             flash('ERROR! Shares must be positive.', 'error')
             return render_template("sell.html")
-
-        price = 0.0
-        input_price = request.form.get('price')
-        if not input_price:
-            latest_price, error = iex_market_data.get_price(symbol)
-            if len(error) > 0:
-                flash('ERROR! ' + error, 'error')
-                return render_template("sell.html")
-            price = latest_price['price']
-        else:
-            price = float(input_price)
-            if not price > 0:
-                flash('ERROR! Price must be positive.', 'error')
-                return render_template("sell.html")
-
-        uid = session['user_id']
+        # Get position info
         portfolio = database.get_portfolio(session['user_id'], symbol)
         existing_shares = 0
         if len(portfolio['symbol']) == 1 and portfolio['symbol'][0] == symbol:
@@ -255,14 +334,50 @@ def sell():
             flash('ERROR! No enough shares to sell.', 'error')
             return render_template("sell.html")
 
+        # Get quote bid price -> potential sell price
+        quote, error = iex_market_data.get_quote(symbol)
+        if len(error) > 0:
+            flash('ERROR! ' + error, 'error')
+            return render_template("sell.html")
+        best_bid = quote["bidPrice"]
+        # When best bid is not positive, cannot sell to others
+        if not best_bid > 0 or not quote["bidSize"] > 0:
+            flash('Order Rejected! No Buying Orders in the Market Now. Please Try Later.', 'error')
+            return render_template("sell.html")
+        # Partial Fill
+        if quote["bidSize"] < shares:
+            shares = quote["bidSize"]
+            flash(f'Only {shares} share(s) of {symbol} available to sell to the market.', 'Notice')
+        price = 0.0
+        input_price = request.form.get('price')
+        # Market order, Use the best bid price as selling price
+        if not input_price:
+            price = quote["bidPrice"]
+        # Sell at input price
+        else:
+            price = float(input_price)
+            if not price > 0:
+                flash('ERROR! Price must be positive.', 'error')
+                return render_template("sell.html")
+            # When input price is higher than best bid, prompt out info
+            if price > best_bid:
+                flash(f'Order Rejected! Your price is higher than the best Bid price at {usd(best_bid)}.', 'error')
+                return render_template("sell.html")
+            # When input price is lower than best bid, prompt out info and sell at best bid
+            if price <= best_bid:
+                flash(f'Order Executed. Your price is lower than the best Bid price at {usd(best_bid)}.'
+                      f'Now you sold {shares} share(s) of {symbol} at {usd(best_bid)}.', 'Notice')
+                price = best_bid
+        uid = session['user_id']
+
         updated_shares = existing_shares - shares
 
         total = price * shares
         new_cash = cash + total
         timestamp = time.strftime("%Y/%m/%d %H:%M:%S")
-
+        # Record this selling trade in DB:
         database.create_sell_transaction(uid, new_cash, symbol, updated_shares, -shares, price, timestamp)
-
+        # When finish buying -> redirect the page to "Portfolio" page
         return redirect(url_for("portfolio"))
     else:
         return render_template("sell.html")
@@ -272,6 +387,7 @@ def sell():
 @login_required
 def history():
     uid = session["user_id"]
+    # Extract transaction record from transactions table
     transactions = database.get_transaction(uid)
     length = len(transactions['symbol'])
     return render_template("history.html", length=length, dict=transactions)
@@ -608,12 +724,13 @@ def start_server_process():
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
-    client_config.server_tombstone = False
-    server_thread = threading.Thread(target=(start_server_process))
-    server_thread.start()
+    if not client_config.server_ready:
+        client_config.server_tombstone = False
+        server_thread = threading.Thread(target=(start_server_process))
+        server_thread.start()
 
-    while not client_config.server_ready:
-        pass
+        while not client_config.server_ready:
+            pass
 
     return render_template("sim_launch_server.html")
 
@@ -621,40 +738,43 @@ def sim_server_up():
 @app.route('/sim_server_down')
 @login_required
 def sim_server_down():
-    try:
-        client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        status = client_config.client_socket.connect_ex(client_config.ADDR)
-        if status != 0:
-            return error_page("Fail in connecting to server")
+    if client_config.server_ready: 
+        try:
+            client_config.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+            status = client_config.client_socket.connect_ex(client_config.ADDR)
+            if status != 0:
+                return error_page("Fail in connecting to server")
 
-        client_config.receiver_stop = False
-        client_config.server_tombstone = True
-        client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-        client_config.client_receiver.start()
+            client_config.receiver_stop = False
+            client_config.server_tombstone = True
+            client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
+            client_config.client_receiver.start()
 
-        set_event(trading_event)
-        client_packet = Packet()
-        send_msg(server_down(client_packet))
-        wait_for_an_event(trading_event)
-        msg_type, msg_data = trading_queue.get()
-        print(msg_data)
-        if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
-            time.sleep(2)
-            print("Server down confirmed!")
-            client_config.client_socket.close()
+            set_event(trading_event)
+            client_packet = Packet()
+            send_msg(server_down(client_packet))
+            wait_for_an_event(trading_event)
+            msg_type, msg_data = trading_queue.get()
+            print(msg_data)
+            if msg_type == PacketTypes.SERVER_DOWN_RSP.value:
+                time.sleep(2)
+                print("Server down confirmed!")
+                client_config.client_socket.close()
 
-        existing_py_process = get_python_pid()
+            existing_py_process = get_python_pid()
 
-        for item in existing_py_process:
-            if item not in process_list:
-                os.kill(item, 9)
+            for item in existing_py_process:
+                if item not in process_list:
+                    os.kill(item, 9)
 
-        client_config.server_ready = False
-        client_config.client_thread_started = False
-        return render_template("sim_server_down.html")
-    except(OSError, Exception):
-        return render_template("sim_server_down.html")
+            client_config.server_ready = False
+            client_config.client_thread_started = False
+            
+        except(OSError, Exception):
+            return render_template("sim_server_down.html")
+
+    return render_template("sim_server_down.html")
 
 
 @app.route('/sim_auto_trading')
@@ -706,7 +826,7 @@ def sim_auto_trading():
         return render_template("sim_auto_trading.html", trading_results=client_config.orders)
 
     else:
-        return error_page("Please launch server first: SimTrading >> Launch Server >> Auto Trading")
+        return render_template("error_auto_trading.html")
 
 
 # Market Data
@@ -717,15 +837,7 @@ def market_data_sp500():
     database.create_table(table_list)
     if database.check_table_empty('sp500'):
         eod_market_data.populate_sp500_data('SPY', 'US')
-    else:
-        #update tables
-        database.clear_table(table_list)
-        eod_market_data.populate_sp500_data('SPY', 'US')
-    select_stmt = """
-    SELECT symbol, name as company_name, sector, industry, 
-            printf("%.2f", weight) as weight 
-    FROM sp500 ORDER BY symbol ASC;
-    """
+    select_stmt = 'SELECT symbol, name as company_name, sector, industry, printf("%.2f", weight) as weight FROM sp500 ORDER BY symbol ASC;'
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_stocks = [result_df[i] for i in result_df]
@@ -737,15 +849,9 @@ def market_data_sp500():
 def market_data_sp500_sectors():
     table_list = ['sp500', 'sp500_sectors']
     database.create_table(table_list)
-    #don't need to update table again, table already updated in sp500 tab
     if database.check_table_empty('sp500_sectors'):
         eod_market_data.populate_sp500_data('SPY', 'US')
-    select_stmt = """
-    SELECT sector as sector_name, 
-            printf("%.4f", equity_pct) as equity_pct, 
-            printf("%.4f", category_pct) as category_pct 
-    FROM sp500_sectors ORDER BY sector ASC;
-    """
+    select_stmt = 'SELECT sector as sector_name, printf("%.4f", equity_pct) as equity_pct, printf("%.4f", category_pct) as category_pct FROM sp500_sectors ORDER BY sector ASC;'
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_sectors = [result_df[i] for i in result_df]
@@ -757,28 +863,11 @@ def market_data_sp500_sectors():
 def market_data_spy():
     table_list = ['spy']
     database.create_table(table_list)
-    today = datetime.today().strftime('%Y-%m-%d')
     if database.check_table_empty('spy'):
-        #if the table is empty, insert data from start date to today
-        eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
-    else:
-        #if the table is not empty, insert data from the last date in the existing table to today.
-        select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
-        last_date = database.execute_sql_statement(select_stmt)['date'][0]
-        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
-    #Change made: display the data in descending order of dates
-    select_stmt = """
-    SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
-            printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close, 
-            volume 
-    FROM spy ORDER BY date DESC;
-    """
+        eod_market_data.populate_stock_data(['SPY'], "spy", start_date, end_date, 'US')
+    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                  'printf("%.2f", adjusted_close) as adjusted_close, volume FROM spy ORDER BY date;'
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_spy = [result_df[i] for i in result_df]
@@ -790,27 +879,11 @@ def market_data_spy():
 def market_data_us10y():
     table_list = ['us10y']
     database.create_table(table_list)
-    #update the database to today
-    today = datetime.today().strftime('%Y-%m-%d')
     if database.check_table_empty('us10y'):
-        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
-    else:
-        #if the table is not empty, insert data from the last date in the existing table to today.
-        select_stmt = 'SELECT date FROM us10y ORDER BY date DESC limit 1'
-        last_date = database.execute_sql_statement(select_stmt)['date'][0]
-        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
-    #Change made: display the data in descending order of dates
-    select_stmt = """
-    SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
-            printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close 
-    FROM us10y ORDER BY date DESC;
-    """
+        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, end_date, 'INDX')
+    select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                  'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                  'printf("%.2f", adjusted_close) as adjusted_close FROM us10y ORDER BY date;'
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_us10y = [result_df[i] for i in result_df]
@@ -822,23 +895,13 @@ def market_data_us10y():
 def market_data_fundamentals():
     table_list = ['fundamentals']
     database.create_table(table_list)
-
     if database.check_table_empty('fundamentals'):
         tickers = database.get_sp500_symbols()
         tickers.append('SPY')
         eod_market_data.populate_fundamental_data(tickers, 'US')
-
-    select_stmt = """
-    SELECT symbol, 
-            printf("%.4f", pe_ratio) as pe_ratio, 
-            printf("%.4f", dividend_yield) as dividend_yield,
-            printf("%.4f", beta) as beta, 
-            printf("%.2f", high_52weeks) as high_52weeks, 
-            printf("%.2f", low_52weeks) as low_52weeks,
-            printf("%.2f", ma_50days) as ma_50days, 
-            printf("%.2f", ma_200days) as ma_200days 
-    FROM fundamentals ORDER BY symbol;
-    """
+    select_stmt = 'SELECT symbol, printf("%.4f", pe_ratio) as pe_ratio, printf("%.4f", dividend_yield) as dividend_yield, ' \
+                  'printf("%.4f", beta) as beta, printf("%.2f", high_52weeks) as high_52weeks, printf("%.2f", low_52weeks) as low_52weeks, ' \
+                  'printf("%.2f", ma_50days) as ma_50days, printf("%.2f", ma_200days) as ma_200days FROM fundamentals ORDER BY symbol;'
     result_df = database.execute_sql_statement(select_stmt)
     result_df = result_df.transpose()
     list_of_stocks = [result_df[i] for i in result_df]
@@ -867,93 +930,23 @@ def market_data_stock():
         if request.form.get("end_date"):
             date2 = request.form.get("end_date")
 
-        select_stmt = f"""
-        SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
-            printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close, 
-            volume 
-        FROM stocks
-        WHERE symbol = "{ticker}" AND strftime('%Y-%m-%d', date) BETWEEN "{date1}" AND "{date2}"
-        ORDER BY date;
-        """
+        select_stmt = 'SELECT symbol, date, printf("%.2f", open) as open, printf("%.2f", high) as high, ' \
+                      'printf("%.2f", low) as low, printf("%.2f", close) as close, ' \
+                      'printf("%.2f", adjusted_close) as adjusted_close, volume FROM stocks ' \
+                      'WHERE symbol = \"' + ticker + '\" AND strftime(\'%Y-%m-%d\', date) BETWEEN \"' + date1 + '\" AND \"' + date2 + '\"' + \
+                      'ORDER BY date;'
         result_df = database.execute_sql_statement(select_stmt)
         result_df = result_df.transpose()
         list_of_stock = [result_df[i] for i in result_df]
         return render_template("md_stock.html", stock_list=list_of_stock)
+
     else:
         return render_template("md_get_stock.html")
 
 
-def update_market_data():
-    """
-    This function is for updating the MatketData database. 
-    # Note: Not used yet. Run this function to update database manually.
-    # TODOs: 
-        1.automatically trigger this function once everyday, then delete the update part in 
-        market_data_sp500(), market_data_spy(), and market_data_us10y().
-        2. Make the retrieval of fundamentals and stock prices faster
-    """
-    today = datetime.today().strftime('%Y-%m-%d')
-
-    #fundamentals (takes a long time to run)
-    table_list = ['fundamentals']
-    database.create_table(table_list)
-    database.clear_table(table_list)
-    tickers = database.get_sp500_symbols()
-    tickers.append('SPY')
-    eod_market_data.populate_fundamental_data(tickers, 'US')
-    
-    #spy price data
-    if database.check_table_empty('spy'):
-        #if the table is empty, insert data from start date to today
-        eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
-    else:
-        #if the table is not empty, insert data from the last date in the existing table to today.
-        select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
-        last_date = database.execute_sql_statement(select_stmt)['date'][0]
-        #define begin_date here. The rest updates will use the same begin date
-        begin_date = (datetime.strptime(last_date,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
-      
-    #us10y
-    database.create_table(['us10y'])
-    if database.check_table_empty('us10y'):
-        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
-    else:
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
-    
-    #stock daily data (takes a long time to run)
-    database.create_table(['stocks'])
-    tickers = database.get_sp500_symbols()
-    if database.check_table_empty('stocks'):
-        eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
-    else:
-        select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
-        last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
-        begin_date_stocks = (datetime.strptime(last_date_stocks,'%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d') #add one day after the last date in table
-        if begin_date_stocks <= today:
-            tickers = database.get_sp500_symbols()
-            eod_market_data.populate_stock_data(tickers, "stocks", begin_date_stocks, today, 'US')
-    
-    #sp500 index & sectors
-    table_list = ['sp500', 'sp500_sectors']
-    database.create_table(table_list)
-    if database.check_table_empty('sp500'):
-        eod_market_data.populate_sp500_data('SPY', 'US')
-    else:
-        #update tables
-        database.clear_table(table_list)
-        eod_market_data.populate_sp500_data('SPY', 'US')
-
 if __name__ == "__main__":
     table_list = ["users", "fre_users", "portfolios", "transactions"]
     database.create_table(table_list)
-    update_market_data()
     add_admin_user()
 
     try:
