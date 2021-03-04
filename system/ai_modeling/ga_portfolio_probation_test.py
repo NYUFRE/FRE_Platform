@@ -30,8 +30,16 @@ probation_testing_end_date = (dt.date(2021, 2, 19)).strftime('%Y-%m-%d')
 # probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
 
 def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
+    """
+    Do probation test from 2020-07-01 till today
+
+    :param database: 
+    :type database:
+    :return: best_portfolio, spy_profit_loss, fund
+    :rtype: Tuple[GAPortfolio, float, int]
+    """    
     # Extract best portfolio's data from table best_portfolio
-    best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
+    best_portfolio_select = "SELECT symbol, name, sector, category_pct from best_portfolio;"
     best_portfolio_df = database.execute_sql_statement(best_portfolio_select)
     best_portfolio_symbols = list(best_portfolio_df['symbol'])
 
@@ -52,6 +60,13 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
     best_portfolio = GAPortfolio()
     best_portfolio.populate_portfolio_by_symbols(best_portfolio_symbols, price_df)  # Calculate returns
 
+    # Extract stocks' information and store in best_portfolio
+    for i in range(len(best_portfolio_df)):
+        symbol, name, sector, weight = best_portfolio_df.iloc[i]
+        best_portfolio.stocks.append((sector, symbol, weight, name))
+    
+    best_portfolio.start_date = probation_testing_start_date
+    best_portfolio.end_date = probation_testing_end_date
     # Update table best_portfolio
     conn = database.engine.connect()
     for symbol in best_portfolio_symbols:
@@ -64,7 +79,12 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
         close_price = df_slice['close'].iloc[-1]
         shares = int(fund * best_portfolio.price_df[best_portfolio.price_df.symbol == symbol]['weight'].iloc[0] / open_price)
         profit_loss = (close_price - open_price) * shares
+        
+        best_portfolio.open_prices.append(open_price)
+        best_portfolio.close_prices.append(close_price)
         best_portfolio.profit_loss += profit_loss
+        best_portfolio.shares.append(shares)
+        best_portfolio.pnl.append(profit_loss)
 
         #TODO
         update_stmt = f"""

@@ -38,6 +38,7 @@ from system.sim_trading.network import PacketTypes, Packet
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
 
+from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test
 from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
@@ -692,7 +693,27 @@ def ai_probation_test():
     portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
     spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
-    stock_list = [val[0] for val in best_portfolio.stocks]
+
+    # stock_list = [val[0] for val in best_portfolio.stocks]
+    stock_list = []
+    for i, stock in enumerate(best_portfolio.stocks):
+        StockObj = Stock()
+        StockObj.symbol = stock[1]
+        StockObj.name = stock[3]
+        StockObj.category_pct = stock[2]
+        StockObj.sector = stock[0]
+
+        ProbationObj = ProbationTestTrade()
+        ProbationObj.open_date = best_portfolio.start_date
+        ProbationObj.close_date = best_portfolio.end_date
+        ProbationObj.open_price = best_portfolio.open_prices[i]
+        ProbationObj.close_price = best_portfolio.close_prices[i]
+        ProbationObj.shares = best_portfolio.shares[i]
+        ProbationObj.profit_loss = best_portfolio.pnl[i]
+
+        StockObj.probation_test_trade = ProbationObj
+        stock_list.append(StockObj)
+
     length = len(stock_list)
     return render_template('ai_probation_test.html', stock_list=stock_list,
                            portfolio_profit=portfolio_profit, spy_profit=spy_profit,

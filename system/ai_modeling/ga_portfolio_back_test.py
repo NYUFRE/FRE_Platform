@@ -16,6 +16,14 @@ from system.ai_modeling.ga_portfolio import GAPortfolio, Stock, Trade
 from system.ai_modeling.ga_portfolio_select import extract_spy, extract_us10y
 
 def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
+    """
+    Do backtest; Calculate cumulative return of best_portfolio and spy
+
+    :param database: 
+    :type database: 
+    :return: best_portfolio, spy
+    :rtype: Tuple[GAPortfolio, Stock]
+    """    
     back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
     back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
