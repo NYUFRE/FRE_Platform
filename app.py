@@ -715,7 +715,7 @@ def start_server_process():
         output = process.stdout.readline()
         if output and not client_config.server_ready:
             print(output.strip())
-            time.sleep(30)
+            time.sleep(5)
             client_config.server_ready = True
         elif client_config.server_tombstone:
             return

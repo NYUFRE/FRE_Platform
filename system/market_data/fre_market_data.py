@@ -161,7 +161,7 @@ class EODMarketData:
         column_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
         price_data = []
         for ticker in tickers:
-            stock = self.get_intraday_data(ticker, start_time, end_time, category)
+            stock = self.get_intraday_data(ticker, start_date, end_date, category)
             print(stock, file=output_file)
             for stock_data in stock:
                 if ((stock_data['open'] is not None and stock_data['open'] > 0) and
