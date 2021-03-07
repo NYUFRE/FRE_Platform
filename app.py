@@ -14,9 +14,9 @@ import time
 import json
 import matplotlib.pyplot as plt
 import base64
-#import plotly
-#import plotly.express as px
-#import plotly.graph_objs as go
+import plotly
+import plotly.express as px
+import plotly.graph_objs as go
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request

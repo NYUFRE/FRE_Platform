@@ -105,11 +105,13 @@ def cointegration_all_test(symbol_list: List[str]) -> None:
     pair_df.to_sql('pair_info', con=database.engine, if_exists='append', index=False)
 
 
-def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: str = dt.datetime.today().strftime('%Y-%m-%d')) -> None:
+def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: str = None) -> None:
     """
     This function creat pair trades for a given sector of stocks from table "sp500"
     :param sector: the sector name of stocks
     """
+    if end_date == None:
+        end_date = dt.datetime.today().strftime('%Y-%m-%d')
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
 
@@ -125,14 +127,15 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
 
 def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float = 0.01,
                              sector: str = "Technology", start_date: str = "2020-01-01",\
-                             end_date: str = dt.datetime.today().strftime('%Y-%m-%d')) -> None:
+                             end_date: str = None) -> None:
     """
     This function build a pair_trading model for a given sector of stocks in sp500 and update database tables
     :param corr_threshold: the threshold for stock pair correlation
     :param adf_threshold: the threshold for adf P value
     :param sector: the sector name of stocks
     """
-
+    if end_date == None:
+        end_date = dt.datetime.today().strftime('%Y-%m-%d')
     create_stock_pairs(sector, start_date, end_date)
 
     select_stmt = f"""SELECT symbol1, symbol2 FROM pair_info WHERE correlation >= {corr_threshold} 
