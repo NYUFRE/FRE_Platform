@@ -110,7 +110,7 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
     This function creat pair trades for a given sector of stocks from table "sp500"
     :param sector: the sector name of stocks
     """
-    if end_date == None:
+    if end_date is None:
         end_date = dt.datetime.today().strftime('%Y-%m-%d')
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
@@ -134,7 +134,7 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     :param adf_threshold: the threshold for adf P value
     :param sector: the sector name of stocks
     """
-    if end_date == None:
+    if end_date is None:
         end_date = dt.datetime.today().strftime('%Y-%m-%d')
     create_stock_pairs(sector, start_date, end_date)
 
