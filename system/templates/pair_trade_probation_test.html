@@ -3,7 +3,7 @@
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
-            <a class="nav-link" href="/pair_trade_build_model">Building Model</a>
+            <a class="nav-link" href="/pair_trade_build_model_param">Building Model</a>
         </li>
 		<li class="nav-item">
             <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
@@ -19,10 +19,13 @@
 	<hr>
 	<div class="form-group">
 		<form action="/pair_trade_probation_test" id="buy" method="POST">
-			<p>Start Date <input type = "text" name = "Start Date" placeholder="yyyy-mm-dd"></p>
-			<p>End Date <input type = "text" name = "End Date" placeholder="yyyy-mm-dd"></p>
-			<p><input type = "submit" value = "submit" /></p>
+            <dl>
+                <p>Start Date &nbsp;<input type = "date" name = "Start Date" min = "2020-08-01" ></p>
+                <p>End Date &nbsp;&nbsp;&nbsp;<input type = "date" name = "End Date" min = "2020-08-01" ></p>
+			    <p style = "height:400px;"><input type = "submit" value="submit" /></p>
+            </dl>
 		</form>
     </div>
 </main>
 {% endblock %}
+
