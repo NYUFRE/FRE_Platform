@@ -13,9 +13,6 @@ import numpy as np
 import sched, time
 import datetime
 
-# from pandas.tseries.holiday import USFederalHolidayCalendar
-# from pandas.tseries.offsets import CustomBusinessDay
-
 import pandas_market_calendars as mcal
 
 import threading
@@ -35,13 +32,6 @@ server_config = ServerConfig()
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-
-# pd.set_option("display.max_rows", None, "display.max_columns", None)
-
-os.environ["EOD_API_KEY"] = "5ba84ea974ab42.45160048"
-
-if not os.environ.get("EOD_API_KEY"):
-    raise RuntimeError("EOD_API_KEY not set")
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
