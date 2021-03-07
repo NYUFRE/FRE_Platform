@@ -14,9 +14,9 @@ import time
 import json
 import matplotlib.pyplot as plt
 import base64
-import plotly
-import plotly.express as px
-import plotly.graph_objs as go
+#import plotly
+#import plotly.express as px
+#import plotly.graph_objs as go
 from sys import platform
 
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -619,12 +619,11 @@ def model_probation_testing():
         probation_testing_start_date = form_input['Start Date']
         probation_testing_end_date = form_input['End Date']
 
-        if not probation_testing_end_date or (not probation_testing_start_date):
+        if (not probation_testing_end_date) or (not probation_testing_start_date):
             flash('Error!  Incorrect Values!', 'error')
             return render_template("pair_trade_probation_test.html")
 
-        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
-                                                                                            "%Y-%m-%d") \
+        if datetime.strptime(probation_testing_start_date,"%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
                 or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error!  Incorrect Dates!', 'error')
             return render_template("pair_trade_probation_test.html")
