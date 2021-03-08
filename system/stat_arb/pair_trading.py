@@ -22,9 +22,8 @@ from system.database.fre_database import FREDatabase
 
 from typing import Collection, List, Union
 
-
-start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
-end_date = dt.datetime.today().strftime('%Y-%m-%d')
+#start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+#end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
 back_testing_start_date = dt.date(2020, 8, 1).strftime('%Y-%m-%d')
 back_testing_end_date = dt.date(2020, 9, 15).strftime('%Y-%m-%d')
@@ -34,8 +33,9 @@ eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
 app = Flask(__name__)
 
+
 ## TODO! Using populate_stock_data from fre_market_data.py
-def populate_stock_data(tickers: Collection[str], table_name: str, start_date: str, end_date:str) -> None:
+def populate_stock_data(tickers: Collection[str], table_name: str, start_date: str, end_date: str) -> None:
     """
     This function writes ticker's data into database
     :param tickers: a list of tickers that we want to write
@@ -60,8 +60,8 @@ def cointegration_test(ticker1: str, ticker2: str) -> List[Union[str, float]]:
     :param ticker1: name of the second ticker
     :return: a list of the linear regression results
     """
-    select1_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker1}';"
-    select2_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker2}';"
+    select1_stmt = f"SELECT close FROM sector_stocks WHERE symbol = '{ticker1}';"
+    select2_stmt = f"SELECT close FROM sector_stocks WHERE symbol = '{ticker2}';"
     symbol1_df = database.execute_sql_statement(select1_stmt)
     symbol2_df = database.execute_sql_statement(select2_stmt)
     symbol1_log_close_prices = np.log(symbol1_df['close'].values)
@@ -105,11 +105,13 @@ def cointegration_all_test(symbol_list: List[str]) -> None:
     pair_df.to_sql('pair_info', con=database.engine, if_exists='append', index=False)
 
 
-def create_stock_pairs(sector: str) -> None:
+def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: str = None) -> None:
     """
     This function creat pair trades for a given sector of stocks from table "sp500"
     :param sector: the sector name of stocks
     """
+    if end_date is None:
+        end_date = dt.datetime.today().strftime('%Y-%m-%d')
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
 
@@ -123,15 +125,18 @@ def create_stock_pairs(sector: str) -> None:
         cointegration_all_test(symbol_list)
 
 
-def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float = 0.01, sector: str = "Technology") -> None:
+def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float = 0.01,
+                             sector: str = "Technology", start_date: str = "2020-01-01",\
+                             end_date: str = None) -> None:
     """
     This function build a pair_trading model for a given sector of stocks in sp500 and update database tables
     :param corr_threshold: the threshold for stock pair correlation
     :param adf_threshold: the threshold for adf P value
     :param sector: the sector name of stocks
     """
-
-    create_stock_pairs(sector)
+    if end_date is None:
+        end_date = dt.datetime.today().strftime('%Y-%m-%d')
+    create_stock_pairs(sector, start_date, end_date)
 
     select_stmt = f"""SELECT symbol1, symbol2 FROM pair_info WHERE correlation >= {corr_threshold} 
                     AND adf_p_value <= {adf_threshold} ORDER BY symbol1, symbol2;"""
@@ -165,17 +170,19 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     result_df = database.execute_sql_statement(select_stmt)
     result_df.to_sql('pair_prices', con=database.engine, if_exists='append', index=False)
 
-
-    select_stmt = "SELECT * FROM pair_prices WHERE date <= " + "\"" + back_testing_start_date + "\";"
+    select_stmt = f"""SELECT symbol1, symbol2, open1, open2, close1, close2 FROM pair_prices 
+                    WHERE date <= "{back_testing_start_date}";"""
     pair_price_df = database.execute_sql_statement(select_stmt)
     pair_price_df_updated = pair_price_df.merge(pair_info_df, how='inner', on=['symbol1', 'symbol2'])
     pair_price_df_updated['open_spread'] = np.log(pair_price_df_updated['open1']) - \
                                            pair_price_df_updated['beta0'] - \
-                                           pair_price_df_updated['beta1_hedgeratio'] * np.log(pair_price_df_updated['open2'])
+                                           pair_price_df_updated['beta1_hedgeratio'] * np.log(
+        pair_price_df_updated['open2'])
 
     pair_price_df_updated['close_spread'] = np.log(pair_price_df_updated['close1']) - \
-                                           pair_price_df_updated['beta0'] - \
-                                           pair_price_df_updated['beta1_hedgeratio'] * np.log(pair_price_df_updated['close2'])
+                                            pair_price_df_updated['beta0'] - \
+                                            pair_price_df_updated['beta1_hedgeratio'] * np.log(
+        pair_price_df_updated['close2'])
 
     pair_price_df_mean = pair_price_df_updated.groupby(['symbol1', 'symbol2'])['close_spread'].mean()
     pair_price_df_stdev = pair_price_df_updated.groupby(['symbol1', 'symbol2'])['close_spread'].std()
@@ -217,7 +224,6 @@ class StockPair:
         self.beta0 = beta0
         self.beta1_hedgeratio = beta1_hedgeratio
 
-
     def __str__(self):
         return str(self.__class__) + ": " + str(self.__dict__) + "\n"
 
@@ -234,8 +240,9 @@ class StockPair:
         """
         trades_matrix = np.array(list(self.trades.values()))
         for index in range(1, trades_matrix.shape[0]):
-            open_spread = np.log(trades_matrix[index, 0]) - self.beta0 - self.beta1_hedgeratio * np.log(trades_matrix[index, 2])
-            z_score = (open_spread - self.price_mean)/self.volatility
+            open_spread = np.log(trades_matrix[index, 0]) - self.beta0 - self.beta1_hedgeratio * np.log(
+                trades_matrix[index, 2])
+            z_score = (open_spread - self.price_mean) / self.volatility
             if z_score >= 1.65:
                 trades_matrix[index, 4] = -10000
                 trades_matrix[index, 5] = int(10000 * self.beta1_hedgeratio)
@@ -282,8 +289,9 @@ def pair_trade_back_test(back_testing_start_date: str, back_testing_end_date: st
         aKey = (row['symbol1'], row['symbol2'])
         stock_pair_map[aKey].update_betas(row['beta0'], row['beta1_hedgeratio'])
 
-    select_stmt = f"""SELECT * FROM pair_prices WHERE date >= "{back_testing_start_date}" 
-                  AND date <= "{back_testing_end_date}";"""
+    select_stmt = f"""SELECT symbol1, symbol2, date, open1, open2, close1, close2
+                    FROM pair_prices WHERE date >= "{back_testing_start_date}" 
+                    AND date <= "{back_testing_end_date}";"""
     result_df = database.execute_sql_statement(select_stmt)
 
     for index in range(0, result_df.shape[0]):
@@ -328,7 +336,8 @@ def pair_trade_probation_test(probation_testing_start_date: str, probation_testi
         aKey = (row['symbol1'], row['symbol2'])
         stock_pair_map[aKey].update_betas(row['beta0'], row['beta1_hedgeratio'])
 
-    select_stmt = f"""SELECT * FROM pair_prices WHERE date >= "{probation_testing_start_date}" 
+    select_stmt = f"""SELECT symbol1, symbol2, date, open1, open2, close1, close2
+                  FROM pair_prices WHERE date >= "{probation_testing_start_date}" 
                   AND date <= "{probation_testing_end_date}";"""
     result_df = database.execute_sql_statement(select_stmt)
 

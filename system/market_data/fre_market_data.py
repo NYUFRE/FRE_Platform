@@ -1,10 +1,13 @@
-import sys
-import os
-import urllib.request
+import concurrent.futures
 import json
+import os
 import pandas as pd
+import sys
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from io import TextIOWrapper
 from typing import Collection
+
 
 class IEXMarketData:
     def __init__(self, api_token: str):
@@ -145,7 +148,6 @@ class EODMarketData:
                 price_data.append(
                     [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
                      stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
-            #print(price_data[-1], file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
 
@@ -161,18 +163,18 @@ class EODMarketData:
         column_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
         price_data = []
         for ticker in tickers:
-            stock = self.get_intraday_data(ticker, start_time, end_time, category)
+            stock = self.get_intraday_data(ticker, start_date, end_date, category)
             print(stock, file=output_file)
             for stock_data in stock:
                 if ((stock_data['open'] is not None and stock_data['open'] > 0) and
-                    (stock_data['high'] is not None and stock_data['high'] > 0) and
-                    (stock_data['low'] is not None and stock_data['low'] > 0) and
-                    (stock_data['close'] is not None and stock_data['close'] > 0) and
-                    (stock_data['volume'] is not None and stock_data['volume'] > 0)):
-                        price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'],
-                                           stock_data['low'], stock_data['close'], stock_data['volume']])
+                        (stock_data['high'] is not None and stock_data['high'] > 0) and
+                        (stock_data['low'] is not None and stock_data['low'] > 0) and
+                        (stock_data['close'] is not None and stock_data['close'] > 0) and
+                        (stock_data['volume'] is not None and stock_data['volume'] > 0)):
+                    price_data.append([stock_data['datetime'], ticker, stock_data['open'], stock_data['high'],
+                                       stock_data['low'], stock_data['close'], stock_data['volume']])
 
-            #print(price_data, file=output_file)
+            # print(price_data, file=output_file)
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks = stocks.dropna()
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
@@ -207,8 +209,8 @@ class EODMarketData:
         sp500_sector_data = []
         for key, value in data["ETF_Data"]["Sector_Weights"].items():
             sector = key
-            equity_pct = float(value['Equity_%'])/100
-            category_pct = float(value['Relative_to_Category'])/100
+            equity_pct = float(value['Equity_%']) / 100
+            category_pct = float(value['Relative_to_Category']) / 100
             sp500_sector_data.append([sector, equity_pct, category_pct])
         sp500_sectors = pd.DataFrame(sp500_sector_data, columns=sp500_sector_column_names)
         sp500_sectors.to_sql("sp500_sectors", con=self.database.engine, if_exists='append', index=False)
@@ -216,29 +218,85 @@ class EODMarketData:
     def populate_fundamental_data(self, tickers: Collection[str], category: str) -> None:
         """
         Retrieve fundamental data and store data into table: "fundamentals"
+        Utilize multi-threads
         :param tickers: a list of tickers
         :param category: a string, should be 'US'
         """
-        column_names = ['symbol', 'pe_ratio', 'dividend_yield', 'beta', 'high_52weeks', 'low_52weeks', 'ma_50days', 'ma_200days']
-        fundamental_data = []
-        for ticker in tickers:
-            data = self.get_fundamental_data(ticker, category)
-            if ticker == 'SPY':
-                fundamental_data.append(
-                    [ticker,
-                     data['ETF_Data']['Valuations_Growth']['Valuations_Rates_Portfolio']['Price/Prospective Earnings'],
-                     data['ETF_Data']['Yield'],
-                     data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
-                     data['Technicals']['52WeekLow'],
-                     data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
-            else:
-                fundamental_data.append(
-                    [ticker,
-                     data['Highlights']['PERatio'], data['Highlights']['DividendYield'],
-                     data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
-                     data['Technicals']['52WeekLow'],
-                     data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
-            #print(fundamental_data[-1])
-        fundamentals = pd.DataFrame(fundamental_data, columns=column_names)
-        fundamentals.fillna(0, inplace=True)
-        fundamentals.to_sql("fundamentals", con=self.database.engine, if_exists='append', index=False)
+        column_names = ['symbol', 'pe_ratio', 'dividend_yield', 'beta', 'high_52weeks', 'low_52weeks', 'ma_50days',
+                        'ma_200days']
+        def fundamental_data_helper(ticker_list):
+            fundamental_data = []
+            for ticker in ticker_list:
+                data = self.get_fundamental_data(ticker, category)
+                if ticker == 'SPY':
+                    fundamental_data.append(
+                        [ticker,
+                         data['ETF_Data']['Valuations_Growth']['Valuations_Rates_Portfolio'][
+                             'Price/Prospective Earnings'],
+                         data['ETF_Data']['Yield'],
+                         data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
+                         data['Technicals']['52WeekLow'],
+                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
+                else:
+                    fundamental_data.append(
+                        [ticker,
+                         data['Highlights']['PERatio'], data['Highlights']['DividendYield'],
+                         data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
+                         data['Technicals']['52WeekLow'],
+                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
+            fundamentals = pd.DataFrame(fundamental_data, columns=column_names)
+            fundamentals.fillna(0, inplace=True)
+            return fundamentals
+
+        # divide the tickers list into 20 sub-lists,if len(tickers) cannot be divided by 20, add the remining tickers to the last sub-list.
+        n = len(tickers) // 20
+        tickers_list = [tickers[x:x + n] for x in range(0, n * 20, n)]
+        tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 20):len(tickers)]
+        # multi-threads: 20 threads
+        result_df = pd.DataFrame(columns=column_names)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for sub_tickers in tickers_list:
+                futures.append(executor.submit(fundamental_data_helper, ticker_list=sub_tickers))
+            for future in concurrent.futures.as_completed(futures):
+                result_df = result_df.append(future.result(), ignore_index=True)
+        result_df.to_sql("fundamentals", con=self.database.engine, if_exists='append', index=False)
+
+    def populate_stocks_data_multi(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str,
+                                   category: str = 'US',
+                                   action: str = 'append', output_file: TextIOWrapper = sys.stderr) -> None:
+        """
+        Retrieve a large amount of stocks's historical data and store data into database.
+        Utilize multi-threads.
+        :param tickers: a list of ticker(s)
+        :param table_name: a string of table name (only one table)
+        :param start_date: string ('%Y-%m-%d')
+        :param end_date: string ('%Y-%m-%d')
+        """
+
+        column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
+
+        def stocks_data_helper(tickers, start_date, end_date, category='US'):
+            price_data = []
+            for ticker in tickers:
+                stock = self.get_daily_data(ticker, start_date, end_date, category)
+                for stock_data in stock:
+                    price_data.append(
+                        [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
+                         stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
+            stocks = pd.DataFrame(price_data, columns=column_names)
+            return stocks
+
+        # multi-threads: 10 threads
+        n = len(tickers) // 10
+        tickers_list = [tickers[x:x + n] for x in range(0, n * 10, n)]
+        tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 10):len(tickers)]
+        result_df = pd.DataFrame(columns=column_names)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for sub_tickers in tickers_list:
+                futures.append(
+                    executor.submit(stocks_data_helper, tickers=sub_tickers, start_date=start_date, end_date=end_date))
+            for future in concurrent.futures.as_completed(futures):
+                result_df = result_df.append(future.result(), ignore_index=True)
+        result_df.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
