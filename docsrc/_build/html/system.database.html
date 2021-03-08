@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>system.database package &#8212; FRE Platform 1.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="system.market_data package" href="system.market_data.html" />
+    <link rel="prev" title="system.ai_modeling package" href="system.ai_modeling.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.market_data.html" title="system.market_data package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.ai_modeling.html" title="system.ai_modeling package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" accesskey="U">system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.database package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-database-package">
+<h1>system.database package<a class="headerlink" href="#system-database-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-system.database.fre_database">
+<span id="system-database-fre-database-module"></span><h2>system.database.fre_database module<a class="headerlink" href="#module-system.database.fre_database" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.database.fre_database.FREDatabase">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.database.fre_database.</span></code><code class="sig-name descname"><span class="pre">FREDatabase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_uri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sqlite:///instance/fre_database.db'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.check_table_empty">
+<code class="sig-name descname"><span class="pre">check_table_empty</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">bool</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.check_table_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the table is empty, returns false if the table is not empty</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.clear_table">
+<code class="sig-name descname"><span class="pre">clear_table</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.clear_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.create_buy_transaction">
+<code class="sig-name descname"><span class="pre">create_buy_transaction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cash</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shares</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.create_buy_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the buying transaction info into database
+:param uid: user id
+:param cash: new cash after buying
+:param symbol: stock ticker
+:param shares: shares to buy
+:param price: price to buy at
+:param timestamp: when the transaction happens
+:return: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.create_sell_transaction">
+<code class="sig-name descname"><span class="pre">create_sell_transaction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_cash</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shares</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_shares</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.create_sell_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the selling transaction info into database.
+:param uid: user id
+:param new_cash: cash after selling
+:param symbol: stock ticker
+:param shares: shares holding after selling
+:param new_shares: negative, shares to sell
+:param price: price to sell at
+:param timestamp: when the transaction happens
+:return: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.create_table">
+<code class="sig-name descname"><span class="pre">create_table</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.create_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is for creating all kinds of tables if that table not exists in database.
+:param table_list: a list of string of table names
+:return: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.drop_table">
+<code class="sig-name descname"><span class="pre">drop_table</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.execute_sql_statement">
+<code class="sig-name descname"><span class="pre">execute_sql_statement</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_stmt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">change</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.execute_sql_statement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_portfolio">
+<code class="sig-name descname"><span class="pre">get_portfolio</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_portfolio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get portfolio info or position info(if symbol is provided)
+:param uid: user id
+:param symbol: stock symbol
+:return: Portfolio (or symbol’s position) info in a dictionary</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_sp500_sectors">
+<code class="sig-name descname"><span class="pre">get_sp500_sectors</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_sp500_sectors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_sp500_symbol_map">
+<code class="sig-name descname"><span class="pre">get_sp500_symbol_map</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_sp500_symbol_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_sp500_symbols">
+<code class="sig-name descname"><span class="pre">get_sp500_symbols</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_sp500_symbols" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_transaction">
+<code class="sig-name descname"><span class="pre">get_transaction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the transaction record from transactions table
+:param uid: user id
+:return: Transaction info in a dictionary</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.database.fre_database.FREDatabase.get_user">
+<code class="sig-name descname"><span class="pre">get_user</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email_address</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uid</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#system.database.fre_database.FREDatabase.get_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.database">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.database" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">system.database package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-system.database.fre_database">system.database.fre_database module</a></li>
+<li><a class="reference internal" href="#module-system.database">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.ai_modeling.html"
+                        title="previous chapter">system.ai_modeling package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="system.market_data.html"
+                        title="next chapter">system.market_data package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/system.database.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.market_data.html" title="system.market_data package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="system.ai_modeling.html" title="system.ai_modeling package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" >system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.database package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, NYU FRE Department.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.0.
+    </div>
+  </body>
+</html>

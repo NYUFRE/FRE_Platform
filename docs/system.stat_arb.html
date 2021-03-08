@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>system.stat_arb package &#8212; FRE Platform 1.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="system.utility package" href="system.utility.html" />
+    <link rel="prev" title="system.sim_trading package" href="system.sim_trading.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.utility.html" title="system.utility package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.sim_trading.html" title="system.sim_trading package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" accesskey="U">system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.stat_arb package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-stat-arb-package">
+<h1>system.stat_arb package<a class="headerlink" href="#system-stat-arb-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-system.stat_arb.pair_trading">
+<span id="system-stat-arb-pair-trading-module"></span><h2>system.stat_arb.pair_trading module<a class="headerlink" href="#module-system.stat_arb.pair_trading" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.stat_arb.pair_trading.StockPair">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">StockPair</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volatility</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_mean</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.stat_arb.pair_trading.StockPair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="system.stat_arb.pair_trading.StockPair.create_trade">
+<code class="sig-name descname"><span class="pre">create_trade</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qty1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qty2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profit_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.stat_arb.pair_trading.StockPair.create_trade" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.stat_arb.pair_trading.StockPair.update_betas">
+<code class="sig-name descname"><span class="pre">update_betas</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta1_hedgeratio</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.stat_arb.pair_trading.StockPair.update_betas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.stat_arb.pair_trading.StockPair.update_trades">
+<code class="sig-name descname"><span class="pre">update_trades</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.stat_arb.pair_trading.StockPair.update_trades" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function update daily qtys and profits of the stockpair
+:return: a dataframe of daily trading records</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.build_pair_trading_model">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">build_pair_trading_model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr_threshold</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adf_threshold</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sector</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'Technology'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.build_pair_trading_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function build a pair_trading model for a given sector of stocks in sp500 and update database tables
+:param corr_threshold: the threshold for stock pair correlation
+:param adf_threshold: the threshold for adf P value
+:param sector: the sector name of stocks</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.cointegration_all_test">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">cointegration_all_test</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.cointegration_all_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calculate the cointegration of all the symbol pairs in the symbol_list and write all the results to “pair_info” table
+:param symbol_list: the list of symbol name</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.cointegration_test">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">cointegration_test</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticker2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#system.stat_arb.pair_trading.cointegration_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calculate the cointegration of two tickers
+:param ticker1: name of the firts ticker
+:param ticker1: name of the second ticker
+:return: a list of the linear regression results</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.create_stock_pairs">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">create_stock_pairs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sector</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.create_stock_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function creat pair trades for a given sector of stocks from table “sp500”
+:param sector: the sector name of stocks</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.pair_trade_back_test">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">pair_trade_back_test</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">back_testing_start_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">back_testing_end_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.pair_trade_back_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function do pair trades back testing and write all the results to the “pair_trades” table and “stock_pairs” table. The profit_loss is the total loss of a given stock pair performance during back testing period
+:param back_testing_start_date: the start date of back testing
+:param back_testing_end_date: the end date of back testing</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.pair_trade_probation_test">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">pair_trade_probation_test</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probation_testing_start_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probation_testing_end_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.pair_trade_probation_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.stat_arb.pair_trading.populate_stock_data">
+<code class="sig-prename descclassname"><span class="pre">system.stat_arb.pair_trading.</span></code><code class="sig-name descname"><span class="pre">populate_stock_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tickers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="headerlink" href="#system.stat_arb.pair_trading.populate_stock_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function writes ticker’s data into database
+:param tickers: a list of tickers that we want to write
+:param table_name: a string of our database’s table name</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.stat_arb">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.stat_arb" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">system.stat_arb package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-system.stat_arb.pair_trading">system.stat_arb.pair_trading module</a></li>
+<li><a class="reference internal" href="#module-system.stat_arb">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.sim_trading.html"
+                        title="previous chapter">system.sim_trading package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="system.utility.html"
+                        title="next chapter">system.utility package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/system.stat_arb.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.utility.html" title="system.utility package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="system.sim_trading.html" title="system.sim_trading package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" >system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.stat_arb package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, NYU FRE Department.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.0.
+    </div>
+  </body>
+</html>
