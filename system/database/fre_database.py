@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, VARCHAR, BLOB, BOOLEAN
+import pandas as pd
+from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE
 from sqlalchemy import MetaData
 from sqlalchemy import Table
 from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
@@ -8,14 +9,10 @@ import pandas as pd
 
 class FREDatabase:
     def __init__(self, database_uri='sqlite:///instance/fre_database.db'):
-        #path = os.path.dirname(os.path.abspath('fre_database.py'))
-        #db = os.path.join(path, 'fre_database.db')
-        #self.engine = create_engine('sqlite:///' + 'FRE_Platform\\database\\fre_database.db')
-        #self.engine = create_engine('sqlite:///fre_database.db')
         self.engine = create_engine(database_uri)
         self.conn = self.engine.connect()
         self.conn.execute("PRAGMA foreign_keys = ON")
-        
+
         self.metadata = MetaData()
         self.metadata.reflect(bind=self.engine)
 
@@ -83,7 +80,7 @@ class FREDatabase:
             elif table_name == "sector_stocks" and table_name not in tables:
                 table = Table(table_name, self.metadata,
                               Column('symbol', String(50), primary_key=True, nullable=False),
-                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('date', DATE, primary_key=True, nullable=False),
                               Column('open', Float, nullable=False),
                               Column('high', Float, nullable=False),
                               Column('low', Float, nullable=False),
@@ -113,7 +110,7 @@ class FREDatabase:
                     foreign_key = 'stock_pairs.symbol2'
                 table = Table(table_name, self.metadata,
                               Column('symbol', String(50), ForeignKey(foreign_key), primary_key=True, nullable=False),
-                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('date', DATE, primary_key=True, nullable=False),
                               Column('open', Float, nullable=False),
                               Column('high', Float, nullable=False),
                               Column('low', Float, nullable=False),
@@ -124,9 +121,11 @@ class FREDatabase:
 
             elif table_name == "pair_prices" and table_name not in tables:
                 table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True, nullable=False),
-                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True, nullable=False),
-                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
+                                     nullable=False),
+                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
+                                     nullable=False),
+                              Column('date', DATE, primary_key=True, nullable=False),
                               Column('open1', Float, nullable=False),
                               Column('close1', Float, nullable=False),
                               Column('open2', Float, nullable=False),
@@ -136,9 +135,11 @@ class FREDatabase:
 
             elif table_name == "pair_trades" and table_name not in tables:
                 table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True, nullable=False),
-                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True, nullable=False),
-                              Column('date', String(50), primary_key=True, nullable=False),
+                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
+                                     nullable=False),
+                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
+                                     nullable=False),
+                              Column('date', DATE, primary_key=True, nullable=False),
                               Column('open1', Float, nullable=False),
                               Column('close1', Float, nullable=False),
                               Column('open2', Float, nullable=False),
@@ -153,7 +154,9 @@ class FREDatabase:
                 table = Table(table_name, self.metadata,
                               Column('symbol', String(20), primary_key=True, nullable=False),
                               Column('name', String(20), nullable=False),
-                              Column('sector', String(20), ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"), nullable=False),
+                              Column('sector', String(20),
+                                     ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"),
+                                     nullable=False),
                               Column('industry', String(20), nullable=False),
                               Column('weight', Float, nullable=False),
                               extend_existing=True)
@@ -164,12 +167,13 @@ class FREDatabase:
                               Column('sector', String(20), primary_key=True, nullable=False),
                               Column('equity_pct', Float, nullable=False),
                               Column('category_pct', Float, nullable=False),
-                              extend_existing = True)
+                              extend_existing=True)
                 table.create(self.engine)
 
             elif table_name == "fundamentals" and table_name not in tables:
                 table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, nullable=False),
+                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
+                                     primary_key=True, nullable=False),
                               Column('pe_ratio', Float),
                               Column('dividend_yield', Float),
                               Column('beta', Float),
@@ -180,10 +184,10 @@ class FREDatabase:
                               extend_existing=True)
                 table.create(self.engine)
 
-            elif (table_name == "spy" or table_name == "us10y" or table_name == "stocks") and table_name not in tables:
+            elif (table_name == "spy" or table_name == "us10y" or table_name == " ") and table_name not in tables:
                 table = Table(table_name, self.metadata,
                               Column('symbol', String(20), primary_key=True, nullable=False),
-                              Column('date', String(20), primary_key=True, nullable=False),
+                              Column('date', DATE, primary_key=True, nullable=False),
                               Column('open', Float, nullable=False),
                               Column('high', Float, nullable=False),
                               Column('low', Float, nullable=False),
@@ -195,13 +199,14 @@ class FREDatabase:
 
             elif table_name == "best_portfolio" and table_name not in tables:
                 table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, nullable=False),
+                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
+                                     primary_key=True, nullable=False),
                               Column('name', String(20), nullable=False),
                               Column('sector', String(20), nullable=False),
                               Column('category_pct', Float, nullable=False),
-                              Column('open_date', String(20), nullable=False),
+                              Column('open_date', DATE, nullable=False),
                               Column('open_price', Float, nullable=False),
-                              Column('close_date', String(20), nullable=False),
+                              Column('close_date', DATE, nullable=False),
                               Column('close_price', Float, nullable=False),
                               Column('shares', Integer, nullable=False),
                               Column('profit_loss', Float, nullable=False),
@@ -282,7 +287,7 @@ class FREDatabase:
                                          f"WHERE user_id = {uid}")
             data = result.fetchall()
 
-        #TODO! Improve the logic for getting users
+        # TODO! Improve the logic for getting users
         if len(data) > 0:
             user['user_id'] = data[0]['user_id']
             user['cash'] = data[0]['cash']
