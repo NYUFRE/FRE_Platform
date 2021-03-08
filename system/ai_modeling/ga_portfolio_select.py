@@ -35,6 +35,20 @@ def create_populate_tables(database, eod_market_data):
     """
 
 def extract_spy(database, start_date: str, end_date: str, include_fundamental: bool = True) -> Stock:
+    """
+    Extract SPY's data from database between start and end date
+
+    :param database: 
+    :type database: 
+    :param start_date: Start date
+    :type start_date: str
+    :param end_date: End date
+    :type end_date: str
+    :param include_fundamental: [Whether to include fundamental data], defaults to True
+    :type include_fundamental: bool, optional
+    :return: A spy Stock object, with price dataframe (price_df) and fundamental dataframe (fundamental_df)
+    :rtype: Stock
+    """    
     spy = Stock()
     spy.symbol = 'spy'
 
@@ -65,6 +79,18 @@ def extract_spy(database, start_date: str, end_date: str, include_fundamental: b
     return spy 
 
 def extract_us10y(database, start_date: str, end_date: str) -> Stock:
+    """
+    Extract us10y's data from database between start and end date
+
+    :param database: 
+    :type database: 
+    :param start_date: Start date
+    :type start_date: str
+    :param end_date: End date
+    :type end_date: str
+    :return: A us10y Stock Object, with price_df 
+    :rtype: Stock
+    """    
     us10y = Stock()
     us10y.symbol = 'us10y'
     # Extract data from db
@@ -82,6 +108,24 @@ def extract_us10y(database, start_date: str, end_date: str) -> Stock:
 
 
 def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutation: int, markedForParents: List[GAPortfolio], population: Dict[float, GAPortfolio]) -> List[GAPortfolio]:
+    """
+    Do crossover and mutate; 2 parent portfolios will generate 1 child portfolio
+    Child will inherit first 5 stocks of parent 1 and last 6 stocks of parent 2
+
+    :param num_of_parents: # of parents selected
+    :type num_of_parents: int
+    :param num_of_children: # of children generated
+    :type num_of_children: int
+    :param num_of_mutation: # of mutation happens
+    :type num_of_mutation: int
+    :param markedForParents: A list of portfolios with highest score
+    :type markedForParents: List[GAPortfolio]
+    :param population: {score: portfolio}
+    :type population: Dict[float, GAPortfolio]
+    :return: Children portfolios (metrics not calculated)
+    :rtype: List[GAPortfolio]
+    """    
+    
     # Generate children portfolios by crossover
     children = []
     for i in range(0, num_of_children):
@@ -106,6 +150,14 @@ def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutat
     return children
 
 def build_ga_model(database) -> GAPortfolio:
+    """
+    Build GA Model, including prepare data, create GAPortfolio objects, crossover & mutate, calculate score
+
+    :param database: 
+    :type database:
+    :return: Best portfolio selected by the model
+    :rtype: GAPortfolio
+    """    
     modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
     modeling_testing_end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 

@@ -34,7 +34,14 @@ from system.portfolio.models import User
 from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
+
+
+from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
+from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
+from system.ai_modeling.ga_portfolio_back_test import ga_back_test
+from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
 from system.sim_trading.network import PacketTypes, Packet
+
 from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, \
     back_testing_start_date, back_testing_end_date
 from system.utility.config import trading_queue, trading_event
@@ -733,7 +740,27 @@ def ai_probation_test():
     portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
     spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
     profit = best_portfolio.profit_loss
-    stock_list = [val[0] for val in best_portfolio.stocks]
+
+    # stock_list = [val[0] for val in best_portfolio.stocks]
+    stock_list = []
+    for i, stock in enumerate(best_portfolio.stocks):
+        stock_obj = Stock()
+        stock_obj.symbol = stock[1]
+        stock_obj.name = stock[3]
+        stock_obj.category_pct = stock[2]
+        stock_obj.sector = stock[0]
+
+        probation_obj = ProbationTestTrade()
+        probation_obj.open_date = best_portfolio.start_date
+        probation_obj.close_date = best_portfolio.end_date
+        probation_obj.open_price = best_portfolio.open_prices[i]
+        probation_obj.close_price = best_portfolio.close_prices[i]
+        probation_obj.shares = best_portfolio.shares[i]
+        probation_obj.profit_loss = best_portfolio.pnl[i]
+
+        stock_obj.probation_test_trade = probation_obj
+        stock_list.append(stock_obj)
+
     length = len(stock_list)
     return render_template('ai_probation_test.html', stock_list=stock_list,
                            portfolio_profit=portfolio_profit, spy_profit=spy_profit,

@@ -160,6 +160,13 @@ class GAPortfolio:
         self.symbols = []   # List[str]
         self.weights = []   # List[float]
 
+        self.shares = []    # List[int]
+        self.start_date = ""
+        self.end_date = ""
+        self.pnl = []
+        self.open_prices = []
+        self.close_prices = []
+
         self.stocks = []    # list of tuple (sector, symbol, weight, name)        self.portfolio_daily_returns = {}
         self.portfolio_daily_returns = {}
         self.portfolio_daily_cumulative_returns = {}
@@ -174,15 +181,40 @@ class GAPortfolio:
         return str(self.__class__) + ": " + str(self.__dict__) + "\n"
 
     def get_stock(self, index: int) -> Tuple[str, str, float, str]:
+        """
+        Get stock with its index
+
+        :param index: index of stock needed to return
+        :type index: int
+        :return: a tuple (sector, symbol, weight, name)
+        :rtype: Tuple[str, str, float, str]
+        """
         return self.stocks[index]
 
     def update_stock(self, index: int, stock: Tuple[str, str, float, str]) -> None:
+        """
+        Update stock with a new stock
+
+        :param index: index of stock needed to update
+        :type index: int
+        :param stock: new stock (sector, symbol, weight, name)
+        :type stock: Tuple[str, str, float, str]
+        """
         self.stocks[index] = stock
 
     def add_beta(self, date, beta):
         self.betas[date] = beta
 
     def populate_portfolio(self, sp500_symbol_map: Dict[str, Tuple[str, str]], sp500_sector_map: Dict[str, float]) -> None:
+        """
+        Randomly select 11 symbols from each sector
+        Store stock's information in self.stocks: (sector
+
+        :param sp500_symbol_map: {sector:(symbol, name)}
+        :type sp500_symbol_map: Dict[str, Tuple[str, str]]
+        :param sp500_sector_map: {sector: weight}
+        :type sp500_sector_map: Dict[str, float]
+        """
         for sector, symbols in sp500_symbol_map.items():
             symbol, name = symbols[random.randint(0, len(symbols)-1)]
             weight = sp500_sector_map[sector]
@@ -190,6 +222,15 @@ class GAPortfolio:
         self.stocks.sort()  # Sort the list according to sectors
 
     def calculate_portfolio_return(self, price_df: pd.DataFrame) -> None:
+        """
+        Calculate portfolio daily return 
+        Calculate cumulative daily return by cumulative product
+        Calculate expected daily return by avg(daily return)
+        Calculate daily volatility by std(daily return)       
+
+        :param price_df: stock prices df
+        :type price_df: pd.DataFrame
+        """
         # Keep only data of stocks in the portfolio
         select_query = ' or '.join(f"symbol == '{val[1]}'" for val in self.stocks)
         self.price_df = price_df.query(select_query)      
@@ -200,6 +241,15 @@ class GAPortfolio:
         self.volatility = self.portfolio_daily_returns.std()
 
     def populate_portfolio_by_symbols(self, symbols: List[str], price_df: pd.DataFrame) -> None:
+        """
+        Given symbols and prices dataframe, populate portfolio
+        Also, calculate portfolio return
+
+        :param symbols: A list of symbols
+        :type symbols: List[str]
+        :param price_df: A dataframe of prices
+        :type price_df: pd.DataFrame
+        """
         # Keep only portfolio stocks' data
         select_query = ' or '.join(f"symbol == '{symbol}'" for symbol in symbols)
         self.price_df = price_df.query(select_query) 
@@ -216,11 +266,23 @@ class GAPortfolio:
         self.cumulative_return = self.portfolio_daily_cumulative_returns[-1]  # last day's cumulative return
 
     def calculate_expected_beta(self, spy_df: pd.DataFrame) -> None:
+        """
+        Calculate portfolio expected_beta by cov(r, rm) / var(rm)
+        
+        :param spy_df: SPY's prices dataframe
+        :type spy_df: pd.DataFrame
+        """
         df = pd.merge(pd.DataFrame(self.portfolio_daily_returns), spy_df, on = 'date', how = 'inner')
         self.expected_beta = df['weighted_ret'].cov(df['spy_dailyret']) / df['spy_dailyret'].var()
         
 
     def populate_portfolio_fundamentals(self, fundamental_df: pd.DataFrame) -> None:
+        """
+        Extract stocks' fundamental data from db and store in self.fundamental_df
+
+        :param fundamental_df: A dataframe for sp500's fundamental data
+        :type fundamental_df: pd.DataFrame
+        """
         select_query = ' or '.join("symbol == '" + val[1] + "'" for val in self.stocks)
         self.fundamental_df = fundamental_df.query(select_query)      
 
@@ -245,9 +307,16 @@ class GAPortfolio:
         self.jensen_measure = self.expected_daily_return * 252 - benchmark_return   # Annualize
 
     def calculate_yield(self) -> None:
+        """
+        Sum of stock's yield * weight
+        """
         self.portfolio_yield = sum(self.fundamental_df['dividend_yield'] * self.fundamental_df['weight'])
 
     def calculate_beta_and_trend(self) -> None:
+        """
+        Calculate portfolio's fundamental beta by sum(stock_beta * stock weight)
+        Calculate trend by compare ma_200days and ma_50days
+        """
         self.beta = sum(self.fundamental_df['beta'] * self.fundamental_df['weight'])
         self.fundamental_df['indicator'] = self.fundamental_df.apply(lambda row : 1 if row['ma_200days'] < row['ma_50days'] else -1, axis=1)
         self.trend = sum(self.fundamental_df['indicator'] * self.fundamental_df['weight'])
