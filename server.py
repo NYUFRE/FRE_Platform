@@ -36,7 +36,7 @@ pd.set_option('display.width', 1000)
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
-class MarketDates():  
+class MarketDates:  
     start_date = None
     end_date = None
     
