@@ -60,8 +60,8 @@ def cointegration_test(ticker1: str, ticker2: str) -> List[Union[str, float]]:
     :param ticker1: name of the second ticker
     :return: a list of the linear regression results
     """
-    select1_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker1}';"
-    select2_stmt = f"SELECT * FROM sector_stocks WHERE symbol = '{ticker2}';"
+    select1_stmt = f"SELECT close FROM sector_stocks WHERE symbol = '{ticker1}';"
+    select2_stmt = f"SELECT close FROM sector_stocks WHERE symbol = '{ticker2}';"
     symbol1_df = database.execute_sql_statement(select1_stmt)
     symbol2_df = database.execute_sql_statement(select2_stmt)
     symbol1_log_close_prices = np.log(symbol1_df['close'].values)
@@ -170,7 +170,8 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     result_df = database.execute_sql_statement(select_stmt)
     result_df.to_sql('pair_prices', con=database.engine, if_exists='append', index=False)
 
-    select_stmt = "SELECT * FROM pair_prices WHERE date <= " + "\"" + back_testing_start_date + "\";"
+    select_stmt = f"""SELECT symbol1, symbol2, open1, open2, close1, close2 FROM pair_prices 
+                    WHERE date <= "{back_testing_start_date}";"""
     pair_price_df = database.execute_sql_statement(select_stmt)
     pair_price_df_updated = pair_price_df.merge(pair_info_df, how='inner', on=['symbol1', 'symbol2'])
     pair_price_df_updated['open_spread'] = np.log(pair_price_df_updated['open1']) - \
@@ -288,8 +289,9 @@ def pair_trade_back_test(back_testing_start_date: str, back_testing_end_date: st
         aKey = (row['symbol1'], row['symbol2'])
         stock_pair_map[aKey].update_betas(row['beta0'], row['beta1_hedgeratio'])
 
-    select_stmt = f"""SELECT * FROM pair_prices WHERE date >= "{back_testing_start_date}" 
-                  AND date <= "{back_testing_end_date}";"""
+    select_stmt = f"""SELECT symbol1, symbol2, date, open1, open2, close1, close2
+                    FROM pair_prices WHERE date >= "{back_testing_start_date}" 
+                    AND date <= "{back_testing_end_date}";"""
     result_df = database.execute_sql_statement(select_stmt)
 
     for index in range(0, result_df.shape[0]):
@@ -334,7 +336,8 @@ def pair_trade_probation_test(probation_testing_start_date: str, probation_testi
         aKey = (row['symbol1'], row['symbol2'])
         stock_pair_map[aKey].update_betas(row['beta0'], row['beta1_hedgeratio'])
 
-    select_stmt = f"""SELECT * FROM pair_prices WHERE date >= "{probation_testing_start_date}" 
+    select_stmt = f"""SELECT symbol1, symbol2, date, open1, open2, close1, close2
+                  FROM pair_prices WHERE date >= "{probation_testing_start_date}" 
                   AND date <= "{probation_testing_end_date}";"""
     result_df = database.execute_sql_statement(select_stmt)
 
