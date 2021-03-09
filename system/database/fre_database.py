@@ -1,8 +1,7 @@
 import pandas as pd
 from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy import Table
-from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String
 from typing import Collection, List, Dict, Union
 import pandas as pd
 
