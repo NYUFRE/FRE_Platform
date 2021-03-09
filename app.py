@@ -1147,7 +1147,7 @@ def update_market_data():
 
 
 if __name__ == "__main__":
-    table_list = ["users", "fre_users", "portfolios", "transactions"]
+    table_list = ["users", "portfolios", "spy", "transactions"]
     database.create_table(table_list)
     update_market_data()
     add_admin_user()
