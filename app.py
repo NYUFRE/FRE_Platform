@@ -659,8 +659,8 @@ def ai_trading():
 def ai_build_model():
     # database.drop_table('best_portfolio')
     # While drop the table, table name "best_portfolio" still in metadata
-    # herefore, everytime only clear table instead of drop it.
-
+    # therefore, everytime only clear table instead of drop it.
+    
     table_list = ['best_portfolio']
     database.create_table(table_list)
     database.clear_table(table_list)
