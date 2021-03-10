@@ -62,7 +62,7 @@ def extract_spy(database, start_date: str, end_date: str, include_fundamental: b
 
     # Calculate daily return
     price_df['spy_dailyret'] = price_df['close'].pct_change()
-    price_df['spy_dailyret'].iloc[0] = price_df['close'].iloc[0] / price_df['open'].iloc[0] - 1.0
+    price_df.loc[0, 'spy_dailyret'] = price_df['close'].iloc[0] / price_df['open'].iloc[0] - 1.0
     price_df['spy_daily_cumulative_return'] = (price_df['spy_dailyret'] + 1.0).cumprod() - 1.0
     spy.price_df = price_df[['date', 'spy_dailyret', 'spy_daily_cumulative_return']]
     spy.cumulative_return = spy.price_df['spy_daily_cumulative_return'].iloc[-1]
@@ -312,9 +312,15 @@ def build_ga_model(database) -> GAPortfolio:
                 conn = database.engine.connect()
                 table = database.metadata.tables["best_portfolio"]
                 sector, symbol, weight, name = best_portfolio.stocks[n]
+                # insert_stmt = table.insert().values(symbol=symbol, name=name, sector=sector,
+                #                                     category_pct=weight,
+                #                                     open_date="", open_price=0, close_date="", close_price=0, shares=0,
+                #                                     profit_loss=0)
+                open_date = dt.datetime(2019,1,1)
+                close_date = dt.datetime(2020,1,1)
                 insert_stmt = table.insert().values(symbol=symbol, name=name, sector=sector,
                                                     category_pct=weight,
-                                                    open_date="", open_price=0, close_date="", close_price=0, shares=0,
+                                                    open_date=open_date, open_price=0, close_date=close_date, close_price=0, shares=0,
                                                     profit_loss=0)
                 conn.execute(insert_stmt)
             return best_portfolio

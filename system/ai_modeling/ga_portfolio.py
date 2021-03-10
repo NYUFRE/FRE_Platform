@@ -6,7 +6,8 @@ from typing import List, Dict, Tuple
 import pandas as pd
 import numpy as np
 
-# from numpy.core._multiarray_umath import ndarray
+import warnings
+warnings.filterwarnings("ignore")
 
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
@@ -235,7 +236,7 @@ class GAPortfolio:
         select_query = ' or '.join(f"symbol == '{val[1]}'" for val in self.stocks)
         self.price_df = price_df.query(select_query)      
         # Calculate returns
-        self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
+        self.price_df.loc[:, 'weighted_ret'] =  self.price_df['dailyret'] * self.price_df['weight']  # weight * daily return
         self.portfolio_daily_returns = self.price_df.groupby('date')['weighted_ret'].sum()
         self.expected_daily_return = self.portfolio_daily_returns.mean()
         self.volatility = self.portfolio_daily_returns.std()
