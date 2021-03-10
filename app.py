@@ -16,6 +16,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objs as go
 from sys import platform
+import io
 
 import numpy as np
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
