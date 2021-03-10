@@ -12,8 +12,6 @@ warnings.filterwarnings("ignore")
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
 
-
-
 class Trade:
     def __init__(self):
         self.date = ""

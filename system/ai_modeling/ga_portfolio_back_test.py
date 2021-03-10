@@ -24,7 +24,7 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     :return: best_portfolio, spy
     :rtype: Tuple[GAPortfolio, Stock]
     """    
-    back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+    back_testing_start_date = dt.date(2020, 7, 1).strftime('%Y-%m-%d')
     back_testing_end_date = dt.date(2020, 12, 31).strftime('%Y-%m-%d')
 
     # Extract best portfolio's data from table best_portfolio

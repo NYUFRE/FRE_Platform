@@ -12,6 +12,7 @@ import random
 from typing import List, Tuple, Dict
 #SP500_NUM_OF_STOCKS = 505
 #PORTFOLIO_NUM_OF_STOCK = 11
+MUTATION_RATE = 0.03
 
 start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
 end_date = dt.datetime.today().strftime('%Y-%m-%d')
@@ -107,7 +108,7 @@ def extract_us10y(database, start_date: str, end_date: str) -> Stock:
     return us10y 
 
 
-def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutation: int, markedForParents: List[GAPortfolio], population: Dict[float, GAPortfolio]) -> List[GAPortfolio]:
+def crossover_and_mutate(num_of_parents: int, num_of_children: int, markedForParents: List[GAPortfolio], population: Dict[float, GAPortfolio]) -> List[GAPortfolio]:
     """
     Do crossover and mutate; 2 parent portfolios will generate 1 child portfolio
     Child will inherit first 5 stocks of parent 1 and last 6 stocks of parent 2
@@ -116,8 +117,6 @@ def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutat
     :type num_of_parents: int
     :param num_of_children: # of children generated
     :type num_of_children: int
-    :param num_of_mutation: # of mutation happens
-    :type num_of_mutation: int
     :param markedForParents: A list of portfolios with highest score
     :type markedForParents: List[GAPortfolio]
     :param population: {score: portfolio}
@@ -140,8 +139,12 @@ def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutat
         children.append(child)
 
     # Mutation
-    for i in range(0, num_of_mutation):
-        child_index = random.randint(0, num_of_children - 1) # randomly pick a child from children
+    # Every child portfolio has a chance to mutate a radnom stock of itself
+    for child_index in range(0, num_of_children):
+        rand = random.random()
+        if rand >= MUTATION_RATE:
+            continue
+
         stock_index = random.randint(0, PORTFOLIO_NUM_OF_STOCK - 1) # randomly pick a gene to mutate
         population_index = random.randint(0, len(population) - 1)   # randomly pick a portfolio from population
         key = list(population.keys())[population_index] # find the key of select portfolio
@@ -158,8 +161,8 @@ def build_ga_model(database) -> GAPortfolio:
     :return: Best portfolio selected by the model
     :rtype: GAPortfolio
     """    
-    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
-    modeling_testing_end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+    modeling_testing_start_date = dt.date(2019, 6, 30).strftime('%Y-%m-%d')
+    modeling_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
     # Extract SPY & us10y data from db 
     spy = extract_spy(database, modeling_testing_start_date, modeling_testing_end_date)
@@ -270,8 +273,7 @@ def build_ga_model(database) -> GAPortfolio:
                 break
 
         # Crossover & Mutation
-        num_of_mutation = 5
-        children = crossover_and_mutate(num_of_parents, num_of_children, num_of_mutation, markedForParents, population)
+        children = crossover_and_mutate(num_of_parents, num_of_children, markedForParents, population)
         for n in range(num_of_children):
             children[n].calculate_portfolio_return(price_df)   # calculate portfolio daily return
             children[n].calculate_expected_beta(spy.price_df)
