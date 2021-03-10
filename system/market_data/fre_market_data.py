@@ -249,9 +249,13 @@ class EODMarketData:
             return fundamentals
 
         # divide the tickers list into 20 sub-lists,if len(tickers) cannot be divided by 20, add the remining tickers to the last sub-list.
-        n = len(tickers) // 20
-        tickers_list = [tickers[x:x + n] for x in range(0, n * 20, n)]
-        tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 20):len(tickers)]
+        if len(tickers) > 20:
+            n = len(tickers) // 20
+            tickers_list = [tickers[x:x + n] for x in range(0, n * 20, n)]
+            tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 20):len(tickers)]
+        else:
+            tickers_list = [tickers]
+
         # multi-threads: 20 threads
         result_df = pd.DataFrame(columns=column_names)
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -288,9 +292,12 @@ class EODMarketData:
             return stocks
 
         # multi-threads: 10 threads
-        n = len(tickers) // 10
-        tickers_list = [tickers[x:x + n] for x in range(0, n * 10, n)]
-        tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 10):len(tickers)]
+        if len(tickers) > 10:
+            n = len(tickers) // 10
+            tickers_list = [tickers[x:x + n] for x in range(0, n * 10, n)]
+            tickers_list[-1] = tickers_list[-1] + tickers[-(len(tickers) % 10):len(tickers)]
+        else:
+            tickers_list = [tickers]
         result_df = pd.DataFrame(columns=column_names)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []

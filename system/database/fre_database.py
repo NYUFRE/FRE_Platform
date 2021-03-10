@@ -1,5 +1,6 @@
 import pandas as pd
-from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE
+from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, \
+    BOOLEAN
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy import Table
 from typing import Collection, List, Dict, Union
@@ -15,6 +16,191 @@ class FREDatabase:
         self.metadata = MetaData()
         self.metadata.reflect(bind=self.engine)
 
+    def _ddl(self, table_name: str) -> Table:
+        if table_name == "users":
+            table = Table(table_name, self.metadata,
+                          Column('user_id', Integer, primary_key=True),
+                          Column('email', VARCHAR, unique=True, nullable=False),
+                          Column('first_name', VARCHAR, nullable=False),
+                          Column('last_name', VARCHAR, nullable=False),
+                          Column('_password', BLOB, nullable=False),
+                          Column('authenticated', BOOLEAN, default=False),
+                          Column('email_confirmed', BOOLEAN, nullable=True, default=False),
+                          Column('email_confirmed_on', DATETIME, nullable=True),
+                          Column('registered_on', DATETIME, nullable=True),
+                          Column('last_logged_in', DATETIME, nullable=True),
+                          Column('current_logged_in', DATETIME, nullable=True),
+                          Column('role', VARCHAR, default='user'),
+                          Column('cash', Numeric, nullable=False, server_default='10000.00'),
+                          sqlite_autoincrement=True,
+                          extend_existing=True)
+
+        elif table_name == "portfolios":
+            table = Table(table_name, self.metadata,
+                          Column('portfolio_id', Integer, primary_key=True),
+                          Column('symbol', Text, nullable=False),
+                          Column('shares', Integer, nullable=False),
+                          Column('avg_cost', Numeric, nullable=True),
+                          Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
+                          sqlite_autoincrement=True,
+                          extend_existing=True)
+
+        elif table_name == "transactions":
+            table = Table(table_name, self.metadata,
+                          Column('transaction_id', Integer, primary_key=True),
+                          Column('symbol', Text, nullable=False),
+                          Column('price', Numeric, nullable=False),
+                          Column('shares', Integer, nullable=False),
+                          Column('timestamp', DATETIME, nullable=False),
+                          Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
+                          sqlite_autoincrement=True,
+                          extend_existing=True)
+
+        elif table_name == "stock_pairs":
+            table = Table(table_name, self.metadata,
+                          Column('symbol1', String(50), primary_key=True, nullable=False),
+                          Column('symbol2', String(50), primary_key=True, nullable=False),
+                          Column('price_mean', Float, nullable=False),
+                          Column('volatility', Float, nullable=False),
+                          Column('profit_loss', Float, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "sector_stocks":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(50), primary_key=True, nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open', Float, nullable=False),
+                          Column('high', Float, nullable=False),
+                          Column('low', Float, nullable=False),
+                          Column('close', Float, nullable=False),
+                          Column('adjusted_close', Float, nullable=False),
+                          Column('volume', Integer, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "pair_info":
+            table = Table(table_name, self.metadata,
+                          Column('symbol1', String(50), primary_key=True, nullable=False),
+                          Column('symbol2', String(50), primary_key=True, nullable=False),
+                          Column('correlation', Float, nullable=False),
+                          Column('beta0', Float, nullable=False),
+                          Column('beta1_hedgeratio', Float, nullable=False),
+                          Column('adf_p_value', Float, nullable=False),
+                          Column('res_mean', Float, nullable=False),
+                          Column('res_std', Float, nullable=False),
+                          extend_existing=True)
+
+
+        elif (table_name == "pair1_stocks" or table_name == "pair2_stocks"):
+            if table_name == 'pair1_stocks':
+                foreign_key = 'stock_pairs.symbol1'
+            else:
+                foreign_key = 'stock_pairs.symbol2'
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(50), ForeignKey(foreign_key), primary_key=True, nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open', Float, nullable=False),
+                          Column('high', Float, nullable=False),
+                          Column('low', Float, nullable=False),
+                          Column('close', Float, nullable=False),
+                          Column('adjusted_close', Float, nullable=False),
+                          Column('volume', Integer, nullable=False))
+
+
+        elif table_name == "pair_prices":
+            table = Table(table_name, self.metadata,
+                          Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
+                                 nullable=False),
+                          Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
+                                 nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open1', Float, nullable=False),
+                          Column('close1', Float, nullable=False),
+                          Column('open2', Float, nullable=False),
+                          Column('close2', Float, nullable=False),
+                          extend_existing=True)
+
+
+        elif table_name == "pair_trades":
+            table = Table(table_name, self.metadata,
+                          Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
+                                 nullable=False),
+                          Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
+                                 nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open1', Float, nullable=False),
+                          Column('close1', Float, nullable=False),
+                          Column('open2', Float, nullable=False),
+                          Column('close2', Float, nullable=False),
+                          Column('qty1', Integer, nullable=False),
+                          Column('qty2', Integer, nullable=False),
+                          Column('profit_loss', Float, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "sp500":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('name', String(20), nullable=False),
+                          Column('sector', String(20),
+                                 ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"),
+                                 nullable=False),
+                          Column('industry', String(20), nullable=False),
+                          Column('weight', Float, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "sp500_sectors":
+            table = Table(table_name, self.metadata,
+                          Column('sector', String(20), primary_key=True, nullable=False),
+                          Column('equity_pct', Float, nullable=False),
+                          Column('category_pct', Float, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "fundamentals":
+
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
+                                 primary_key=True, nullable=False),
+                          Column('pe_ratio', Float),
+                          Column('dividend_yield', Float),
+                          Column('beta', Float),
+                          Column('high_52weeks', Float),
+                          Column('low_52weeks', Float),
+                          Column('ma_50days', Float),
+                          Column('ma_200days', Float),
+                          extend_existing=True)
+
+        elif (table_name == "spy" or table_name == "us10y" or table_name == "stocks"):
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open', Float, nullable=False),
+                          Column('high', Float, nullable=False),
+                          Column('low', Float, nullable=False),
+                          Column('close', Float, nullable=False),
+                          Column('adjusted_close', Float, nullable=False),
+                          Column('volume', Integer, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "best_portfolio":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
+                                 primary_key=True, nullable=False),
+                          Column('name', String(20), nullable=False),
+                          Column('sector', String(20), nullable=False),
+                          Column('category_pct', Float, nullable=False),
+                          Column('open_date', DATE, nullable=False),
+                          Column('open_price', Float, nullable=False),
+                          Column('close_date', DATE, nullable=False),
+                          Column('close_price', Float, nullable=False),
+                          Column('shares', Integer, nullable=False),
+                          Column('profit_loss', Float, nullable=False),
+                          extend_existing=True)
+        else:
+            raise ValueError("Table name not known")
+        return table
+
+
+
+
     def create_table(self, table_list: Collection[str]) -> None:
         """
         This function is for creating all kinds of tables if that table not exists in database.
@@ -23,194 +209,12 @@ class FREDatabase:
         """
         tables = self.metadata.tables.keys()
         for table_name in table_list:
+            if table_name not in tables:
+                if table_name == "fundamentals" and "sp500" not in tables:
+                    self._ddl("sp500").create(self.engine)
+                tbl = self._ddl(table_name)
+                tbl.create(self.engine)
 
-            if table_name == "users" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('user_id', Integer, primary_key=True),
-                              Column('email', VARCHAR, unique=True, nullable=False),
-                              Column('first_name', VARCHAR, nullable=False),
-                              Column('last_name', VARCHAR, nullable=False),
-                              Column('_password', BLOB, nullable=False),
-                              Column('authenticated', BOOLEAN, default=False),
-                              Column('email_confirmed', BOOLEAN, nullable=True, default=False),
-                              Column('email_confirmed_on', DATETIME, nullable=True),
-                              Column('registered_on', DATETIME, nullable=True),
-                              Column('last_logged_in', DATETIME, nullable=True),
-                              Column('current_logged_in', DATETIME, nullable=True),
-                              Column('role', VARCHAR, default='user'),
-                              Column('cash', Numeric, nullable=False, server_default='10000.00'),
-                              sqlite_autoincrement=True,
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "portfolios" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('portfolio_id', Integer, primary_key=True),
-                              Column('symbol', Text, nullable=False),
-                              Column('shares', Integer, nullable=False),
-                              Column('avg_cost', Numeric, nullable=True),
-                              Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
-                              sqlite_autoincrement=True,
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "transactions" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('transaction_id', Integer, primary_key=True),
-                              Column('symbol', Text, nullable=False),
-                              Column('price', Numeric, nullable=False),
-                              Column('shares', Integer, nullable=False),
-                              Column('timestamp', DATETIME, nullable=False),
-                              Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
-                              sqlite_autoincrement=True,
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "stock_pairs" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), primary_key=True, nullable=False),
-                              Column('symbol2', String(50), primary_key=True, nullable=False),
-                              Column('price_mean', Float, nullable=False),
-                              Column('volatility', Float, nullable=False),
-                              Column('profit_loss', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "sector_stocks" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(50), primary_key=True, nullable=False),
-                              Column('date', DATE, primary_key=True, nullable=False),
-                              Column('open', Float, nullable=False),
-                              Column('high', Float, nullable=False),
-                              Column('low', Float, nullable=False),
-                              Column('close', Float, nullable=False),
-                              Column('adjusted_close', Float, nullable=False),
-                              Column('volume', Integer, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "pair_info" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), primary_key=True, nullable=False),
-                              Column('symbol2', String(50), primary_key=True, nullable=False),
-                              Column('correlation', Float, nullable=False),
-                              Column('beta0', Float, nullable=False),
-                              Column('beta1_hedgeratio', Float, nullable=False),
-                              Column('adf_p_value', Float, nullable=False),
-                              Column('res_mean', Float, nullable=False),
-                              Column('res_std', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif (table_name == "pair1_stocks" or table_name == "pair2_stocks") and table_name not in tables:
-                if table_name == 'pair1_stocks':
-                    foreign_key = 'stock_pairs.symbol1'
-                else:
-                    foreign_key = 'stock_pairs.symbol2'
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(50), ForeignKey(foreign_key), primary_key=True, nullable=False),
-                              Column('date', DATE, primary_key=True, nullable=False),
-                              Column('open', Float, nullable=False),
-                              Column('high', Float, nullable=False),
-                              Column('low', Float, nullable=False),
-                              Column('close', Float, nullable=False),
-                              Column('adjusted_close', Float, nullable=False),
-                              Column('volume', Integer, nullable=False))
-                table.create(self.engine)
-
-            elif table_name == "pair_prices" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
-                                     nullable=False),
-                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
-                                     nullable=False),
-                              Column('date', DATE, primary_key=True, nullable=False),
-                              Column('open1', Float, nullable=False),
-                              Column('close1', Float, nullable=False),
-                              Column('open2', Float, nullable=False),
-                              Column('close2', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "pair_trades" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol1', String(50), ForeignKey('pair1_stocks.symbol'), primary_key=True,
-                                     nullable=False),
-                              Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
-                                     nullable=False),
-                              Column('date', DATE, primary_key=True, nullable=False),
-                              Column('open1', Float, nullable=False),
-                              Column('close1', Float, nullable=False),
-                              Column('open2', Float, nullable=False),
-                              Column('close2', Float, nullable=False),
-                              Column('qty1', Integer, nullable=False),
-                              Column('qty2', Integer, nullable=False),
-                              Column('profit_loss', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "sp500" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), primary_key=True, nullable=False),
-                              Column('name', String(20), nullable=False),
-                              Column('sector', String(20),
-                                     ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"),
-                                     nullable=False),
-                              Column('industry', String(20), nullable=False),
-                              Column('weight', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "sp500_sectors" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('sector', String(20), primary_key=True, nullable=False),
-                              Column('equity_pct', Float, nullable=False),
-                              Column('category_pct', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "fundamentals" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
-                                     primary_key=True, nullable=False),
-                              Column('pe_ratio', Float),
-                              Column('dividend_yield', Float),
-                              Column('beta', Float),
-                              Column('high_52weeks', Float),
-                              Column('low_52weeks', Float),
-                              Column('ma_50days', Float),
-                              Column('ma_200days', Float),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif (table_name == "spy" or table_name == "us10y" or table_name == " ") and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), primary_key=True, nullable=False),
-                              Column('date', DATE, primary_key=True, nullable=False),
-                              Column('open', Float, nullable=False),
-                              Column('high', Float, nullable=False),
-                              Column('low', Float, nullable=False),
-                              Column('close', Float, nullable=False),
-                              Column('adjusted_close', Float, nullable=False),
-                              Column('volume', Integer, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
-
-            elif table_name == "best_portfolio" and table_name not in tables:
-                table = Table(table_name, self.metadata,
-                              Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
-                                     primary_key=True, nullable=False),
-                              Column('name', String(20), nullable=False),
-                              Column('sector', String(20), nullable=False),
-                              Column('category_pct', Float, nullable=False),
-                              Column('open_date', DATE, nullable=False),
-                              Column('open_price', Float, nullable=False),
-                              Column('close_date', DATE, nullable=False),
-                              Column('close_price', Float, nullable=False),
-                              Column('shares', Integer, nullable=False),
-                              Column('profit_loss', Float, nullable=False),
-                              extend_existing=True)
-                table.create(self.engine)
 
     def clear_table(self, table_list):
         conn = self.engine.connect()
