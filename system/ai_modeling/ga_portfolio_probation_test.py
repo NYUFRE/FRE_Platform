@@ -70,13 +70,11 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
     # Update table best_portfolio
     conn = database.engine.connect()
     for symbol in best_portfolio_symbols:
-        open_date = probation_testing_start_date
-        close_date = probation_testing_end_date
-        # open_price = best_portfolio.stocks[i].trades[probation_testing_start_date].adjusted_close
-        # close_price = best_portfolio.stocks[i].trades[probation_testing_end_date].adjusted_close
         df_slice = best_portfolio.price_df[best_portfolio.price_df.symbol == symbol]
         open_price = df_slice['open'].iloc[0]
         close_price = df_slice['close'].iloc[-1]
+        open_date = df_slice.index[0]   
+        close_date = df_slice.index[-1]  # in order that database has not been updated
         shares = int(fund * best_portfolio.price_df[best_portfolio.price_df.symbol == symbol]['weight'].iloc[0] / open_price)
         profit_loss = (close_price - open_price) * shares
         
@@ -93,7 +91,7 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
                 close_price = '{str(close_price)}', shares = '{str(shares)}', profit_loss = '{str(round(profit_loss, 2))}'
             WHERE symbol = '{symbol}';
         """
-        print(update_stmt)
+        #print(update_stmt)
         conn.execute(update_stmt)
 
     # make SPY captical in spy table
