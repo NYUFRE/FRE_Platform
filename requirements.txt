@@ -32,6 +32,7 @@ pandas-market-calendars==1.6.1
 passlib==1.7.2
 patsy==0.5.1
 Pillow==7.2.0
+plotly==4.14.3
 pycparser==2.20
 PyMeeus==0.3.7
 pyparsing==2.4.7

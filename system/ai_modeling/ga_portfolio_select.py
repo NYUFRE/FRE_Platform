@@ -9,7 +9,7 @@ sys.path.append('../')
 import copy
 import datetime as dt
 import random
-
+from typing import List, Tuple, Dict
 #SP500_NUM_OF_STOCKS = 505
 #PORTFOLIO_NUM_OF_STOCK = 11
 
@@ -34,409 +34,289 @@ def create_populate_tables(database, eod_market_data):
     database.clear_table(tables)
     """
 
+def extract_spy(database, start_date: str, end_date: str, include_fundamental: bool = True) -> Stock:
+    """
+    Extract SPY's data from database between start and end date
 
-def build_ga_model(database):
+    :param database: 
+    :type database: 
+    :param start_date: Start date
+    :type start_date: str
+    :param end_date: End date
+    :type end_date: str
+    :param include_fundamental: [Whether to include fundamental data], defaults to True
+    :type include_fundamental: bool, optional
+    :return: A spy Stock object, with price dataframe (price_df) and fundamental dataframe (fundamental_df)
+    :rtype: Stock
+    """    
     spy = Stock()
-    spy.symbol = 'SPY'
+    spy.symbol = 'spy'
 
-    us10y = Stock()
-    us10y.symbol = 'US10Y'
-
-    sp500_stock_map = {}
-    sp500_sectors = database.get_sp500_sectors()
-    for sector in sp500_sectors:
-        sp500_stock_map[sector] = []
-
-    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
-    modeling_testing_end_date = dt.date(2019, 12, 31).strftime('%Y-%m-%d')
-
-    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
-                 modeling_testing_start_date + "\" AND \"" + modeling_testing_end_date + "\";"
-    print(spy_select)
+    # Extract price data from table spy
+    spy_select = f"""
+        SELECT date, open, close
+        FROM spy
+        WHERE Date(date) BETWEEN Date('{start_date}') AND Date('{end_date}');
+    """
     price_df = database.execute_sql_statement(spy_select)
-    for index, row in price_df.iterrows():
-        trade = Trade()
-        trade.date = row['date']
-        trade.open = row['open']
-        trade.high = row['high']
-        trade.low = row['low']
-        trade.close = row['close']
-        trade.adjusted_close = row['adjusted_close']
-        trade.volume = row['volume']
-        spy.add_trade(trade)
 
-    spy.calculate_daily_return()
-    spy.calculate_expected_return()
-    spy.calculate_volatility()
+    # Calculate daily return
+    price_df['spy_dailyret'] = price_df['close'].pct_change()
+    price_df['spy_dailyret'].iloc[0] = price_df['close'].iloc[0] / price_df['open'].iloc[0] - 1.0
+    price_df['spy_daily_cumulative_return'] = (price_df['spy_dailyret'] + 1.0).cumprod() - 1.0
+    spy.price_df = price_df[['date', 'spy_dailyret', 'spy_daily_cumulative_return']]
+    spy.cumulative_return = spy.price_df['spy_daily_cumulative_return'].iloc[-1]
+    
+    spy.expected_daily_return = price_df['spy_dailyret'].mean()
+    spy.volatility = price_df['spy_dailyret'].std()
 
-    spy_fundamental_select = "SELECT * FROM fundamentals WHERE symbol = \"SPY\";"
-    print(spy_fundamental_select)
-    fundamental_df = database.execute_sql_statement(spy_fundamental_select)
-    fundamental = Fundamental()
-    for index, row in fundamental_df.iterrows():
-        fundamental.pe_ratio = row['pe_ratio']
-        fundamental.dividend_yield = row['dividend_yield']
-        fundamental.beta = row['beta']
-        fundamental.high_52weeks = row['high_52weeks']
-        fundamental.low_52weeks = row['low_52weeks']
-        fundamental.ma_50days = row['ma_50days']
-        fundamental.ma_200days = row['ma_200days']
-    spy.fundamental = fundamental
+    # Extract fundamental data from table fundamentals
+    if include_fundamental:
+        spy_fundamental_select = "SELECT * FROM fundamentals WHERE symbol = \"SPY\";"
+        fundamental_df = database.execute_sql_statement(spy_fundamental_select)
+        spy.fundamental_df = fundamental_df
+    
+    return spy 
 
-    us10y_select = "SELECT * FROM us10y WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + \
-                   modeling_testing_start_date + "\" AND \"" + modeling_testing_end_date + "\";"
-    print(us10y_select)
+def extract_us10y(database, start_date: str, end_date: str) -> Stock:
+    """
+    Extract us10y's data from database between start and end date
+
+    :param database: 
+    :type database: 
+    :param start_date: Start date
+    :type start_date: str
+    :param end_date: End date
+    :type end_date: str
+    :return: A us10y Stock Object, with price_df 
+    :rtype: Stock
+    """    
+    us10y = Stock()
+    us10y.symbol = 'us10y'
+    # Extract data from db
+    us10y_select = f"""
+        SELECT date, close FROM us10y 
+        WHERE Date(date) BETWEEN Date('{start_date}') AND Date('{end_date}');
+    """
     price_df = database.execute_sql_statement(us10y_select)
-    for index, row in price_df.iterrows():
-        trade = Trade()
-        trade.date = row['date']
-        trade.open = row['open']
-        trade.high = row['high']
-        trade.low = row['low']
-        trade.close = row['close']
-        trade.adjusted_close = row['adjusted_close']
-        trade.volume = row['volume']
-        us10y.add_trade(trade)
+    # Calculation
+    price_df['rate'] = price_df['close'] / 100
+    us10y.expected_daily_return = price_df['rate'].mean()
+    us10y.price_df = price_df[['date', 'rate']]
+    
+    return us10y 
 
-    us10y.calculate_risk_free_rate()
-    us10y.calculate_expected_risk_free_rate()
 
-    sp500_sector_map = {}
-    sp500_sector_select = "SELECT sector, category_pct from sp500_sectors;"
-    print(sp500_sector_select)
-    sp500_sector_df = database.execute_sql_statement(sp500_sector_select)
-    for index, row in sp500_sector_df.iterrows():
-        sp500_sector_map[row['sector']] = row['category_pct']
+def crossover_and_mutate(num_of_parents: int, num_of_children: int, num_of_mutation: int, markedForParents: List[GAPortfolio], population: Dict[float, GAPortfolio]) -> List[GAPortfolio]:
+    """
+    Do crossover and mutate; 2 parent portfolios will generate 1 child portfolio
+    Child will inherit first 5 stocks of parent 1 and last 6 stocks of parent 2
 
+    :param num_of_parents: # of parents selected
+    :type num_of_parents: int
+    :param num_of_children: # of children generated
+    :type num_of_children: int
+    :param num_of_mutation: # of mutation happens
+    :type num_of_mutation: int
+    :param markedForParents: A list of portfolios with highest score
+    :type markedForParents: List[GAPortfolio]
+    :param population: {score: portfolio}
+    :type population: Dict[float, GAPortfolio]
+    :return: Children portfolios (metrics not calculated)
+    :rtype: List[GAPortfolio]
+    """    
+    
+    # Generate children portfolios by crossover
+    children = []
+    for i in range(0, num_of_children):
+        parent1_index = random.randint(0, num_of_parents - 1)
+        parent2_index = random.randint(0, num_of_parents - 1)
+        parent1 = markedForParents[parent1_index]
+        parent2 = markedForParents[parent2_index]
+        child = copy.deepcopy(parent1)
+        for index in range(5, PORTFOLIO_NUM_OF_STOCK):
+            stock = parent2.get_stock(index)
+            child.update_stock(index, stock)
+        children.append(child)
+
+    # Mutation
+    for i in range(0, num_of_mutation):
+        child_index = random.randint(0, num_of_children - 1) # randomly pick a child from children
+        stock_index = random.randint(0, PORTFOLIO_NUM_OF_STOCK - 1) # randomly pick a gene to mutate
+        population_index = random.randint(0, len(population) - 1)   # randomly pick a portfolio from population
+        key = list(population.keys())[population_index] # find the key of select portfolio
+        children[child_index].update_stock(stock_index, population[key].get_stock(stock_index)) # mutate the gene with the select portfolio's gene
+    
+    return children
+
+def build_ga_model(database) -> GAPortfolio:
+    """
+    Build GA Model, including prepare data, create GAPortfolio objects, crossover & mutate, calculate score
+
+    :param database: 
+    :type database:
+    :return: Best portfolio selected by the model
+    :rtype: GAPortfolio
+    """    
+    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
+    modeling_testing_end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+
+    # Extract SPY & us10y data from db 
+    spy = extract_spy(database, modeling_testing_start_date, modeling_testing_end_date)
+    us10y = extract_us10y(database, modeling_testing_start_date, modeling_testing_end_date)
+
+    # Extract stock symbols from table sp500; {sector: (symbol, name)}
     sp500_symbol_map = database.get_sp500_symbol_map()
-    for key, symbols in sorted(sp500_symbol_map.items()):
-        stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) BETWEEN \"" + modeling_testing_start_date + "\" AND \"" + \
-                       modeling_testing_end_date + "\" AND open > 0 AND close > 0 AND symbol IN (" + ",".join(
-            "'" + symbol_name[0] + "'" for symbol_name in symbols) + ");"
-        print(stock_select)
-        price_df = database.execute_sql_statement(stock_select)
-        if price_df.empty:
-            exit("price_df is empty")
 
-        fundamental_select = "SELECT * FROM Fundamentals WHERE symbol IN (" + ",".join(
-            "'" + symbol_name[0] + "'" for symbol_name in symbols) + ");"
-        print(fundamental_select)
-        fundamental_df = database.execute_sql_statement(fundamental_select)
-        if fundamental_df.empty:
-            exit("fundamental_df is empty")
+    # Extract fundamental data from table fundamentals
+    # Merge with sector and sector weight
+    fundamental_select = f"""
+        SELECT fundamentals.symbol, pe_ratio, dividend_yield, beta, ma_50days, ma_200days, sp500_sectors.sector, sp500_sectors.category_pct AS weight
+        FROM fundamentals
+            JOIN sp500
+                ON fundamentals.symbol = sp500.symbol 
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector;
+    """
+    fundamental_df = database.execute_sql_statement(fundamental_select)
+    if fundamental_df.empty:
+        exit("fundamental_df is empty")
+    fundamental_df.sort_values(['sector','symbol'], inplace=True)
 
-        for symbol_name in sorted(symbols):
-            stock = Stock()
-            stock.symbol = symbol_name[0]
-            stock.name = symbol_name[1]
-            stock.sector = key
-            stock.category_pct = sp500_sector_map[key]
+    # Extract stock prices from table stocks
+    # Merge name, with sector, sector weight
+    stock_select = f"""
+        SELECT stocks.symbol, stocks.date, stocks.open, stocks.close, sp500.name, sp500_sectors.category_pct AS weight
+        FROM stocks
+            JOIN sp500
+                ON stocks.symbol = sp500.symbol
+            JOIN sp500_sectors
+                ON sp500.sector = sp500_sectors.sector
+        WHERE Date(date) BETWEEN Date('{modeling_testing_start_date}') AND Date('{modeling_testing_end_date}')
+            AND open > 0 
+            AND close > 0;
+    """
+    price_df = database.execute_sql_statement(stock_select)
+    if price_df.empty:
+        exit("price_df is empty")
 
-            trades = price_df.loc[price_df['symbol'] == symbol_name[0]]
-            for index, row in trades.iterrows():
-                trade = Trade()
-                trade.date = row['date']
-                trade.open = row['open']
-                trade.high = row['high']
-                trade.low = row['low']
-                trade.close = row['close']
-                trade.adjusted_close = row['adjusted_close']
-                trade.volume = row['volume']
-                stock.add_trade(trade)
+    # Calculate stock daily return
+    price_df['dailyret'] = price_df.groupby('symbol')['close'].pct_change()
+    price_df['dailyret'].fillna(price_df['close']/price_df['open']-1.0, inplace=True)
+    price_df.set_index('date', inplace=True)    # set index, easier for further operations
 
-            stock.calculate_daily_return()
+    # Extract sector weight from Table sp500 and convert to a dict {sector: weight}
+    sp500_sector_select = "SELECT sector, category_pct from sp500_sectors;"
+    sp500_sector_df = database.execute_sql_statement(sp500_sector_select)
+    sp500_sector_map = sp500_sector_df.set_index('sector')['category_pct'].to_dict()
 
-            fundamental = Fundamental()
-            for index, row in fundamental_df.loc[fundamental_df['symbol'] == symbol_name[0]].iterrows():
-                fundamental.pe_ratio = row['pe_ratio']
-                fundamental.dividend_yield = row['dividend_yield']
-                fundamental.beta = row['beta']
-                fundamental.high_52weeks = row['high_52weeks']
-                fundamental.low_52weeks = row['low_52weeks']
-                fundamental.ma_50days = row['ma_50days']
-                fundamental.ma_200days = row['ma_200days']
-            stock.fundamental = fundamental
-            # print(stock)
-            sp500_stock_map[stock.sector].append(stock)
-        # print(symbols)
-
+    # Begin GA
     population = {}
     number_of_portfolio = 50
 
     while True:
-        portfolio = GAPortfolio()
-        portfolio.populate_portfolio(sp500_sectors, sp500_stock_map)
-        portfolio.calculate_portfolio_daily_returns(sp500_sector_map)
-        portfolio.calculate_portfolio_daily_beta(spy.daily_returns, us10y.daily_risk_free_rates)
-        portfolio.calculate_expected_return()
-        portfolio.calculate_expected_beta()
-        portfolio.calculate_volatility()
-        portfolio.calculate_yield(sp500_sector_map)
-        portfolio.calculate_beta_and_trend(sp500_sector_map)
+        portfolio = GAPortfolio()   # create an empty GAPortfolio object
+        portfolio.populate_portfolio(sp500_symbol_map, sp500_sector_map)    # randomly select 11 stocks to build portfolio
+        portfolio.calculate_portfolio_return(price_df)   # calculate portfolio daily return
+        portfolio.calculate_expected_beta(spy.price_df)
+        portfolio.populate_portfolio_fundamentals(fundamental_df)   # Extract fundamental data of stocks of this portfolio
+        portfolio.calculate_yield()
+        portfolio.calculate_beta_and_trend()
         portfolio.calculate_sharpe_ratio(us10y)
         portfolio.calculate_treynor_measure(us10y)
         portfolio.calculate_jensen_measure(spy, us10y)
         portfolio.calculate_score(spy)
 
-        print(portfolio)
-
         population[portfolio.score] = portfolio
         if len(population) >= number_of_portfolio:
             break
 
-    print("Generation 1\n")
-    count = 0
-    for key, portfolio in sorted(population.items()):
-        count += 1
-        print("Portfolio " + str(count) + ": " + str(key))
-        print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
-              ((portfolio.portfolio_yield * 100), portfolio.beta, (portfolio.volatility * 100),
-               (portfolio.expected_daily_return * 100)))
-        print("trend: %8.4f, sharpe_ratio:%8.4f, treynor_measure:%8.4f, jensen_measure:%8.4f, score:%8.4f" %
-              (portfolio.trend, portfolio.sharpe_ratio, portfolio.treynor_measure, portfolio.jensen_measure,
-               portfolio.score))
+    # print("Generation 1\n")
+    # count = 0
+    # for key, portfolio in sorted(population.items()):
+    #     count += 1
+    #     print("Portfolio " + str(count) + ": " + str(key))
+    #     print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
+    #           ((portfolio.portfolio_yield * 100), portfolio.beta, (portfolio.volatility * 100),
+    #            (portfolio.expected_daily_return * 100)))
+    #     print("trend: %8.4f, sharpe_ratio:%8.4f, treynor_measure:%8.4f, jensen_measure:%8.4f, score:%8.4f" %
+    #           (portfolio.trend, portfolio.sharpe_ratio, portfolio.treynor_measure, portfolio.jensen_measure,
+    #            portfolio.score))
 
-        for stock in portfolio.stocks:
-            print(stock.symbol, end=",")
-        print('\n')
+        # for stock in portfolio.stocks:
+        #     print(stock.symbol, end=",")
+        # print('\n')
 
-    number_of_children = 10
+    num_of_children = 10
     children = []
     number_of_generation = 100
     max_score = 0
     min_improvement = 0.01
 
     for i in range(1, number_of_generation):
+        # Delete the bottom 10 portfolios
         sorted_population_keys = sorted(population.keys())
-        for key in sorted_population_keys[0:number_of_children]:
+        for key in sorted_population_keys[0:num_of_children]:
             del population[key]
 
+        # Select the top 20 portfolios as parents
         markedForParents = []
-        number_of_parents = 20
+        num_of_parents = 20
         count = 0
         for key, portfolio in sorted(population.items(), reverse=True):
             markedForParents.append(portfolio)
             count += 1
-            if count == number_of_parents:
+            if count == num_of_parents:
                 break
 
-        for j in range(0, number_of_children):
-            parent1_index = random.randint(0, number_of_parents - 1)
-            parent2_index = random.randint(0, number_of_parents - 1)
-            parent1 = markedForParents[parent1_index]
-            parent2 = markedForParents[parent2_index]
-            child = copy.deepcopy(parent1)
-            for index in range(5, PORTFOLIO_NUM_OF_STOCK):
-                stock = parent2.get_stock(index)
-                child.update_stock(index, stock)
-
-            child.calculate_portfolio_daily_returns(sp500_sector_map)
-            child.calculate_portfolio_daily_beta(spy.daily_returns, us10y.daily_risk_free_rates)
-            child.calculate_expected_return()
-            child.calculate_expected_beta()
-            child.calculate_volatility()
-            child.calculate_yield(sp500_sector_map)
-            child.calculate_beta_and_trend(sp500_sector_map)
-            child.calculate_sharpe_ratio(us10y)
-            child.calculate_treynor_measure(us10y)
-            child.calculate_jensen_measure(spy, us10y)
-            child.calculate_score(spy)
-            children.append(child)
-
+        # Crossover & Mutation
         num_of_mutation = 5
-        for j in range(0, num_of_mutation):
-            child_index = random.randint(0, number_of_children - 1)
-            stock_index = random.randint(0, PORTFOLIO_NUM_OF_STOCK - 1)
-            population_index = random.randint(0, len(population) - 1)
-            key = list(population.keys())[population_index]
-            children[child_index].update_stock(stock_index, population[key].get_stock(stock_index))
-            children[child_index].calculate_portfolio_daily_returns(sp500_sector_map)
-            children[child_index].calculate_portfolio_daily_beta(spy.daily_returns, us10y.daily_risk_free_rates)
-            children[child_index].calculate_expected_return()
-            children[child_index].calculate_expected_beta()
-            children[child_index].calculate_volatility()
-            children[child_index].calculate_yield(sp500_sector_map)
-            children[child_index].calculate_beta_and_trend(sp500_sector_map)
-            children[child_index].calculate_sharpe_ratio(us10y)
-            children[child_index].calculate_treynor_measure(us10y)
-            children[child_index].calculate_jensen_measure(spy, us10y)
-            children[child_index].calculate_score(spy)
+        children = crossover_and_mutate(num_of_parents, num_of_children, num_of_mutation, markedForParents, population)
+        for n in range(num_of_children):
+            children[n].calculate_portfolio_return(price_df)   # calculate portfolio daily return
+            children[n].calculate_expected_beta(spy.price_df)
+            children[n].populate_portfolio_fundamentals(fundamental_df)
+            children[n].calculate_yield()
+            children[n].calculate_beta_and_trend()
+            children[n].calculate_sharpe_ratio(us10y)
+            children[n].calculate_treynor_measure(us10y)
+            children[n].calculate_jensen_measure(spy, us10y)
+            children[n].calculate_score(spy)
 
-        for j in range(0, len(children)):
-            population[children[j].score] = children[j]
+        # Insert children into population
+        for n in range(num_of_children):
+            population[children[n].score] = children[n]
         children.clear()
 
-        print("Generation " + str(i + 1) + "\n")
-        count = 0
-        for key, portfolio in sorted(population.items()):
-            count += 1
-            print("Portfolio " + str(count) + ": " + str(key))
-            print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
-                  ((portfolio.portfolio_yield * 100), portfolio.beta, (portfolio.volatility * 100),
-                   (portfolio.expected_daily_return * 100)))
-            print("trend: %8.4f, sharpe_ratio:%8.4f, treynor_measure:%8.4f, jensen_measure:%8.4f, score:%8.4f" %
-                  (portfolio.trend, portfolio.sharpe_ratio, portfolio.treynor_measure, portfolio.jensen_measure,
-                   portfolio.score))
+        # print("Generation " + str(i + 1) + "\n")
+        # count = 0
+        # for key, portfolio in sorted(population.items()):
+        #     count += 1
+        #     print("Portfolio " + str(count) + ": " + str(key))
+        #     print("yield: %8.4f%%, beta: %8.4f, daily_volatility:%8.4f%%, expected_daily_return:%8.4f%%" %
+        #           ((portfolio.portfolio_yield * 100), portfolio.beta, (portfolio.volatility * 100),
+        #            (portfolio.expected_daily_return * 100)))
+        #     print("trend: %8.4f, sharpe_ratio:%8.4f, treynor_measure:%8.4f, jensen_measure:%8.4f, score:%8.4f" %
+        #           (portfolio.trend, portfolio.sharpe_ratio, portfolio.treynor_measure, portfolio.jensen_measure,
+        #            portfolio.score))
 
-            for stock in portfolio.stocks:
-                print(stock.symbol, end=",")
-            print('\n')
+            # for stock in portfolio.stocks:
+            #     print(stock.symbol, end=",")
+            # print('\n')
 
         sorted_fitness = sorted(population.keys(), reverse=True)
         best_portfolio = population[sorted_fitness[0]]
         if abs(best_portfolio.score - max_score) < min_improvement:
-            for stock in best_portfolio.stocks:
-                # TODO! Move this logic into fre_database
-                # portfolio_insert_table = "INSERT INTO portfolios (symbol, sector, category_pct, open_date, open_price, close_date, close_price, shares, profitL_loss) \
-                #                        VALUES(\"%s\", \"%s\", %f, \"%s\", %f, \"%s\", %f, %d, %f)" % (stock.symbol, stock.sector, stock.category_pct, "", 0, "", 0, 0, 0)
-                # print(portfolio_insert_table)
-                # database.engine.execute(portfolio_insert_table, True)
-
+            #TODO! Move this logic into fre_database
+            for n in range(PORTFOLIO_NUM_OF_STOCK):
                 conn = database.engine.connect()
                 table = database.metadata.tables["best_portfolio"]
-                insert_stmt = table.insert().values(symbol=stock.symbol, name=stock.name, sector=stock.sector,
-                                                    category_pct=stock.category_pct,
+                sector, symbol, weight, name = best_portfolio.stocks[n]
+                insert_stmt = table.insert().values(symbol=symbol, name=name, sector=sector,
+                                                    category_pct=weight,
                                                     open_date="", open_price=0, close_date="", close_price=0, shares=0,
                                                     profit_loss=0)
                 conn.execute(insert_stmt)
             return best_portfolio
         else:
             max_score = best_portfolio.score
-    """
-    # Back Testing
-    back_testing_start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
-    back_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
-
-    for i in range(len(best_portfolio.stocks)):
-        stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
-                       "BETWEEN \"" + back_testing_start_date + "\" AND \"" + back_testing_end_date + \
-                       "\" AND open > 0 AND close > 0 AND symbol = \'" + best_portfolio.stocks[i].symbol + "\';"
-        print(stock_select)
-        price_df = database.execute_sql_statement(stock_select)
-        if price_df.empty:
-            exit("back testing price_df is empty")
-        for index, row in price_df.iterrows():
-            trade = Trade()
-            trade.date = row['date']
-            trade.open = row['open']
-            trade.high = row['high']
-            trade.low = row['low']
-            trade.close = row['close']
-            trade.adjusted_close = row['adjusted_close']
-            trade.volume = row['volume']
-            best_portfolio.stocks[i].add_trade(trade)
-
-        best_portfolio.stocks[i].calculate_daily_return()
-
-    best_portfolio.calculate_portfolio_daily_returns(sp500_sector_map)
-    best_portfolio.calculate_cumulative_return(back_testing_start_date, back_testing_end_date)
-
-    # Probation Testing
-    # make SPY captical in spy table
-    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) " \
-                 "BETWEEN \"" + back_testing_start_date + "\" AND \"" + back_testing_end_date + \
-                 "\" AND open > 0 AND close > 0 AND symbol = 'spy';"
-    print(spy_select)
-    price_df = database.execute_sql_statement(spy_select)
-
-    for index, row in price_df.iterrows():
-        trade = Trade()
-        trade.date = row['date']
-        trade.open = row['open']
-        trade.high = row['high']
-        trade.low = row['low']
-        trade.close = row['close']
-        trade.adjusted_close = row['adjusted_close']
-        trade.volume = row['volume']
-        spy.add_trade(trade)
-
-    spy.calculate_daily_return()
-    spy.calculate_cumulative_return(back_testing_start_date, back_testing_end_date)
-
-    print("Back Test:")
-    print("best portfolio cumulative return: %4.2f%%" % (best_portfolio.cumulative_return * 100))
-    print("spy cumulative return: %4.2f%%" % (spy.cumulative_return * 100))
-
-    # Probation Testing
-    # probation_testing_start_date = "2020-07-01"
-    # probation_testing_end_date = "2020-07-31"
-    probation_testing_start_date = (dt.date(2020, 6, 30) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
-    # probation_testing_end_date = previous_working_day(dt.datetime.today()).strftime('%Y-%m-%d')
-    probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
-
-    for i in range(len(best_portfolio.stocks)):
-        stock_select = "SELECT * FROM stocks WHERE strftime(\'%Y-%m-%d\', date) " \
-                       "BETWEEN \"" + probation_testing_start_date + "\" AND \"" + probation_testing_end_date + \
-                       "\" AND open > 0 AND close > 0 AND symbol = \'" + best_portfolio.stocks[i].symbol + "\';"
-        print(stock_select)
-        price_df = database.execute_sql_statement(stock_select)
-        if price_df.empty:
-            exit("probation testing price_df is empty")
-        for index, row in price_df.iterrows():
-            trade = Trade()
-            trade.date = row['date']
-            trade.open = row['open']
-            trade.high = row['high']
-            trade.low = row['low']
-            trade.close = row['close']
-            trade.adjusted_close = row['adjusted_close']
-            trade.volume = row['volume']
-            best_portfolio.stocks[i].add_trade(trade)
-
-        best_portfolio.stocks[i].calculate_daily_return()
-
-    best_portfolio.calculate_portfolio_daily_returns(sp500_sector_map)
-
-    for i in range(len(best_portfolio.stocks)):
-        best_portfolio.stocks[i].probation_test_trade.open_date = probation_testing_start_date
-        best_portfolio.stocks[i].probation_test_trade.close_date = probation_testing_end_date
-        best_portfolio.stocks[i].probation_test_trade.open_price = best_portfolio.stocks[i].trades[
-            probation_testing_start_date].adjusted_close
-        best_portfolio.stocks[i].probation_test_trade.close_price = best_portfolio.stocks[i].trades[
-            probation_testing_end_date].adjusted_close
-        best_portfolio.stocks[i].probation_test_trade.shares = int(fund * best_portfolio.stocks[i].category_pct /
-                                                                   best_portfolio.stocks[
-                                                                       i].probation_test_trade.open_price)
-        best_portfolio.stocks[i].probation_test_trade.profit_loss = (best_portfolio.stocks[
-                                                                         i].probation_test_trade.close_price -
-                                                                     best_portfolio.stocks[
-                                                                         i].probation_test_trade.open_price) * \
-                                                                    best_portfolio.stocks[i].probation_test_trade.shares
-
-    best_portfolio.calculate_profit_loss()
-
-    # make SPY captical in spy table
-    spy_select = "SELECT * FROM spy WHERE strftime(\'%Y-%m-%d\', date) " \
-                 "BETWEEN \"" + probation_testing_start_date + "\" AND \"" + probation_testing_end_date + \
-                 "\" AND open > 0 AND close > 0 AND symbol = 'spy';"
-    print(spy_select)
-    price_df = database.execute_sql_statement(spy_select)
-
-    for index, row in price_df.iterrows():
-        trade = Trade()
-        trade.date = row['date']
-        trade.open = row['open']
-        trade.high = row['high']
-        trade.low = row['low']
-        trade.close = row['close']
-        trade.adjusted_close = row['adjusted_close']
-        trade.volume = row['volume']
-        spy.add_trade(trade)
-
-    spy.calculate_daily_return()
-
-    spy.probation_test_trade.open_date = probation_testing_start_date
-    spy.probation_test_trade.close_date = probation_testing_end_date
-    spy.probation_test_trade.open_price = spy.trades[probation_testing_start_date].open
-    spy.probation_test_trade.close_price = spy.trades[probation_testing_end_date].close
-    spy.probation_test_trade.shares = int(fund / spy.probation_test_trade.open_price)
-    spy.probation_test_trade.profit_loss = (
-                                                       spy.probation_test_trade.close_price - spy.probation_test_trade.open_price) * \
-                                           spy.probation_test_trade.shares
-
-    print("Probabtion Test:")
-    print("best portfolio return: %4.2f%%" % (float(best_portfolio.profit_loss / fund) * 100))
-    print("spy return: %4.2f%%" % (float(spy.probation_test_trade.profit_loss / fund) * 100))
-    """
-
-

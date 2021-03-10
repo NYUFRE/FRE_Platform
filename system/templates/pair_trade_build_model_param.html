@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/pair_trade_build_model_param">Building Model</a>
+        </li>
+		<li class="nav-item">
+            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Pair Trade Parameters</h3>
+	<hr>
+	<div class="form-group">
+		<form action="/pair_trade_build_model_param" id="buy" method="POST">
+			<p style = "width:650px;" align="right">P Value Threshold: <input type = "text" name = "P Threshold" style = "width:200px;"></p>
+            <p style = "width:650px;" align="right">Corr Threshold: <input type = "text" name = "Corr Threshold" style = "width:200px;"></p>
+            <p style = "width:650px;" align="right">Start Date: <input type = "date" name = "Start Date" min = "2020-01-01" style = "width:200px;"></p>
+            <p style = "width:650px;" align="right">End Date: <input type = "date" name = "End Date" min = "2020-08-01" style = "width:200px;"></p>
+            <p style = "width:650px;" align="right">Sector: <select name = "Sector" action = '/' style = "width:200px;">
+                {%for sector in sector_list%}
+                <option value = "{{sector}}" selected>{{sector}}</option>>
+                {% endfor %}
+            </select></p>
+			<p style = "height:300px;"><input type = "submit" value = "submit" /></p>
+		</form>
+    </div>
+</main>
+{% endblock %}

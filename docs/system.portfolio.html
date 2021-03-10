@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>system.portfolio package &#8212; FRE Platform 1.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="system.sim_trading package" href="system.sim_trading.html" />
+    <link rel="prev" title="system.market_data package" href="system.market_data.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.sim_trading.html" title="system.sim_trading package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.market_data.html" title="system.market_data package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" accesskey="U">system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.portfolio package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="system-portfolio-package">
+<h1>system.portfolio package<a class="headerlink" href="#system-portfolio-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-system.portfolio.forms">
+<span id="system-portfolio-forms-module"></span><h2>system.portfolio.forms module<a class="headerlink" href="#module-system.portfolio.forms" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.portfolio.forms.EmailForm">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.portfolio.forms.</span></code><code class="sig-name descname"><span class="pre">EmailForm</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.forms.EmailForm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_wtf.form.FlaskForm</span></code></p>
+<dl class="py attribute">
+<dt id="system.portfolio.forms.EmailForm.email">
+<code class="sig-name descname"><span class="pre">email</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(StringField,</span> <span class="pre">('Email</span> <span class="pre">Address',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Email</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.EmailForm.email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="system.portfolio.forms.LoginForm">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.portfolio.forms.</span></code><code class="sig-name descname"><span class="pre">LoginForm</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.forms.LoginForm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_wtf.form.FlaskForm</span></code></p>
+<dl class="py attribute">
+<dt id="system.portfolio.forms.LoginForm.email">
+<code class="sig-name descname"><span class="pre">email</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(StringField,</span> <span class="pre">('Email</span> <span class="pre">Address',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Email</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.LoginForm.email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.forms.LoginForm.password">
+<code class="sig-name descname"><span class="pre">password</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(PasswordField,</span> <span class="pre">('Password',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.LoginForm.password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="system.portfolio.forms.PasswordForm">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.portfolio.forms.</span></code><code class="sig-name descname"><span class="pre">PasswordForm</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.forms.PasswordForm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_wtf.form.FlaskForm</span></code></p>
+<dl class="py attribute">
+<dt id="system.portfolio.forms.PasswordForm.password">
+<code class="sig-name descname"><span class="pre">password</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(PasswordField,</span> <span class="pre">('Password',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.PasswordForm.password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="system.portfolio.forms.RegisterForm">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.portfolio.forms.</span></code><code class="sig-name descname"><span class="pre">RegisterForm</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.forms.RegisterForm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">flask_wtf.form.FlaskForm</span></code></p>
+<dl class="py attribute">
+<dt id="system.portfolio.forms.RegisterForm.confirm">
+<code class="sig-name descname"><span class="pre">confirm</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(PasswordField,</span> <span class="pre">('Repeat</span> <span class="pre">Password',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.EqualTo</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.RegisterForm.confirm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.forms.RegisterForm.email">
+<code class="sig-name descname"><span class="pre">email</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(StringField,</span> <span class="pre">('Email</span> <span class="pre">Address',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Email</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.RegisterForm.email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.forms.RegisterForm.first_name">
+<code class="sig-name descname"><span class="pre">first_name</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(StringField,</span> <span class="pre">('First</span> <span class="pre">Name',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.RegisterForm.first_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.forms.RegisterForm.last_name">
+<code class="sig-name descname"><span class="pre">last_name</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(StringField,</span> <span class="pre">('Last</span> <span class="pre">Name',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.RegisterForm.last_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.forms.RegisterForm.password">
+<code class="sig-name descname"><span class="pre">password</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;UnboundField(PasswordField,</span> <span class="pre">('Password',),</span> <span class="pre">{'validators':</span> <span class="pre">[&lt;wtforms.validators.DataRequired</span> <span class="pre">object&gt;,</span> <span class="pre">&lt;wtforms.validators.Length</span> <span class="pre">object&gt;]})&gt;</span></em><a class="headerlink" href="#system.portfolio.forms.RegisterForm.password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.portfolio.models">
+<span id="system-portfolio-models-module"></span><h2>system.portfolio.models module<a class="headerlink" href="#module-system.portfolio.models" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="system.portfolio.models.User">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">system.portfolio.models.</span></code><code class="sig-name descname"><span class="pre">User</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plaintext_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">role</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10000.00'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.models.User" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.ext.declarative.api.Model</span></code></p>
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.authenticated">
+<code class="sig-name descname"><span class="pre">authenticated</span></code><a class="headerlink" href="#system.portfolio.models.User.authenticated" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.cash">
+<code class="sig-name descname"><span class="pre">cash</span></code><a class="headerlink" href="#system.portfolio.models.User.cash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.current_logged_in">
+<code class="sig-name descname"><span class="pre">current_logged_in</span></code><a class="headerlink" href="#system.portfolio.models.User.current_logged_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.email">
+<code class="sig-name descname"><span class="pre">email</span></code><a class="headerlink" href="#system.portfolio.models.User.email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.email_confirmed">
+<code class="sig-name descname"><span class="pre">email_confirmed</span></code><a class="headerlink" href="#system.portfolio.models.User.email_confirmed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.email_confirmed_on">
+<code class="sig-name descname"><span class="pre">email_confirmed_on</span></code><a class="headerlink" href="#system.portfolio.models.User.email_confirmed_on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.first_name">
+<code class="sig-name descname"><span class="pre">first_name</span></code><a class="headerlink" href="#system.portfolio.models.User.first_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="system.portfolio.models.User.get_id">
+<code class="sig-name descname"><span class="pre">get_id</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.models.User.get_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the email address to satisfy Flask-Login’s requirements.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.portfolio.models.User.is_active">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_active</span></code><a class="headerlink" href="#system.portfolio.models.User.is_active" title="Permalink to this definition">¶</a></dt>
+<dd><p>Always True, as all users are active.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.portfolio.models.User.is_anonymous">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_anonymous</span></code><a class="headerlink" href="#system.portfolio.models.User.is_anonymous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Always False, as anonymous users aren’t supported.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.portfolio.models.User.is_authenticated">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">is_authenticated</span></code><a class="headerlink" href="#system.portfolio.models.User.is_authenticated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the user is authenticated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="system.portfolio.models.User.is_correct_password">
+<code class="sig-name descname"><span class="pre">is_correct_password</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plaintext_password</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.models.User.is_correct_password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.last_logged_in">
+<code class="sig-name descname"><span class="pre">last_logged_in</span></code><a class="headerlink" href="#system.portfolio.models.User.last_logged_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.last_name">
+<code class="sig-name descname"><span class="pre">last_name</span></code><a class="headerlink" href="#system.portfolio.models.User.last_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.password">
+<code class="sig-name descname"><span class="pre">password</span></code><a class="headerlink" href="#system.portfolio.models.User.password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.registered_on">
+<code class="sig-name descname"><span class="pre">registered_on</span></code><a class="headerlink" href="#system.portfolio.models.User.registered_on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.role">
+<code class="sig-name descname"><span class="pre">role</span></code><a class="headerlink" href="#system.portfolio.models.User.role" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.set_password">
+<code class="sig-name descname"><span class="pre">set_password</span></code><a class="headerlink" href="#system.portfolio.models.User.set_password" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="system.portfolio.models.User.user_id">
+<code class="sig-name descname"><span class="pre">user_id</span></code><a class="headerlink" href="#system.portfolio.models.User.user_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-system.portfolio.users">
+<span id="system-portfolio-users-module"></span><h2>system.portfolio.users module<a class="headerlink" href="#module-system.portfolio.users" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="system.portfolio.users.add_admin_user">
+<code class="sig-prename descclassname"><span class="pre">system.portfolio.users.</span></code><code class="sig-name descname"><span class="pre">add_admin_user</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.users.add_admin_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.portfolio.users.send_async_email">
+<code class="sig-prename descclassname"><span class="pre">system.portfolio.users.</span></code><code class="sig-name descname"><span class="pre">send_async_email</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.users.send_async_email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.portfolio.users.send_confirmation_email">
+<code class="sig-prename descclassname"><span class="pre">system.portfolio.users.</span></code><code class="sig-name descname"><span class="pre">send_confirmation_email</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.users.send_confirmation_email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.portfolio.users.send_email">
+<code class="sig-prename descclassname"><span class="pre">system.portfolio.users.</span></code><code class="sig-name descname"><span class="pre">send_email</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_body</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_body</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.users.send_email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="system.portfolio.users.send_password_reset_email">
+<code class="sig-prename descclassname"><span class="pre">system.portfolio.users.</span></code><code class="sig-name descname"><span class="pre">send_password_reset_email</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_email</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#system.portfolio.users.send_password_reset_email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-system.portfolio">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.portfolio" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">system.portfolio package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-system.portfolio.forms">system.portfolio.forms module</a></li>
+<li><a class="reference internal" href="#module-system.portfolio.models">system.portfolio.models module</a></li>
+<li><a class="reference internal" href="#module-system.portfolio.users">system.portfolio.users module</a></li>
+<li><a class="reference internal" href="#module-system.portfolio">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.market_data.html"
+                        title="previous chapter">system.market_data package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="system.sim_trading.html"
+                        title="next chapter">system.sim_trading package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/system.portfolio.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="system.sim_trading.html" title="system.sim_trading package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="system.market_data.html" title="system.market_data package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">FRE Platform 1.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="system.html" >system package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">system.portfolio package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, NYU FRE Department.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.0.
+    </div>
+  </body>
+</html>

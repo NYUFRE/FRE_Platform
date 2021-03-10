@@ -107,7 +107,7 @@ def get_python_pid() -> Set[int]:
 
 
 class FREWriter:
-
+    """A simple logging class for FRE platform."""
     def __init__(self, stdout, filename):
         self.stdout = stdout
         self.logfile = open(filename, 'a')
