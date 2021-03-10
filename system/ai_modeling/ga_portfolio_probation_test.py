@@ -25,9 +25,9 @@ def previous_working_day(check_day_, holidays=holidays.US()):
     else:
         return previous_working_day(most_recent, holidays)
 
-probation_testing_start_date = (dt.date(2020, 6, 30) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
-probation_testing_end_date = (dt.date(2021, 2, 19)).strftime('%Y-%m-%d')
-# probation_testing_end_date = previous_working_day(dt.date(2020, 8, 1)).strftime('%Y-%m-%d')
+probation_testing_start_date = (dt.date(2020, 12, 31) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+# probation_testing_end_date = (dt.date(2021, 2, 19)).strftime('%Y-%m-%d')
+probation_testing_end_date = previous_working_day(dt.date.today()).strftime('%Y-%m-%d')
 
 def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
     """
