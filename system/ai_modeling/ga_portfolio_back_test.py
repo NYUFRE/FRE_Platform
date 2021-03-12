@@ -48,9 +48,10 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
 
     best_portfolio = GAPortfolio()
     best_portfolio.populate_portfolio_by_symbols(best_portfolio_symbols, price_df)  # Calculate returns
-
+    
     spy = extract_spy(database, back_testing_start_date, back_testing_end_date, include_fundamental=False)
-
+    spy.price_df['date'] = pd.to_datetime(spy.price_df['date'])
+    spy.price_df.set_index('date', inplace=True)
     
     print("Back Test:")
     print("best portfolio cumulative return: %4.2f%%" % (best_portfolio.cumulative_return*100))

@@ -314,10 +314,6 @@ def build_ga_model(database) -> GAPortfolio:
                 conn = database.engine.connect()
                 table = database.metadata.tables["best_portfolio"]
                 sector, symbol, weight, name = best_portfolio.stocks[n]
-                # insert_stmt = table.insert().values(symbol=symbol, name=name, sector=sector,
-                #                                     category_pct=weight,
-                #                                     open_date="", open_price=0, close_date="", close_price=0, shares=0,
-                #                                     profit_loss=0)
                 open_date = dt.datetime(2019,1,1)
                 close_date = dt.datetime(2020,1,1)
                 insert_stmt = table.insert().values(symbol=symbol, name=name, sector=sector,

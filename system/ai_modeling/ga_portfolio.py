@@ -248,15 +248,16 @@ class GAPortfolio:
         """
         # Keep only portfolio stocks' data
         select_query = ' or '.join(f"symbol == '{symbol}'" for symbol in symbols)
-        self.price_df = price_df.query(select_query) 
+        self.price_df = price_df.query(select_query).copy()
 
         # Calculate stocks' daily return
         self.price_df['dailyret'] = self.price_df.groupby('symbol')['close'].pct_change()
         self.price_df['dailyret'].fillna(self.price_df['close']/self.price_df['open']-1.0, inplace=True)
+        self.price_df['date'] = pd.to_datetime(self.price_df['date'])
         self.price_df.set_index('date', inplace=True)
 
         # Calculate portoflio daily return
-        self.price_df.loc[:, 'weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
+        self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
         self.portfolio_daily_returns = self.price_df.groupby('date')['weighted_ret'].sum()
         self.portfolio_daily_cumulative_returns = (self.portfolio_daily_returns + 1.0).cumprod() - 1.0
         self.cumulative_return = self.portfolio_daily_cumulative_returns[-1]  # last day's cumulative return
