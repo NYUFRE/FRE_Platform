@@ -43,7 +43,7 @@ from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
 from system.sim_trading.network import PacketTypes, Packet
 
 from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, \
-    back_testing_start_date, back_testing_end_date
+     done_pair_trade_model #back_testing_start_date, back_testing_end_date
 from system.utility.config import trading_queue, trading_event
 from system.utility.helpers import error_page, login_required, usd, get_python_pid
 
@@ -543,13 +543,14 @@ def admin_view_users():
 @app.route('/pair_trading')
 @login_required
 def pair_trading():
-    return render_template("pair_trading.html")
+    return render_template("pair_trading.html", done_pair_trade_model=done_pair_trade_model)
 
 
 @app.route('/pair_trade_build_model_param', methods=['POST', 'GET'])
 @login_required
 def build_model():
     if request.method == 'POST':
+        global pair_trading_start_date, pair_trading_end_date, back_testing_start_date, back_testing_end_date, done_pair_trade_model
         select_stmt = "SELECT DISTINCT sector FROM sp500;"
         result_df = database.execute_sql_statement(select_stmt)
         sector_list = list(result_df['sector'])
@@ -559,25 +560,26 @@ def build_model():
         adf_threshold = form_input['P Threshold']
         pair_trading_start_date = form_input['Start Date']
         pair_trading_end_date = form_input['End Date']
+        back_testing_start_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d") + timedelta(270)).strftime("%Y-%m-%d")
+        back_testing_end_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d") + timedelta(330)).strftime("%Y-%m-%d")
         sector = form_input['Sector']
 
         if not (corr_threshold and adf_threshold and pair_trading_end_date and pair_trading_start_date and sector):
             flash('Error!  Incorrect Values!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=done_pair_trade_model)
 
         if float(corr_threshold) >= 1 or float(corr_threshold) <= - 1:
             flash('Error!  Incorrect Correlation Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=done_pair_trade_model)
 
         if float(adf_threshold) >= 1 or float(adf_threshold) <= 0:
             flash('Error!  Incorrect P Value Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=done_pair_trade_model)
 
-        if datetime.strptime(pair_trading_start_date, "%Y-%m-%d") >= datetime.strptime(pair_trading_end_date,
-                                                                                       "%Y-%m-%d") \
+        if datetime.strptime(pair_trading_start_date,"%Y-%m-%d") + timedelta(365) >= datetime.strptime(pair_trading_end_date,"%Y-%m-%d") \
                 or datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error!  Incorrect Dates!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=done_pair_trade_model)
 
         build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, pair_trading_end_date)
         select_stmt = "SELECT * FROM stock_pairs;"
@@ -586,12 +588,13 @@ def build_model():
         result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
         result_df = result_df.transpose()
         list_of_pairs = [result_df[i] for i in result_df]
-        return render_template("pair_trade_build_model.html", pair_list=list_of_pairs)
+        done_pair_trade_model = "pointer-events:auto"
+        return render_template("pair_trade_build_model.html", pair_list=list_of_pairs, done_pair_trade_model=done_pair_trade_model)
     else:
         select_stmt = "SELECT DISTINCT sector FROM sp500;"
         result_df = database.execute_sql_statement(select_stmt)
         sector_list = list(result_df['sector'])
-        return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+        return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=done_pair_trade_model)
 
 
 @app.route('/pair_trade_back_test')
@@ -623,12 +626,12 @@ def model_probation_testing():
 
         if (not probation_testing_end_date) or (not probation_testing_start_date):
             flash('Error!  Incorrect Values!', 'error')
-            return render_template("pair_trade_probation_test.html")
+            return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
-        if datetime.strptime(probation_testing_start_date,"%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
-                or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
+                or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date,"%Y-%m-%d"):
             flash('Error!  Incorrect Dates!', 'error')
-            return render_template("pair_trade_probation_test.html")
+            return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
         pair_trade_probation_test(probation_testing_start_date, probation_testing_end_date)
 
@@ -642,9 +645,9 @@ def model_probation_testing():
         result_df['Profit'] = result_df['Profit'].map('${:,.2f}'.format)
         result_df = result_df.transpose()
         trade_results = [result_df[i] for i in result_df]
-        return render_template("pair_trade_probation_test_result.html", trade_list=trade_results, total=usd(total))
+        return render_template("pair_trade_probation_test_result.html",trade_list=trade_results,total=usd(total))
     else:
-        return render_template("pair_trade_probation_test.html")
+        return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
 
 # AI modeling
