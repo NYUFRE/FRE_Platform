@@ -29,23 +29,118 @@
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-	<h3>Trading Portfolio</h3>
-	<p>
-        This is a paper trading system where you can perform manual trading.
-    </p>
-
-        <p>
-            Portfolio Section shows current holdings.
-        </p>
-        <p>
-            Stock Quote show quotes from data vendor.
-        </p>
-        <p>
-            Buy / Sell stock provides corresponding service.
-        </p>
-        <p>
-            History shows the trading history.
-        </p>
+    <h3><strong>Manual Trading and Portfolio Management</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							This is a paper trading system where a user can perform manual trading and manage a personal trading portfolio.<br>
+							Each registered user has initial fund of $10,000.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Portfolio</strong>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Shows current holdings, average cost of each holding, cash value, portfolio value, and unrealized PnL.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Each holding in the portfolio is calculated in real-time based on the latest sale price of the stock from IEX.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Stock Quote</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Show real-time quotes from market data provider IEX. 
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) While the market is open, the quote shows best bid and ask quotes as well as the latest sale price.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Buy/Sell Stock</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Provides manual trading based on quotes. Currently the system does not support short stocks. 
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Market orders will be traded at quoted bid and ask price. 
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Limit buy order will trade at quoted ask price. 
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• If a buy order price is higher than ask price, the order will receive price improvement, i.e. filled at the ask price.
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• If a buy order price is lower than the ask price, the order will be rejected.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Limit Sell order will trade at quoted bid price. 
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• If a sell order price is lower than bid price, the order will receive price improvement, i.e. filled at bid price.
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• If a sell order price is higher than the bid price, the order will be rejected.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>History</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Show the symbol, price, quantity, date, and time for every trade. 
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 
 </main>
+<br></br>
+<br></br>
+
 {% endblock %}
