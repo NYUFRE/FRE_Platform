@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 Create the instance directory in FRE_Platform and load flask.cfg into the instance directory
 
-Set PYTHONPATH pointing to your FRE_Platform
+Set PYTHONPATH pointing to your FRE_Platform such as
 ```
 set PYTHONPATH="C:\NYUFRE\FRE_Platform\FRE_Platform"
 ```
