@@ -29,13 +29,14 @@ from collections import defaultdict
 
 server_config = ServerConfig()
 
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
+#pd.set_option('display.max_rows', 500)
+#pd.set_option('display.max_columns', 500)
+#pd.set_option('display.width', 1000)
+
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
-
 
 def populate_intraday_order_map(symbols: Iterable[str], intraday_data_table: str, market_periods: List[str]) -> Dict[
     str, List]:

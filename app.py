@@ -35,7 +35,6 @@ from system.portfolio.users import send_confirmation_email, send_password_reset_
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
 
-
 from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test
@@ -200,8 +199,6 @@ def portfolio():
         layout = {'title': '<b>Portfolio Holdings</b>'}
         return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion="100%",
                                length=0, graph_values=graph_values, layout=layout)
-
-
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -625,7 +622,8 @@ def model_probation_testing():
             flash('Error!  Incorrect Values!', 'error')
             return render_template("pair_trade_probation_test.html")
 
-        if datetime.strptime(probation_testing_start_date,"%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
+                                                                                            "%Y-%m-%d") \
                 or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error!  Incorrect Dates!', 'error')
             return render_template("pair_trade_probation_test.html")
@@ -660,7 +658,7 @@ def ai_build_model():
     # database.drop_table('best_portfolio')
     # While drop the table, table name "best_portfolio" still in metadata
     # therefore, everytime only clear table instead of drop it.
-    
+
     table_list = ['best_portfolio']
     database.create_table(table_list)
     database.clear_table(table_list)
@@ -673,7 +671,7 @@ def ai_build_model():
     # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock)    # (symbol, name, sector,weight)
+        print(stock)  # (symbol, name, sector,weight)
         stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
     # Show portfolio's score metrics
@@ -785,6 +783,7 @@ def start_server_process():
             print(output.strip())
             time.sleep(5)
             client_config.server_ready = True
+            return
         elif client_config.server_tombstone:
             return
 
@@ -812,10 +811,12 @@ def sim_server_down():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
+                client_config.server_ready = False
                 return error_page("Fail in connecting to server")
 
             client_config.receiver_stop = False
             client_config.server_tombstone = True
+
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_receiver.start()
 
@@ -840,6 +841,9 @@ def sim_server_down():
             client_config.client_thread_started = False
 
         except(OSError, Exception):
+            # TODO Need a Web page to indicate we throw an exception and print full stack.
+            client_config.server_ready = False
+            client_config.client_thread_started = False
             return render_template("sim_server_down.html")
 
     return render_template("sim_server_down.html")
@@ -865,7 +869,8 @@ def sim_auto_trading():
             msg_data = {}
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-            client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+            client_config.client_thread = threading.Thread(target=join_trading_network,
+                                                           args=(trading_queue, trading_event))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
@@ -1035,7 +1040,7 @@ def market_data_fundamentals():
 @app.route('/md_stocks', methods=["GET", "POST"])
 @login_required
 def market_data_stock():
-    #TODO: if ticker not in database, add new data to database.
+    # TODO: if ticker not in database, add new data to database.
     table_list = ['stocks']
     database.create_table(table_list)
     if database.check_table_empty('stocks'):
