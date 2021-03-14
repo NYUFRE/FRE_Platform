@@ -23,20 +23,20 @@ eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 class BollingerBandsStocksInfo:    
     def __init__(self, ticker, h=20, k1=2, notional=10000,
                  price_queue=Queue(int(20 / 5)), ):
-        self.Ticker = ticker
-        self.H = h
-        self.K1 = k1
-        self.Notional = notional
+        self.ticker = ticker
+        self.h = h
+        self.k1 = k1
+        self.notional = notional
         self.price_queue = price_queue
-        self.Std = "null"
-        self.MA = "null"
+        self.std = "null"
+        self.ma = "null"
         self.position = 0
-        self.Qty = 0
+        self.qty = 0
         self.current_price_buy = 0
         self.current_price_sell = 1e6
-        self.Tradelist = []
-        self.PnLlist = []
-        self.PnL = 0
+        self.trade_list = []
+        self.pnl_list = []
+        self.pnl = 0
 
 
 class BBDmodelStockSelector:

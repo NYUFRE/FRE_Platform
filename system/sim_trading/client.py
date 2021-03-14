@@ -198,10 +198,8 @@ def join_trading_network(q, e):
                 if mkt_status["Status"] == 'Open' or mkt_status["Status"] == 'Pending Closing':
                     break
                 if mkt_status['Market_Period'] == market_end_date and mkt_status["Status"] == "Market Closed":
-                    while not q.empty():
-                        client_config.orders.append(get_response(q))
                     # print('PnL Calculation Logic')
-                    PnL_dict = {}
+                    pnl_dict = {}
                     for stk in StockInfoDict:
                         stkbuy_order = [order for order in client_config.orders if
                                         (order['Symbol'] == stk) & (order['Side'] == 'Buy')]
@@ -220,11 +218,16 @@ def join_trading_network(q, e):
                         stkPnL = sum([P * Q for P, Q in zip(stksell_price, stksell_qty)]) - sum(
                             [P * Q for P, Q in zip(stkbuy_price, stkbuy_qty)])
                         # print(stkPnL)
-                        PnL_dict.update({stk: stkPnL})
+                        pnl_dict.update({stk: stkPnL})
 
-                    client_config.PnL = sum(PnL_dict.values())
-                    client_config.Ticker_PnL = {stk: usd(PnL_dict[stk]) for stk in PnL_dict}
+                    client_config.pnl = sum(pnl_dict.values())
+                    client_config.ticker_pnl = {stk: usd(pnl_dict[stk]) for stk in pnl_dict}
                     # complete the sim_trade
+                    set_event(e)
+                    send_msg(get_market_status(client_packet))
+                    wait_for_an_event(e)
+                    while not q.empty():
+                        get_response(q)
                     client_config.trade_complete = True
                     break
                 time.sleep(0.5)
@@ -234,17 +237,17 @@ def join_trading_network(q, e):
             if mkt_status["Status"] == "Pending Closing":
                 for stk in StockInfoDict:
                     stkInfo_object = StockInfoDict[stk]
-                    stkInfo_object.MA = 'null'
-                    stkInfo_object.Std = 'null'
-                    stkInfo_object.price_queue = Queue(int(stkInfo_object.H / 5))  # reset the members
+                    stkInfo_object.ma = 'null'
+                    stkInfo_object.std = 'null'
+                    stkInfo_object.price_queue = Queue(int(stkInfo_object.h / 5))  # reset the members
                     if stkInfo_object.position != 0:
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
                         # if longing
                         if stkInfo_object.position > 0:
-                            enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.Qty)
-                            print("Close Trade in: ", stk, "With postion: Sell", "With Qty: ", stkInfo_object.Qty)
+                            enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.qty)
+                            print("Close Trade in: ", stk, "With postion: Sell", "With Qty: ", stkInfo_object.qty)
                             print("Because: Close at Pending Close.")
                             set_event(e)
                             send_msg(client_packet)
@@ -255,13 +258,13 @@ def join_trading_network(q, e):
                                 response_data = get_response(q)
                                 response_list.append(response_data)
                                 client_config.orders.append(response_data)
-                            stkInfo_object.Qty = 0
+                            stkInfo_object.qty = 0
                             stkInfo_object.position = 0
 
                         # if shorting
                         else:
-                            enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.Qty)
-                            print("Close Trade in: ", stk, "With postion: Buy", "With Qty: ", stkInfo_object.Qty)
+                            enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.qty)
+                            print("Close Trade in: ", stk, "With postion: Buy", "With Qty: ", stkInfo_object.qty)
                             print("Because: Close at Pending Close.")
                             set_event(e)
                             send_msg(client_packet)
@@ -272,7 +275,7 @@ def join_trading_network(q, e):
                                 response_data = get_response(q)
                                 response_list.append(response_data)
                                 client_config.orders.append(response_data)
-                            stkInfo_object.Qty = 0
+                            stkInfo_object.qty = 0
                             stkInfo_object.position = 0
                 # re-enter into checking "Open" while-loop
                 continue
@@ -346,20 +349,20 @@ def join_trading_network(q, e):
                 if not stkInfo_object.price_queue.full():
                     stkInfo_object.price_queue.put(current_price)
                     if stkInfo_object.price_queue.full():
-                        stkInfo_object.MA = np.array(stkInfo_object.price_queue.queue).mean()
-                        stkInfo_object.Std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                        stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
+                        stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
                 else:  # already full
                     popout = stkInfo_object.price_queue.get()
                     stkInfo_object.price_queue.put(current_price)
-                    stkInfo_object.MA = np.array(stkInfo_object.price_queue.queue).mean()
-                    stkInfo_object.Std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                    stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
+                    stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
 
             for stk in StockInfoDict:
                 stkInfo_object = StockInfoDict[stk]
-                K1 = stkInfo_object.K1
-                MA = stkInfo_object.MA
-                Std = stkInfo_object.Std
-                Notional = stkInfo_object.Notional
+                K1 = stkInfo_object.k1
+                MA = stkInfo_object.ma
+                Std = stkInfo_object.std
+                Notional = stkInfo_object.notional
                 if MA == 'null':
                     continue
                 current_buy = stkInfo_object.current_price_buy
@@ -376,10 +379,10 @@ def join_trading_network(q, e):
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        stkInfo_object.Qty = int(Notional / current_sell)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.Qty)
+                        stkInfo_object.qty = int(Notional / current_sell)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.qty)
                         print("Open Trade in: ", stk, "With postion: Buy", "at Price:", current_sell, "With Qty:",
-                              stkInfo_object.Qty)
+                              stkInfo_object.qty)
                         print("Because: Price below lower band:", usd(MA - K1 * Std))
                         set_event(e)
                         send_msg(client_packet)
@@ -398,10 +401,10 @@ def join_trading_network(q, e):
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        stkInfo_object.Qty = int(Notional / current_buy)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.Qty)
+                        stkInfo_object.qty = int(Notional / current_buy)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.qty)
                         print("Open Trade in: ", stk, "With postion: Sell", "at Price:", current_buy, "With Qty: ",
-                              stkInfo_object.Qty)
+                              stkInfo_object.qty)
                         print("Because: Price above upper band:", usd(MA + K1 * Std))
                         set_event(e)
                         send_msg(client_packet)
@@ -420,9 +423,9 @@ def join_trading_network(q, e):
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.Qty)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.qty)
                         print("Close Trade in: ", stk, "With postion: Sell", "at Price:", current_buy, "With Qty: ",
-                              stkInfo_object.Qty)
+                              stkInfo_object.qty)
                         print("Because: Price above lower band:", usd(MA))
                         set_event(e)
                         send_msg(client_packet)
@@ -436,7 +439,7 @@ def join_trading_network(q, e):
                         #                    Trade_object = stkInfo_object.Tradelist[-1]
                         #                    Trade_object.CloseTrade(response_list)
                         #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
-                        stkInfo_object.Qty = 0
+                        stkInfo_object.qty = 0
                         stkInfo_object.position = 0
 
                 # shorting now
@@ -445,9 +448,9 @@ def join_trading_network(q, e):
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.Qty)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.qty)
                         print("Close Trade in: ", stk, "With postion: Buy", "at Price:", current_sell, "With Qty: ",
-                              stkInfo_object.Qty)
+                              stkInfo_object.qty)
                         print("Because: Price below upper band:", usd(MA))
                         set_event(e)
                         send_msg(client_packet)
@@ -461,7 +464,7 @@ def join_trading_network(q, e):
                         #                    Trade_object = stkInfo_object.Tradelist[-1]
                         #                    Trade_object.CloseTrade(response_list)
                         #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
-                        stkInfo_object.Qty = 0
+                        stkInfo_object.qty = 0
                         stkInfo_object.position = 0
 
             time.sleep(1)  # request order book every sec

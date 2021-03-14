@@ -28,8 +28,8 @@ class ClientConfig:
         self.client_symbols = "AAPL,XOM"
 
         self.server_tombstone = True
-        self.PnL = 0
-        self.Ticker_PnL = {}
+        self.pnl = 0
+        self.ticker_pnl = {}
 
 
 class ServerConfig:

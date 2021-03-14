@@ -1,3 +1,4 @@
+#################
 #### imports ####
 #################
 
@@ -789,8 +790,8 @@ def start_server_process():
             client_config.server_ready = True
         elif client_config.server_tombstone:
             return
-        
-        
+
+
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
@@ -894,7 +895,7 @@ def sim_auto_trading():
             client_config.trade_complete = False
             client_config.client_socket.close()
 
-        return render_template("sim_auto_trading.html", trading_results=client_config.orders, pnl_results=client_config.Ticker_PnL)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders, pnl_results=client_config.ticker_pnl)
 
     else:
         return render_template("error_auto_trading.html")
