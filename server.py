@@ -29,12 +29,40 @@ from collections import defaultdict
 
 server_config = ServerConfig()
 
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
+#pd.set_option('display.max_rows', 500)
+#pd.set_option('display.max_columns', 500)
+#pd.set_option('display.width', 1000)
+
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
+
+
+class MarketDates:  
+    start_date = None
+    end_date = None
+    
+    @classmethod
+    def get_market_periods(cls):
+        cls.end_date = datetime.datetime.today()  
+        cls.start_date = cls.end_date + datetime.timedelta(-server_config.total_market_days)
+        trading_calendar = mcal.get_calendar('NYSE')
+        server_config.market_periods = trading_calendar.schedule(
+            start_date=cls.start_date.strftime("%Y-%m-%d"),
+            end_date=cls.end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-1]      
+        server_config.total_market_days = len(server_config.market_periods)
+        
+        market_period_objects = trading_calendar.schedule(start_date=cls.start_date.strftime("%Y-%m-%d"),
+                                                  end_date=cls.end_date.strftime("%Y-%m-%d")).index.tolist()[:-1]
+        
+        cls.start_date = server_config.market_periods[0]
+        cls.end_date = server_config.market_periods[-1]
+        print(server_config.market_periods, file=server_config.server_output)
+          # Update for remove non-trading days
+        return cls.start_date, cls.end_date, market_period_objects
+        
+        
 
 
 def populate_intraday_order_map(symbols: Iterable[str], intraday_data_table: str, market_periods: List[str]) -> Dict[
@@ -202,7 +230,7 @@ def handle_client(client, q=None):
                 elif msg_type == PacketTypes.MARKET_STATUS_REQ.value:
                     server_packet.m_type = PacketTypes.MARKET_STATUS_RSP.value
                     server_msg = json.dumps({'Server': server_config.server_id, 'Status': server_config.market_status,
-                                             'Market_Period': server_config.market_period})
+                                             'Market_Period': server_config.market_period, 'Market_End_Date': MarketDates.end_date})
                     server_packet.m_data = server_msg
                     client.send(server_packet.serialize())
                     data = json.loads(server_packet.m_data)
@@ -728,37 +756,10 @@ def launch_server():
     # server_config.server_output = sys.stdout
 
     server_config.symbol_list = get_stock_list()
+    # print(server_config.symbol_list)
 
-    # USFederalHolidayCalendar has a bug, GoodFriday is not excluded
-    # us_bd = CustomBusinessDay(holidays=['2020-04-10'], calendar=USFederalHolidayCalendar())
-
-    # lastBusDay = datetime.datetime.today()
-    # if datetime.date.weekday(lastBusDay) == 5:  # if it's Saturday
-    #     lastBusDay = lastBusDay - datetime.timedelta(days=1)  # then make it Friday
-    # elif datetime.date.weekday(lastBusDay) == 6:  # if it's Sunday
-    #     lastBusDay = lastBusDay - datetime.timedelta(days=2)  # then make it Friday
-
-    end_date = datetime.datetime.today()  
-
-    # end_date = datetime.datetime.today() - datetime.timedelta(days = 1) # yesterday
-    start_date = end_date + datetime.timedelta(-server_config.total_market_days)
-
-    # server_config.market_periods = pd.DatetimeIndex(
-    #    pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), freq=us_bd)).strftime("%Y-%m-%d").tolist()
-    trading_calendar = mcal.get_calendar('NYSE')
-    server_config.market_periods = trading_calendar.schedule(
-        start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-1]
-
-    print(server_config.market_periods, file=server_config.server_output)
-    server_config.total_market_days = len(server_config.market_periods)  # Update for remove non-trading days
-
-    # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"),
-    #                                                       end=end_date.replace(hour=23, minute=30).strftime(
-    #                                                           "%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
-    # market_period_objects = pd.DatetimeIndex(pd.date_range(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d %H:%M:%S"), freq=us_bd)).tolist()
-    market_period_objects = trading_calendar.schedule(start_date=start_date.strftime("%Y-%m-%d"),
-                                                      end_date=end_date.strftime("%Y-%m-%d")).index.tolist()[:-1]
+    start_date, end_date, market_period_objects = MarketDates.get_market_periods()
+    # print(server_config.market_periods)
 
     for i in range(len(market_period_objects)):
         server_config.market_period_seconds.append(

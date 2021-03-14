@@ -16,6 +16,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objs as go
 from sys import platform
+import io
 
 import numpy as np
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -34,7 +35,6 @@ from system.portfolio.models import User
 from system.portfolio.users import send_confirmation_email, send_password_reset_email, add_admin_user
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
-
 
 from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
@@ -200,8 +200,6 @@ def portfolio():
         layout = {'title': '<b>Portfolio Holdings</b>'}
         return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion="100%",
                                length=0, graph_values=graph_values, layout=layout)
-
-
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -625,7 +623,8 @@ def model_probation_testing():
             flash('Error!  Incorrect Values!', 'error')
             return render_template("pair_trade_probation_test.html")
 
-        if datetime.strptime(probation_testing_start_date,"%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
+                                                                                            "%Y-%m-%d") \
                 or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error!  Incorrect Dates!', 'error')
             return render_template("pair_trade_probation_test.html")
@@ -660,7 +659,7 @@ def ai_build_model():
     # database.drop_table('best_portfolio')
     # While drop the table, table name "best_portfolio" still in metadata
     # therefore, everytime only clear table instead of drop it.
-    
+
     table_list = ['best_portfolio']
     database.create_table(table_list)
     database.clear_table(table_list)
@@ -673,7 +672,7 @@ def ai_build_model():
     # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock)    # (symbol, name, sector,weight)
+        print(stock)  # (symbol, name, sector,weight)
         stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
     # Show portfolio's score metrics
@@ -692,11 +691,14 @@ def ai_build_model():
 @app.route('/ai_back_test')
 @login_required
 def ai_back_test():
-    global portfolio_ys, spy_ys, n
+    global portfolio_ys, spy_ys, bt_start_date, bt_end_date # Used for function "ai_back_test_plot"
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
-    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
-    n = len(portfolio_ys)
+
+    bt_start_date = str(spy.price_df.index[0])[:10]
+    bt_end_date = str(spy.price_df.index[-1])[:10]
+
+    portfolio_ys = best_portfolio.portfolio_daily_cumulative_returns.copy()
+    spy_ys = spy.price_df['spy_daily_cumulative_return'].copy()
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -706,16 +708,15 @@ def ai_back_test():
 def ai_back_test_plot():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
+    n = len(portfolio_ys)
     line = np.zeros(n)
-    t = range(n)
-    axis.plot(t, portfolio_ys[0:n], 'ro')
-    axis.plot(t, spy_ys[0:n], 'bd')
-    axis.plot(t, line, 'b')
+    axis.plot(portfolio_ys, 'ro')
+    axis.plot(spy_ys, 'bd')
+    axis.plot(portfolio_ys.index, line, 'b')
 
     axis.set(xlabel="Date",
              ylabel="Cumulative Returns",
-             title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
-             xlim=[0, n])
+             title=f"Portfolio Back Test ({bt_start_date} to {bt_end_date})")
 
     axis.text(0.2, 0.9, 'Red - Portfolio, Blue - SPY',
               verticalalignment='center',
@@ -785,6 +786,7 @@ def start_server_process():
             print(output.strip())
             time.sleep(5)
             client_config.server_ready = True
+            return
         elif client_config.server_tombstone:
             return
 
@@ -812,10 +814,12 @@ def sim_server_down():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
+                client_config.server_ready = False
                 return error_page("Fail in connecting to server")
 
             client_config.receiver_stop = False
             client_config.server_tombstone = True
+
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_receiver.start()
 
@@ -840,6 +844,9 @@ def sim_server_down():
             client_config.client_thread_started = False
 
         except(OSError, Exception):
+            # TODO Need a Web page to indicate we throw an exception and print full stack.
+            client_config.server_ready = False
+            client_config.client_thread_started = False
             return render_template("sim_server_down.html")
 
     return render_template("sim_server_down.html")
@@ -857,15 +864,16 @@ def sim_auto_trading():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
-                return error_page("Fail in connecting to server")
-
+                flash("Failure in server: please restart the program")
+                return render_template("error_auto_trading.html")
             client_config.client_up = True
             client_config.orders = []
             client_packet = Packet()
             msg_data = {}
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-            client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+            client_config.client_thread = threading.Thread(target=join_trading_network,
+                                                           args=(trading_queue, trading_event))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
@@ -891,10 +899,15 @@ def sim_auto_trading():
             client_config.trade_complete = False
             client_config.client_socket.close()
 
-        return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders, pnl_results=client_config.ticker_pnl)
 
     else:
         return render_template("error_auto_trading.html")
+
+@app.route('/sim_model_info')
+@login_required
+def sim_model_info():
+    return render_template("sim_model_info.html")
 
 
 # Market Data
@@ -1035,6 +1048,7 @@ def market_data_fundamentals():
 @app.route('/md_stocks', methods=["GET", "POST"])
 @login_required
 def market_data_stock():
+    # TODO: if ticker not in database, add new data to database.
     table_list = ['stocks']
     database.create_table(table_list)
     if database.check_table_empty('stocks'):

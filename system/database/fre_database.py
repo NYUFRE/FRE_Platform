@@ -1,10 +1,8 @@
 import pandas as pd
-from sqlalchemy import Column, ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, \
-    BOOLEAN
-from sqlalchemy import MetaData, create_engine
-from sqlalchemy import Table
+from sqlalchemy import ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, BOOLEAN
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy import Table, Column
 from typing import Collection, List, Dict, Union
-import pandas as pd
 
 
 class FREDatabase:
