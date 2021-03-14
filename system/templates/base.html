@@ -34,7 +34,8 @@
 
 			function exportTableToCSV(filename) {
 				var csv = [];
-				var rows = document.querySelectorAll("table tr");
+				var container = document.querySelector("#long-report")
+				var rows = container.querySelectorAll("table tr");
 				
 				for (var i = 0; i < rows.length; i++) {
 					var row = [], cols = rows[i].querySelectorAll("td, th");
@@ -47,6 +48,16 @@
 
 				downloadCSV(csv.join("\n"), filename);
 			}
+			
+			function hideElement() {
+              var x = document.getElementById("long-report");
+              if (x.style.display === "none") {
+                  x.style.display = "block";
+              } 
+              else {
+                  x.style.display = "none";
+                  }
+            }
 		</script>
 	</head>
 
