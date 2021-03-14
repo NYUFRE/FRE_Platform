@@ -29,12 +29,15 @@ from collections import defaultdict
 
 server_config = ServerConfig()
 
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
+#pd.set_option('display.max_rows', 500)
+#pd.set_option('display.max_columns', 500)
+#pd.set_option('display.width', 1000)
+
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
+
 
 class MarketDates:  
     start_date = None
