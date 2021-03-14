@@ -18,11 +18,15 @@ Install the required packages
 ```
 pip install -r requirements.txt
 ```
-Create the instance directory in FRE_Platform and load flask.cfg and fre_database.db into the instance directory
+Create the instance directory in FRE_Platform and load flask.cfg into the instance directory
 
+Set PYTHONPATH pointing to your FRE_Platform
+```
+set PYTHONPATH="C:\NYUFRE\FRE_Platform\FRE_Platform"
+```
 Launch the platform
 ```
-flask run
+python app.py
 ```
 Stop the platform by Ctrl-C and deactivate the virtualenv
 ```
