@@ -112,6 +112,8 @@ def logout():
     logout_user()
     flash('Goodbye!', 'info')
     session.clear()
+    global done_pair_trade_model
+    done_pair_trade_model = "pointer-events:none"
     return redirect(url_for('login'))
 
 
