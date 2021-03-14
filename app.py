@@ -1,4 +1,3 @@
-#################
 #### imports ####
 #################
 
@@ -787,8 +786,8 @@ def start_server_process():
             client_config.server_ready = True
         elif client_config.server_tombstone:
             return
-
-
+        
+        
 @app.route('/sim_server_up')
 @login_required
 def sim_server_up():
@@ -812,7 +811,8 @@ def sim_server_down():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
-                return error_page("Fail in connecting to server")
+                flash("Failure in server: please restart the program")
+                return render_template("sim_server_down.html")
 
             client_config.receiver_stop = False
             client_config.server_tombstone = True
@@ -857,8 +857,8 @@ def sim_auto_trading():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
-                return error_page("Fail in connecting to server")
-
+                flash("Failure in server: please restart the program")
+                return render_template("error_auto_trading.html")
             client_config.client_up = True
             client_config.orders = []
             client_packet = Packet()
@@ -891,10 +891,15 @@ def sim_auto_trading():
             client_config.trade_complete = False
             client_config.client_socket.close()
 
-        return render_template("sim_auto_trading.html", trading_results=client_config.orders)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders, pnl_results=client_config.Ticker_PnL)
 
     else:
         return render_template("error_auto_trading.html")
+
+@app.route('/sim_model_info')
+@login_required
+def sim_model_info():
+    return render_template("sim_model_info.html")
 
 
 # Market Data

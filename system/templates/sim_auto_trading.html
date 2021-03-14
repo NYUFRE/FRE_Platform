@@ -11,14 +11,24 @@
         <li class="nav-item">
             <a class="nav-link" href="/sim_server_down">Stop Server</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link"></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/sim_model_info">Model Info</a>
+        </li>
     </ul>
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
     <h3><strong>Auto Trading Report</strong></h3>
     <br>
-    <button onclick="exportTableToCSV('AutoTradingReport.csv')" id="button-csv" style="float:left">Export to CSV File</button>
-    <div class="table-responsive">
+    <button onclick="exportTableToCSV('AutoTradingReport.csv')" id="button-csv" style="float:left">Export to CSV</button>
+    <button onclick="hideElement()" id="button-csv" style="float:left">PnL by Symbol</button>
+    <div class="table-responsive" id="long-report">
         <table class="table table-striped">
             <thead>
             <tr>
@@ -48,6 +58,26 @@
             </tbody>
         </table>
     </div>
-	<hr>
+    <br>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th style="text-align:center">Symbol</th>
+                    <th style="text-align:center">ProfitLoss</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for key, value in pnl_results.items() %}
+            <tr>
+                <th style="text-align:center">{{ key }}</th>
+                <td style="text-align:center">{{ value }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <hr>
+    </div>
+
 </main>
 {% endblock %}
