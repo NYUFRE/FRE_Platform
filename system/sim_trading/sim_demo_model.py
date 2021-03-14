@@ -56,7 +56,6 @@ class BBDmodelStockSelector:
                 print(start_date, end_date)
                 start_time = int(start_date.replace(tzinfo=dt.timezone.utc).timestamp())
                 end_time = int(end_date.replace(tzinfo=dt.timezone.utc).timestamp())
-                print('good1')
                 stk_data = pd.DataFrame(eod_market_data.get_intraday_data(stk, start_time, end_time))
                 std = stk_data.close.pct_change().shift(-1).std()
                 std_resultdf.loc[stk,'std'] = std
