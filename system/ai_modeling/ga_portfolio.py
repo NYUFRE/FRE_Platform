@@ -6,12 +6,8 @@ from typing import List, Dict, Tuple
 import pandas as pd
 import numpy as np
 
-# from numpy.core._multiarray_umath import ndarray
-
 SP500_NUM_OF_STOCKS = 505
 PORTFOLIO_NUM_OF_STOCK = 11
-
-
 
 class Trade:
     def __init__(self):
@@ -233,9 +229,9 @@ class GAPortfolio:
         """
         # Keep only data of stocks in the portfolio
         select_query = ' or '.join(f"symbol == '{val[1]}'" for val in self.stocks)
-        self.price_df = price_df.query(select_query)      
+        self.price_df = price_df.query(select_query).copy()   
         # Calculate returns
-        self.price_df['weighted_ret'] = self.price_df['dailyret'] * self.price_df['weight']   # weight * daily return
+        self.price_df['weighted_ret'] =  self.price_df['dailyret'] * self.price_df['weight']  # weight * daily return
         self.portfolio_daily_returns = self.price_df.groupby('date')['weighted_ret'].sum()
         self.expected_daily_return = self.portfolio_daily_returns.mean()
         self.volatility = self.portfolio_daily_returns.std()
@@ -252,11 +248,12 @@ class GAPortfolio:
         """
         # Keep only portfolio stocks' data
         select_query = ' or '.join(f"symbol == '{symbol}'" for symbol in symbols)
-        self.price_df = price_df.query(select_query) 
+        self.price_df = price_df.query(select_query).copy()
 
         # Calculate stocks' daily return
         self.price_df['dailyret'] = self.price_df.groupby('symbol')['close'].pct_change()
         self.price_df['dailyret'].fillna(self.price_df['close']/self.price_df['open']-1.0, inplace=True)
+        self.price_df['date'] = pd.to_datetime(self.price_df['date'])
         self.price_df.set_index('date', inplace=True)
 
         # Calculate portoflio daily return
@@ -284,24 +281,15 @@ class GAPortfolio:
         :type fundamental_df: pd.DataFrame
         """
         select_query = ' or '.join("symbol == '" + val[1] + "'" for val in self.stocks)
-        self.fundamental_df = fundamental_df.query(select_query)      
+        self.fundamental_df = fundamental_df.query(select_query).copy()    
 
     def calculate_sharpe_ratio(self, us10y: Stock) -> None:
-        # self.sharpe_ratio = (self.expected_daily_return - us10y.expected_daily_return) / self.volatility
         self.sharpe_ratio = (self.expected_daily_return * 252 - us10y.expected_daily_return) / (self.volatility * np.sqrt(252)) # annualized
 
     def calculate_treynor_measure(self, us10y: Stock) -> None:
-        # self.treynor_measure = (self.expected_daily_return - us10y.expected_daily_return) / self.expected_beta
         self.treynor_measure = (self.expected_daily_return * 252 - us10y.expected_daily_return) / self.expected_beta
 
     def calculate_jensen_measure(self, spy: Stock, us10y: Stock) -> None:
-        #TODO make sense? what is spy.fundamental.beta? Wrong?
-        # r = rf + stock_beta * (rm - rf) 
-        # benchmark_return = us10y.expected_daily_return + spy.fundamental.beta * (
-        #             spy.expected_daily_return - us10y.expected_daily_return)
-        # benchmark_return = us10y.expected_daily_return + self.expected_beta * (
-        #              spy.expected_daily_return - us10y.expected_daily_return)
-        # self.jensen_measure = self.expected_daily_return - benchmark_return
         benchmark_return = us10y.expected_daily_return + self.expected_beta * (
                      spy.expected_daily_return * 252 - us10y.expected_daily_return)
         self.jensen_measure = self.expected_daily_return * 252 - benchmark_return   # Annualize
@@ -318,8 +306,8 @@ class GAPortfolio:
         Calculate trend by compare ma_200days and ma_50days
         """
         self.beta = sum(self.fundamental_df['beta'] * self.fundamental_df['weight'])
-        self.fundamental_df['indicator'] = self.fundamental_df.apply(lambda row : 1 if row['ma_200days'] < row['ma_50days'] else -1, axis=1)
-        self.trend = sum(self.fundamental_df['indicator'] * self.fundamental_df['weight'])
+        indicator = self.fundamental_df.apply(lambda row : 1 if row['ma_200days'] < row['ma_50days'] else -1, axis=1)
+        self.trend = sum(indicator * self.fundamental_df['weight'])
 
 
     def calculate_score(self, spy: Stock) -> None:

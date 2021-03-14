@@ -16,6 +16,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objs as go
 from sys import platform
+import io
 
 import numpy as np
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
@@ -692,11 +693,14 @@ def ai_build_model():
 @app.route('/ai_back_test')
 @login_required
 def ai_back_test():
-    global portfolio_ys, spy_ys, n
+    global portfolio_ys, spy_ys, bt_start_date, bt_end_date # Used for function "ai_back_test_plot"
     best_portfolio, spy = ga_back_test(database)
-    portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
-    spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
-    n = len(portfolio_ys)
+
+    bt_start_date = str(spy.price_df.index[0])[:10]
+    bt_end_date = str(spy.price_df.index[-1])[:10]
+
+    portfolio_ys = best_portfolio.portfolio_daily_cumulative_returns.copy()
+    spy_ys = spy.price_df['spy_daily_cumulative_return'].copy()
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -706,16 +710,15 @@ def ai_back_test():
 def ai_back_test_plot():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
+    n = len(portfolio_ys)
     line = np.zeros(n)
-    t = range(n)
-    axis.plot(t, portfolio_ys[0:n], 'ro')
-    axis.plot(t, spy_ys[0:n], 'bd')
-    axis.plot(t, line, 'b')
+    axis.plot(portfolio_ys, 'ro')
+    axis.plot(spy_ys, 'bd')
+    axis.plot(portfolio_ys.index, line, 'b')
 
     axis.set(xlabel="Date",
              ylabel="Cumulative Returns",
-             title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
-             xlim=[0, n])
+             title=f"Portfolio Back Test ({bt_start_date} to {bt_end_date})")
 
     axis.text(0.2, 0.9, 'Red - Portfolio, Blue - SPY',
               verticalalignment='center',
