@@ -22,7 +22,6 @@ from system.database.fre_database import FREDatabase
 
 from typing import Collection, List, Union
 
-done_pair_trade_model = "pointer-events:none"
 #start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 #end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
