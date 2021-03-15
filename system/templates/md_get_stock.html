@@ -31,6 +31,9 @@
 			<li class="nav-item">
 				<a class="nav-link" href="/md_fundamentals">Stock Fundamentals</a>
 			</li>
+			<li class="nav-item">
+            	<a class="nav-link" href="/md_update_data">Update Market Data (takes 1 min)</a>
+        	</li>
 		</ul>
 	</nav>
 	
@@ -39,8 +42,8 @@
 		<div class="form-stock">
 			<form action="/md_stocks" id="md_stocks" method="post">
 				<input id="symbol" name="symbol" placeholder="Symbol" type="text"/>
-				<input id="start_date" name="start_date" placeholder="yyyy-mm-dd" type="text"/>
-				<input id="end_date" name="end_date" placeholder="yyyy-mm-dd" type="text"/>
+				<input id="start_date" name="start_date" placeholder="yyyy-mm-dd" type="date"/>
+				<input id="end_date" name="end_date" placeholder="yyyy-mm-dd" type="date"/>
 				<input type="submit" value="Get Stock"/>
 			</form>
 		</div>

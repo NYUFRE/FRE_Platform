@@ -36,7 +36,6 @@ from system.portfolio.users import send_confirmation_email, send_password_reset_
 from system.sim_trading.client import client_config, client_receive, send_msg, set_event, server_down, \
     wait_for_an_event, join_trading_network, quit_connection
 
-
 from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test
@@ -201,8 +200,6 @@ def portfolio():
         layout = {'title': '<b>Portfolio Holdings</b>'}
         return render_template("portfolio.html", dict=[], total=usd(cash), cash=usd(cash), cash_proportion="100%",
                                length=0, graph_values=graph_values, layout=layout)
-
-
 
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -626,7 +623,8 @@ def model_probation_testing():
             flash('Error!  Incorrect Values!', 'error')
             return render_template("pair_trade_probation_test.html")
 
-        if datetime.strptime(probation_testing_start_date,"%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d")\
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
+                                                                                            "%Y-%m-%d") \
                 or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error!  Incorrect Dates!', 'error')
             return render_template("pair_trade_probation_test.html")
@@ -661,7 +659,7 @@ def ai_build_model():
     # database.drop_table('best_portfolio')
     # While drop the table, table name "best_portfolio" still in metadata
     # therefore, everytime only clear table instead of drop it.
-    
+
     table_list = ['best_portfolio']
     database.create_table(table_list)
     database.clear_table(table_list)
@@ -674,7 +672,7 @@ def ai_build_model():
     # Show stocks' information of best portfolio
     stocks = []
     for stock in best_portfolio.stocks:
-        print(stock)    # (symbol, name, sector,weight)
+        print(stock)  # (symbol, name, sector,weight)
         stocks.append((stock[1], stock[3], stock[0], str(round(stock[2] * 100, 4))))
     length = len(stocks)
     # Show portfolio's score metrics
@@ -788,6 +786,7 @@ def start_server_process():
             print(output.strip())
             time.sleep(5)
             client_config.server_ready = True
+            return
         elif client_config.server_tombstone:
             return
 
@@ -820,6 +819,7 @@ def sim_server_down():
 
             client_config.receiver_stop = False
             client_config.server_tombstone = True
+
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_receiver.start()
 
@@ -844,6 +844,9 @@ def sim_server_down():
             client_config.client_thread_started = False
 
         except(OSError, Exception):
+            # TODO Need a Web page to indicate we throw an exception and print full stack.
+            client_config.server_ready = False
+            client_config.client_thread_started = False
             return render_template("sim_server_down.html")
 
     return render_template("sim_server_down.html")
@@ -869,7 +872,8 @@ def sim_auto_trading():
             msg_data = {}
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
-            client_config.client_thread = threading.Thread(target=join_trading_network, args=(trading_queue, trading_event))
+            client_config.client_thread = threading.Thread(target=join_trading_network,
+                                                           args=(trading_queue, trading_event))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
@@ -1044,7 +1048,7 @@ def market_data_fundamentals():
 @app.route('/md_stocks', methods=["GET", "POST"])
 @login_required
 def market_data_stock():
-    #TODO: if ticker not in database, add new data to database.
+    # TODO: if ticker not in database, add new data to database.
     table_list = ['stocks']
     database.create_table(table_list)
     if database.check_table_empty('stocks'):
@@ -1064,6 +1068,15 @@ def market_data_stock():
         if request.form.get("end_date"):
             date2 = request.form.get("end_date")
 
+        #if ticker is not in database, update the data from EOD and store it into database
+        symbol_list = database.execute_sql_statement("SELECT DISTINCT symbol FROM stocks;")['symbol']
+        if ticker not in list(symbol_list):
+            try:
+                today = datetime.today().strftime('%Y-%m-%d')
+                eod_market_data.populate_stock_data([ticker], "stocks", start_date, today, 'US')
+            except:
+                flash('Can\'t find data. Please enter correct ticker name and dates.')
+
         select_stmt = f"""
         SELECT symbol, date, 
             printf("%.2f", open) as open, 
@@ -1078,87 +1091,92 @@ def market_data_stock():
         """
         result_df = database.execute_sql_statement(select_stmt)
         if result_df.empty:
-            flash('Data does not exist in database. Please enter a ticker in S&P500 and a date after 2010/1/1 :)')
+            flash('Can\'t find data. Please enter correct ticker name and dates.')
         result_df = result_df.transpose()
         list_of_stock = [result_df[i] for i in result_df]
         return render_template("md_stock.html", stock_list=list_of_stock)
     else:
         return render_template("md_get_stock.html")
 
-
+@app.route('/md_update_data')
+@login_required
 def update_market_data():
     """
     This function is for updating the MatketData database.
-    # Note: Not used yet. Run this function to update database manually.
+    Click the update_market_data tab, all market data will be updated. Takes around 1 min.
     # TODOs:
-        1.automatically trigger this function once everyday, then delete the update part in
+        Automatically trigger this function once everyday, then delete the update part in
         market_data_sp500(), market_data_spy(), and market_data_us10y().
-        2. Make the retrieval of fundamentals and stock prices faster
     """
     today = datetime.today().strftime('%Y-%m-%d')
-
-    # fundamentals (use multi-threads,takes 30 seconnds)
-    table_list = ['fundamentals']
-    database.create_table(table_list)
-    database.clear_table(table_list)
-    tickers = database.get_sp500_symbols()
-    tickers.append('SPY')
-    eod_market_data.populate_fundamental_data(tickers, 'US')
-
-    # spy price data
-    if database.check_table_empty('spy'):
-        # if the table is empty, insert data from start date to today
-        eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
-    else:
-        # if the table is not empty, insert data from the last date in the existing table to today.
-        select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
-        last_date = database.execute_sql_statement(select_stmt)['date'][0]
-        # define begin_date here. The rest updates will use the same begin date
-        begin_date = (datetime.strptime(last_date, '%Y-%m-%d') + timedelta(days=1)).strftime(
-            '%Y-%m-%d')  # add one day after the last date in table
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
-
-    # us10y
-    database.create_table(['us10y'])
-    if database.check_table_empty('us10y'):
-        eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
-    else:
-        select_stmt = 'SELECT date FROM us10y ORDER BY date DESC limit 1'
-        last_date = database.execute_sql_statement(select_stmt)['date'][0]
-        begin_date = (datetime.strptime(last_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-        if begin_date <= today:
-            eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
-
-    # stock daily data (use multi-threads,takes 22 seconnds)
-    # TODO: try to use batch request from IEX data to further speed up. Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
-    database.create_table(['stocks'])
-    tickers = database.get_sp500_symbols()
-    if database.check_table_empty('stocks'):
-        eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
-    else:
-        select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
-        last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
-        begin_date_stocks = (datetime.strptime(last_date_stocks, '%Y-%m-%d') + timedelta(days=1)).strftime(
-            '%Y-%m-%d')  # add one day after the last date in table
-        if begin_date_stocks <= today:
-            eod_market_data.populate_stocks_data_multi(tickers, "stocks", begin_date_stocks, today, 'US')
-
-    # sp500 index & sectors
-    table_list = ['sp500', 'sp500_sectors']
-    database.create_table(table_list)
-    if database.check_table_empty('sp500'):
-        eod_market_data.populate_sp500_data('SPY', 'US')
-    else:
-        # update tables
+    try: 
+        
+        # fundamentals (use multi-threads,takes 30 seconnds)
+        table_list = ['fundamentals']
+        database.create_table(table_list)
         database.clear_table(table_list)
-        eod_market_data.populate_sp500_data('SPY', 'US')
+        tickers = database.get_sp500_symbols()
+        tickers.append('SPY')
+        eod_market_data.populate_fundamental_data(tickers, 'US')
+        
+        # spy price data
+        if database.check_table_empty('spy'):
+            # if the table is empty, insert data from start date to today
+            eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
+        else:
+            # if the table is not empty, insert data from the last date in the existing table to today.
+            select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
+            last_date = database.execute_sql_statement(select_stmt)['date'][0]
+            # define begin_date here. The rest updates will use the same begin date
+            begin_date = (datetime.strptime(last_date, '%Y-%m-%d') + timedelta(days=1)).strftime(
+                '%Y-%m-%d')  # add one day after the last date in table
+            if begin_date <= today:
+                eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
+        # us10y
+        database.create_table(['us10y'])
+        if database.check_table_empty('us10y'):
+            eod_market_data.populate_stock_data(['US10Y'], "us10y", start_date, today, 'INDX')
+        else:
+            select_stmt = 'SELECT date FROM us10y ORDER BY date DESC limit 1'
+            last_date = database.execute_sql_statement(select_stmt)['date'][0]
+            begin_date = (datetime.strptime(last_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+            if begin_date <= today:
+                eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
+        
+        # stock daily data (use multi-threads,takes 22 seconnds)
+        # TODO: try to use batch request from IEX data to further speed up. Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
+        database.create_table(['stocks'])
+        tickers = database.get_sp500_symbols()
+        if database.check_table_empty('stocks'):
+            eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
+        else:
+            select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
+            last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
+            begin_date_stocks = (datetime.strptime(last_date_stocks, '%Y-%m-%d') + timedelta(days=1)).strftime(
+                '%Y-%m-%d')  # add one day after the last date in table
+            if begin_date_stocks <= today:
+                eod_market_data.populate_stocks_data_multi(tickers, "stocks", begin_date_stocks, today, 'US')
+        flash("Stock daily data updated...")
+        
+        # sp500 index & sectors
+        table_list = ['sp500', 'sp500_sectors']
+        database.create_table(table_list)
+        if database.check_table_empty('sp500'):
+            eod_market_data.populate_sp500_data('SPY', 'US')
+        else:
+            # update tables
+            database.clear_table(table_list)
+            eod_market_data.populate_sp500_data('SPY', 'US')
+        flash("Thank you for waiting!   All market data is updated!")
+    except:
+        flash("Something went wrong when updating the market data :(")
+
+    return render_template("md_update_data.html")
 
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
     database.create_table(table_list)
-    update_market_data()
     add_admin_user()
 
     try:
