@@ -814,8 +814,10 @@ def sim_server_down():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
+                #TODO: Per Professor, a better clean-up logic needs to be added here
                 client_config.server_ready = False
-                return error_page("Fail in connecting to server")
+                flash("Failure in server: please restart the program")
+                return render_template("sim_server_down.html")
 
             client_config.receiver_stop = False
             client_config.server_tombstone = True

@@ -222,6 +222,8 @@ def join_trading_network(q, e):
 
                     client_config.pnl = sum(pnl_dict.values())
                     client_config.ticker_pnl = {stk: usd(pnl_dict[stk]) for stk in sorted(pnl_dict.keys())}
+                    client_config.ticker_pnl['Total'] = usd(client_config.pnl)
+
                     # complete the sim_trade
                     set_event(e)
                     send_msg(get_market_status(client_packet))

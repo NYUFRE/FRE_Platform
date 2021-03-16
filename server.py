@@ -38,6 +38,31 @@ pd.set_option("display.max_rows", None, "display.max_columns", None)
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
 
+class MarketDates:  
+    start_date = None
+    end_date = None
+    
+    @classmethod
+    def get_market_periods(cls):
+        cls.end_date = datetime.datetime.today()  
+        cls.start_date = cls.end_date + datetime.timedelta(-server_config.total_market_days)
+        trading_calendar = mcal.get_calendar('NYSE')
+        server_config.market_periods = trading_calendar.schedule(
+            start_date=cls.start_date.strftime("%Y-%m-%d"),
+            end_date=cls.end_date.strftime("%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[:-1]      
+        server_config.total_market_days = len(server_config.market_periods)
+        
+        market_period_objects = trading_calendar.schedule(start_date=cls.start_date.strftime("%Y-%m-%d"),
+                                                  end_date=cls.end_date.strftime("%Y-%m-%d")).index.tolist()[:-1]
+        
+        cls.start_date = server_config.market_periods[0]
+        cls.end_date = server_config.market_periods[-1]
+        print(server_config.market_periods, file=server_config.server_output)
+          # Update for remove non-trading days
+        return cls.start_date, cls.end_date, market_period_objects
+        
+        
+
 
 class MarketDates:  
     start_date = None
