@@ -6,10 +6,10 @@
             <a class="nav-link" href="/pair_trade_build_model_param">Building Model</a>
         </li>
 		<li class="nav-item">
-            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
+            <a class="nav-link" href="/pair_trade_back_test" style={{ done_pair_trade_model }}>Back Testing</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
+            <a class="nav-link" href="/pair_trade_probation_test" style={{ done_pair_trade_model }}>Probation Testing</a>
         </li>
     </ul>
 </nav>
@@ -38,7 +38,8 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) The historical daily price data from 2019-01-01 to 2020-07-31 are used for stock pair selection
+							1) The historical daily price data from 2020-01-01 to now can be used for stock pair selection.<br>
+                               The time interval between pair_trading_start_date and pair_trading_end_date should be at least one year.
 						</p>
 					</td>
 				</tr>
@@ -103,7 +104,9 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							Use the daily price data from 2020-08-01 to 2020-09-15 for pair trading and P&L calculation
+							Use the daily price data from the 270th to the 330th date from pair_trading_start_date for pair trading and P&L calculation
+                            <br>back_testing_start_date: 270th date from pair_trading_start_date
+                            <br>back_testing_end_date: 330th date from pair_trading_start_date
 						</p>
 					</td>
 				</tr>
@@ -117,7 +120,7 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							Any two trading dates before current date could be used for conducting pair trading
+							Any two trading dates between back_testing_end_date and pair_trading_end_date could be used for conducting pair trading
 						</p>
 					</td>
 				</tr>

@@ -6,10 +6,10 @@
             <a class="nav-link active" href="/pair_trade_build_model_param">Building Model</a>
         </li>
 		<li class="nav-item">
-            <a class="nav-link" href="/pair_trade_back_test">Back Testing</a>
+            <a class="nav-link" href="/pair_trade_back_test" style={{ done_pair_trade_model }}>Back Testing</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/pair_trade_probation_test">Probation Testing</a>
+            <a class="nav-link" href="/pair_trade_probation_test" style={{ done_pair_trade_model }}>Probation Testing</a>
         </li>
     </ul>
 </nav>
@@ -22,7 +22,7 @@
 			<p style = "width:650px;" align="right">P Value Threshold: <input type = "text" name = "P Threshold" style = "width:200px;"></p>
             <p style = "width:650px;" align="right">Corr Threshold: <input type = "text" name = "Corr Threshold" style = "width:200px;"></p>
             <p style = "width:650px;" align="right">Start Date: <input type = "date" name = "Start Date" min = "2020-01-01" style = "width:200px;"></p>
-            <p style = "width:650px;" align="right">End Date: <input type = "date" name = "End Date" min = "2020-08-01" style = "width:200px;"></p>
+            <p style = "width:650px;" align="right">End Date: <input type = "date" name = "End Date" min = "2021-01-01" style = "width:200px;"></p>
             <p style = "width:650px;" align="right">Sector: <select name = "Sector" action = '/' style = "width:200px;">
                 {%for sector in sector_list%}
                 <option value = "{{sector}}" selected>{{sector}}</option>>

@@ -42,8 +42,7 @@ from system.ai_modeling.ga_portfolio_back_test import ga_back_test
 from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
 from system.sim_trading.network import PacketTypes, Packet
 
-from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test, \
-    back_testing_start_date, back_testing_end_date
+from system.stat_arb.pair_trading import build_pair_trading_model, pair_trade_back_test, pair_trade_probation_test
 from system.utility.config import trading_queue, trading_event
 from system.utility.helpers import error_page, login_required, usd, get_python_pid
 
@@ -112,6 +111,7 @@ def logout():
     logout_user()
     flash('Goodbye!', 'info')
     session.clear()
+    client_config.done_pair_model = "pointer-events:none;color:grey;"
     return redirect(url_for('login'))
 
 
@@ -541,7 +541,7 @@ def admin_view_users():
 @app.route('/pair_trading')
 @login_required
 def pair_trading():
-    return render_template("pair_trading.html")
+    return render_template("pair_trading.html", done_pair_trade_model=client_config.done_pair_model)
 
 
 @app.route('/pair_trade_build_model_param', methods=['POST', 'GET'])
@@ -558,24 +558,34 @@ def build_model():
         pair_trading_start_date = form_input['Start Date']
         pair_trading_end_date = form_input['End Date']
         sector = form_input['Sector']
+        back_testing_start_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d")+timedelta(270)).strftime("%Y-%m-%d")
+        back_testing_end_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d")+timedelta(330)).strftime("%Y-%m-%d")
+
+        client_config.pair_trading_start_date = pair_trading_start_date
+        client_config.pair_trading_end_date = pair_trading_end_date
+        client_config.back_testing_start_date = back_testing_start_date
+        client_config.back_testing_end_date = back_testing_end_date
 
         if not (corr_threshold and adf_threshold and pair_trading_end_date and pair_trading_start_date and sector):
             flash('Error!  Incorrect Values!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
         if float(corr_threshold) >= 1 or float(corr_threshold) <= - 1:
             flash('Error!  Incorrect Correlation Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
         if float(adf_threshold) >= 1 or float(adf_threshold) <= 0:
             flash('Error!  Incorrect P Value Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
-        if datetime.strptime(pair_trading_start_date, "%Y-%m-%d") >= datetime.strptime(pair_trading_end_date,
-                                                                                       "%Y-%m-%d") \
-                or datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.now():
-            flash('Error!  Incorrect Dates!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+        if datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.now():
+            flash('Error!  Incorrect End Date! Should be no more than today!', 'error')
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+
+        least_end_date = datetime.strptime(pair_trading_start_date, "%Y-%m-%d") + timedelta(365)
+        if least_end_date >= datetime.strptime(pair_trading_end_date, "%Y-%m-%d"):
+            flash(f'Error!  Incorrect End Date! End date should be no earlier than {least_end_date.strftime("%Y-%m-%d")}!', 'error')
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
         build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, pair_trading_end_date)
         select_stmt = "SELECT * FROM stock_pairs;"
@@ -584,17 +594,20 @@ def build_model():
         result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
         result_df = result_df.transpose()
         list_of_pairs = [result_df[i] for i in result_df]
+        client_config.done_pair_model = "pointer-events:auto"
         return render_template("pair_trade_build_model.html", pair_list=list_of_pairs)
     else:
         select_stmt = "SELECT DISTINCT sector FROM sp500;"
         result_df = database.execute_sql_statement(select_stmt)
         sector_list = list(result_df['sector'])
-        return render_template("pair_trade_build_model_param.html", sector_list=sector_list)
+        return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
 
 @app.route('/pair_trade_back_test')
 @login_required
 def model_back_testing():
+    back_testing_start_date = client_config.back_testing_start_date
+    back_testing_end_date = client_config.back_testing_end_date
     pair_trade_back_test(back_testing_start_date, back_testing_end_date)
 
     select_stmt = "SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
@@ -618,16 +631,17 @@ def model_probation_testing():
         form_input = request.form
         probation_testing_start_date = form_input['Start Date']
         probation_testing_end_date = form_input['End Date']
+        pair_trading_end_date = client_config.pair_trading_end_date
+        back_testing_end_date = client_config.back_testing_end_date
 
         if (not probation_testing_end_date) or (not probation_testing_start_date):
             flash('Error!  Incorrect Values!', 'error')
-            return render_template("pair_trade_probation_test.html")
+            return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
 
-        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
-                                                                                            "%Y-%m-%d") \
-                or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.now():
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d") \
+                or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date,"%Y-%m-%d"):
             flash('Error!  Incorrect Dates!', 'error')
-            return render_template("pair_trade_probation_test.html")
+            return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
 
         pair_trade_probation_test(probation_testing_start_date, probation_testing_end_date)
 
@@ -643,7 +657,8 @@ def model_probation_testing():
         trade_results = [result_df[i] for i in result_df]
         return render_template("pair_trade_probation_test_result.html", trade_list=trade_results, total=usd(total))
     else:
-        return render_template("pair_trade_probation_test.html")
+        back_testing_end_date = client_config.back_testing_end_date
+        return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
 
 
 # AI modeling
@@ -691,7 +706,7 @@ def ai_build_model():
 @app.route('/ai_back_test')
 @login_required
 def ai_back_test():
-    global portfolio_ys, spy_ys, bt_start_date, bt_end_date # Used for function "ai_back_test_plot"
+    global portfolio_ys, spy_ys, bt_start_date, bt_end_date  # Used for function "ai_back_test_plot"
     best_portfolio, spy = ga_back_test(database)
 
     bt_start_date = str(spy.price_df.index[0])[:10]
@@ -901,10 +916,12 @@ def sim_auto_trading():
             client_config.trade_complete = False
             client_config.client_socket.close()
 
-        return render_template("sim_auto_trading.html", trading_results=client_config.orders, pnl_results=client_config.ticker_pnl)
+        return render_template("sim_auto_trading.html", trading_results=client_config.orders,
+                               pnl_results=client_config.ticker_pnl)
 
     else:
         return render_template("error_auto_trading.html")
+
 
 @app.route('/sim_model_info')
 @login_required
@@ -1070,7 +1087,7 @@ def market_data_stock():
         if request.form.get("end_date"):
             date2 = request.form.get("end_date")
 
-        #if ticker is not in database, update the data from EOD and store it into database
+        # if ticker is not in database, update the data from EOD and store it into database
         symbol_list = database.execute_sql_statement("SELECT DISTINCT symbol FROM stocks;")['symbol']
         if ticker not in list(symbol_list):
             try:
@@ -1100,6 +1117,7 @@ def market_data_stock():
     else:
         return render_template("md_get_stock.html")
 
+
 @app.route('/md_update_data')
 @login_required
 def update_market_data():
@@ -1111,8 +1129,8 @@ def update_market_data():
         market_data_sp500(), market_data_spy(), and market_data_us10y().
     """
     today = datetime.today().strftime('%Y-%m-%d')
-    try: 
-        
+    try:
+
         # fundamentals (use multi-threads,takes 30 seconnds)
         table_list = ['fundamentals']
         database.create_table(table_list)
@@ -1120,7 +1138,7 @@ def update_market_data():
         tickers = database.get_sp500_symbols()
         tickers.append('SPY')
         eod_market_data.populate_fundamental_data(tickers, 'US')
-        
+
         # spy price data
         if database.check_table_empty('spy'):
             # if the table is empty, insert data from start date to today
@@ -1144,7 +1162,7 @@ def update_market_data():
             begin_date = (datetime.strptime(last_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
             if begin_date <= today:
                 eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
-        
+
         # stock daily data (use multi-threads,takes 22 seconnds)
         # TODO: try to use batch request from IEX data to further speed up. Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
         database.create_table(['stocks'])
@@ -1159,7 +1177,7 @@ def update_market_data():
             if begin_date_stocks <= today:
                 eod_market_data.populate_stocks_data_multi(tickers, "stocks", begin_date_stocks, today, 'US')
         flash("Stock daily data updated...")
-        
+
         # sp500 index & sectors
         table_list = ['sp500', 'sp500_sectors']
         database.create_table(table_list)
