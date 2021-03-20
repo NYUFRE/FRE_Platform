@@ -20,8 +20,8 @@
 	<div class="form-group">
 		<form action="/pair_trade_probation_test" id="buy" method="POST">
             <dl>
-                <p>Start Date &nbsp;<input type = "date" name = "Start Date" min = "2020-08-01" ></p>
-                <p>End Date &nbsp;&nbsp;&nbsp;<input type = "date" name = "End Date" min = "2020-08-01" ></p>
+                <p>Start Date &nbsp;<input type = "date" name = "Start Date" min ={{ back_testing_end_date }} ></p>
+                <p>End Date &nbsp;&nbsp;&nbsp;<input type = "date" name = "End Date" min ={{ back_testing_end_date }} ></p>
 			    <p style = "height:400px;"><input type = "submit" value="submit" /></p>
             </dl>
 		</form>

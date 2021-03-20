@@ -18,7 +18,7 @@ class ClientConfig:
         self.client_thread = threading.Thread()
         self.client_receiver = threading.Thread()
         self.server_ready = False
-        
+
         self.orders = []
 
         self.client_thread_started = False
@@ -30,6 +30,13 @@ class ClientConfig:
         self.server_tombstone = True
         self.pnl = 0
         self.ticker_pnl = {}
+
+        #configs for pair_trading
+        self.done_pair_model = "pointer-events:none;color:grey;"
+        self.pair_trading_start_date = "2020-01-01"
+        self.pair_trading_end_date = "2021-01-02"
+        self.back_testing_start_date = "2020-09-01"
+        self.back_testing_end_date = "2020-11-01"
 
 
 class ServerConfig:
