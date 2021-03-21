@@ -801,7 +801,6 @@ def start_server_process():
             print(output.strip())
             time.sleep(5)
             client_config.server_ready = True
-            return
         elif client_config.server_tombstone:
             return
 
