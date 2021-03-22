@@ -797,12 +797,13 @@ def start_server_process():
                                universal_newlines=True)
     while True:
         output = process.stdout.readline()
+        if client_config.server_tombstone:
+            return
+
         if output and not client_config.server_ready:
             print(output.strip())
             time.sleep(5)
             client_config.server_ready = True
-        elif client_config.server_tombstone:
-            return
 
 
 @app.route('/sim_server_up')
