@@ -222,6 +222,8 @@ def join_trading_network(q, e):
 
                     client_config.pnl = sum(pnl_dict.values())
                     client_config.ticker_pnl = {stk: usd(pnl_dict[stk]) for stk in sorted(pnl_dict.keys())}
+                    client_config.ticker_pnl['Total'] = usd(client_config.pnl)
+
                     # complete the sim_trade
                     set_event(e)
                     send_msg(get_market_status(client_packet))
@@ -419,11 +421,11 @@ def join_trading_network(q, e):
                 #                    stkInfo_object.Tradelist.append(Trade_object)
 
                 elif stkInfo_object.position == 1:  # longing now
-                    if current_buy >= MA:  # above lower bound, sell to close postion
+                    if current_buy >= MA - 0.75 * K1 * Std:  # above lower bound, sell to close postion
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.qty)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Lmt', 'Sell', MA, stkInfo_object.qty)
                         print("Close Trade in: ", stk, "With postion: Sell", "at Price:", current_buy, "With Qty: ",
                               stkInfo_object.qty)
                         print("Because: Price above lower band:", usd(MA))
@@ -444,11 +446,11 @@ def join_trading_network(q, e):
 
                 # shorting now
                 else:
-                    if current_sell <= MA:  # below upper bound, buy to close postion
+                    if current_sell <= MA + 0.75 * K1 * Std:  # below upper bound, buy to close postion
                         client_packet = Packet()
                         OrderIndex += 1
                         client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.qty)
+                        enter_a_new_order(client_packet, client_order_id, stk, 'Lmt', 'Buy', MA, stkInfo_object.qty)
                         print("Close Trade in: ", stk, "With postion: Buy", "at Price:", current_sell, "With Qty: ",
                               stkInfo_object.qty)
                         print("Because: Price below upper band:", usd(MA))

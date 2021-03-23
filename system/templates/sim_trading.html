@@ -17,7 +17,7 @@
         <li class="nav-item">
             <a class="nav-link"></a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" style="border-bottom: 2px solid #D3D3D3; border-top: 2px solid #D3D3D3;">
             <a class="nav-link" href="/sim_model_info">Model Info</a>
         </li>
     </ul>
@@ -84,7 +84,7 @@
 					<td width="881" valign="top">
 						<p>
 							1) Number of orders = (high_price - low_price)/price scale, 
-							price_scale is either $0.01 or $1 based stock price >= 1000 or not.
+							price_scale is either $0.01 or $1 based on stock price >= 1000 or not.
 						</p>
 					</td>
 				</tr>
@@ -125,14 +125,14 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) Buy interests: Evey 5 min low price, 1/2 of the volume * rand().
+							1) Buy interests: Every 5 min low price, 1/2 of the volume * rand().
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							2) Sell interests: Evey 5 min high price, 1/2 of the volume * rand().
+							2) Sell interests: Every 5 min high price, 1/2 of the volume * rand().
 						</p>
 					</td>
 				</tr>
@@ -146,7 +146,7 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							4) The order book is sorted accorinding Side, Symbol, Price and Quantity.
+							4) The order book is sorted according to Side, Symbol, Price and Quantity.
 						</p>
 					</td>
 				</tr>
@@ -160,14 +160,14 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) If buy side or sell side book is not empty, a best buy or best sell is filled.
+							1) If buy side or sell side book is not empty, a best buy or sell order will be filled.
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							2) If buy side or sell side is empty, the close trade for a buy or sell will be executed at daily market data closing price.
+							2) Otherwise, the close trade for a buy or sell order will be executed at daily market data closing price.
 						</p>
 					</td>
 				</tr>
@@ -192,8 +192,8 @@
 						</p>
 						<ul>
 							<li>Market orders - always filled from best price.</li>
-							<li>Limit orders - will be filled at equal or better price.</li>
-							<li>A new limit order or a limit order with better price sweep books until it is filled or counter side of the book is empty.</li>
+							<li>Limit orders - filled or partially filled at equal or better price.</li>
+							<li>A limit order with better price will sweep the order book until it is filled or counter side of the book is empty.</li>
 						</ul>  
 					</td>
 				</tr>
