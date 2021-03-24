@@ -52,6 +52,17 @@ def populate_stock_data(tickers: Collection[str], table_name: str, start_date: s
     stocks = pd.DataFrame(price_data, columns=column_names)
     stocks.to_sql(table_name, con=database.engine, if_exists='append', index=False)
 
+def populate_stock_data_from_db(tickers: Collection[str], table_name: str, start_date: str, end_date: str) -> None:
+
+    column_names = ['symbol', 'date', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume']
+    stocks = pd.DataFrame(columns=column_names)
+    for ticker in tickers:
+        select_stmt = f"""SELECT symbol, date, open, high, low, close, adjusted_close, volume FROM stocks
+                      WHERE symbol = "{ticker}" AND date <= "{end_date}" AND date >= "{start_date}";"""
+        symbol_df = database.execute_sql_statement(select_stmt)
+        stocks = stocks.append(symbol_df, ignore_index=True)
+    stocks.to_sql(table_name, con=database.engine, if_exists='append', index=False)
+
 
 def cointegration_test(ticker1: str, ticker2: str) -> List[Union[str, float]]:
     """
@@ -115,11 +126,11 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
 
-    select_stmt = f"SELECT symbol FROM sp500 WHERE sector ='{sector}' ORDER BY symbol;"
+    select_stmt = f"""SELECT symbol FROM sp500 WHERE sector ='{sector}' ORDER BY symbol;"""
     result_df = database.execute_sql_statement(select_stmt)
     symbol_list = result_df['symbol'].tolist()
     if database.check_table_empty('sector_stocks'):
-        populate_stock_data(symbol_list, "sector_stocks", start_date, end_date)
+        populate_stock_data_from_db(symbol_list, "sector_stocks", start_date, end_date)
 
     if database.check_table_empty('pair_info'):
         cointegration_all_test(symbol_list)
@@ -157,8 +168,8 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
                   AND adf_p_value <= {adf_threshold} ORDER BY symbol1, symbol2;"""
     pair_info_df = database.execute_sql_statement(select_stmt)
 
-    populate_stock_data(pairs['symbol1'].unique(), 'pair1_stocks', start_date, end_date)
-    populate_stock_data(pairs['symbol2'].unique(), 'pair2_stocks', start_date, end_date)
+    populate_stock_data_from_db(pairs['symbol1'].unique(), 'pair1_stocks', start_date, end_date)
+    populate_stock_data_from_db(pairs['symbol2'].unique(), 'pair2_stocks', start_date, end_date)
 
     select_stmt = "SELECT stock_pairs.symbol1 AS symbol1, stock_pairs.symbol2 AS symbol2, \
                  pair1_stocks.date AS date, pair1_stocks.open AS open1, pair1_stocks.close AS close1, \
