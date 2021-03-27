@@ -587,6 +587,11 @@ def build_model():
             flash(f'Error!  Incorrect End Date! End date should be no earlier than {least_end_date.strftime("%Y-%m-%d")}!', 'error')
             return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
+        max_db_date = database.execute_sql_statement("SELECT MAX(date) AS max FROM stocks;")["max"][0]
+        if datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.strptime(max_db_date, "%Y-%m-%d"):
+            flash("Warning! There is not enough data in database. Should go to MarketData page and update first!")
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+
         build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, pair_trading_end_date)
         select_stmt = "SELECT * FROM stock_pairs;"
         result_df = database.execute_sql_statement(select_stmt)
