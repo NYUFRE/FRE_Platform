@@ -31,6 +31,7 @@ class ClientConfig:
         self.pnl = 0
         self.ticker_pnl = {}
 
+        #TODO Should create a separate class for pair trading instead of adding to ClientConfig
         #configs for pair_trading
         self.done_pair_model = "pointer-events:none;color:grey;"
         self.pair_trading_start_date = "2020-01-01"
