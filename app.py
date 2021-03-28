@@ -26,7 +26,10 @@ from flask_login import login_user, current_user, logout_user
 from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SAWarning
+
+import warnings
+warnings.simplefilter(action='ignore', category=SAWarning)
 
 from system import app, db, bcrypt, database, iex_market_data, eod_market_data, process_list
 from system.ai_modeling.ga_portfolio_back_test import ga_back_test

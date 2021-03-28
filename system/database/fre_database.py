@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import ForeignKey, Integer, Float, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, BOOLEAN
+from sqlalchemy import ForeignKey, Integer, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, BOOLEAN
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy import Table, Column
 from typing import Collection, List, Dict, Union
@@ -58,20 +58,20 @@ class FREDatabase:
             table = Table(table_name, self.metadata,
                           Column('symbol1', String(50), primary_key=True, nullable=False),
                           Column('symbol2', String(50), primary_key=True, nullable=False),
-                          Column('price_mean', Float, nullable=False),
-                          Column('volatility', Float, nullable=False),
-                          Column('profit_loss', Float, nullable=False),
+                          Column('price_mean', Numeric, nullable=False),
+                          Column('volatility', Numeric, nullable=False),
+                          Column('profit_loss', Numeric, nullable=False),
                           extend_existing=True)
 
         elif table_name == "sector_stocks":
             table = Table(table_name, self.metadata,
                           Column('symbol', String(50), primary_key=True, nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
-                          Column('open', Float, nullable=False),
-                          Column('high', Float, nullable=False),
-                          Column('low', Float, nullable=False),
-                          Column('close', Float, nullable=False),
-                          Column('adjusted_close', Float, nullable=False),
+                          Column('open', Numeric, nullable=False),
+                          Column('high', Numeric, nullable=False),
+                          Column('low', Numeric, nullable=False),
+                          Column('close', Numeric, nullable=False),
+                          Column('adjusted_close', Numeric, nullable=False),
                           Column('volume', Integer, nullable=False),
                           extend_existing=True)
 
@@ -79,12 +79,12 @@ class FREDatabase:
             table = Table(table_name, self.metadata,
                           Column('symbol1', String(50), primary_key=True, nullable=False),
                           Column('symbol2', String(50), primary_key=True, nullable=False),
-                          Column('correlation', Float, nullable=False),
-                          Column('beta0', Float, nullable=False),
-                          Column('beta1_hedgeratio', Float, nullable=False),
-                          Column('adf_p_value', Float, nullable=False),
-                          Column('res_mean', Float, nullable=False),
-                          Column('res_std', Float, nullable=False),
+                          Column('correlation', Numeric, nullable=False),
+                          Column('beta0', Numeric, nullable=False),
+                          Column('beta1_hedgeratio', Numeric, nullable=False),
+                          Column('adf_p_value', Numeric, nullable=False),
+                          Column('res_mean', Numeric, nullable=False),
+                          Column('res_std', Numeric, nullable=False),
                           extend_existing=True)
 
 
@@ -96,11 +96,11 @@ class FREDatabase:
             table = Table(table_name, self.metadata,
                           Column('symbol', String(50), ForeignKey(foreign_key), primary_key=True, nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
-                          Column('open', Float, nullable=False),
-                          Column('high', Float, nullable=False),
-                          Column('low', Float, nullable=False),
-                          Column('close', Float, nullable=False),
-                          Column('adjusted_close', Float, nullable=False),
+                          Column('open', Numeric, nullable=False),
+                          Column('high', Numeric, nullable=False),
+                          Column('low', Numeric, nullable=False),
+                          Column('close', Numeric, nullable=False),
+                          Column('adjusted_close', Numeric, nullable=False),
                           Column('volume', Integer, nullable=False))
 
 
@@ -111,10 +111,10 @@ class FREDatabase:
                           Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
                                  nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
-                          Column('open1', Float, nullable=False),
-                          Column('close1', Float, nullable=False),
-                          Column('open2', Float, nullable=False),
-                          Column('close2', Float, nullable=False),
+                          Column('open1', Numeric, nullable=False),
+                          Column('close1', Numeric, nullable=False),
+                          Column('open2', Numeric, nullable=False),
+                          Column('close2', Numeric, nullable=False),
                           extend_existing=True)
 
 
@@ -125,13 +125,13 @@ class FREDatabase:
                           Column('symbol2', String(50), ForeignKey('pair2_stocks.symbol'), primary_key=True,
                                  nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
-                          Column('open1', Float, nullable=False),
-                          Column('close1', Float, nullable=False),
-                          Column('open2', Float, nullable=False),
-                          Column('close2', Float, nullable=False),
+                          Column('open1', Numeric, nullable=False),
+                          Column('close1', Numeric, nullable=False),
+                          Column('open2', Numeric, nullable=False),
+                          Column('close2', Numeric, nullable=False),
                           Column('qty1', Integer, nullable=False),
                           Column('qty2', Integer, nullable=False),
-                          Column('profit_loss', Float, nullable=False),
+                          Column('profit_loss', Numeric, nullable=False),
                           extend_existing=True)
 
         elif table_name == "sp500":
@@ -142,14 +142,14 @@ class FREDatabase:
                                  ForeignKey('sp500.sector', onupdate="CASCADE", ondelete="CASCADE"),
                                  nullable=False),
                           Column('industry', String(20), nullable=False),
-                          Column('weight', Float, nullable=False),
+                          Column('weight', Numeric, nullable=False),
                           extend_existing=True)
 
         elif table_name == "sp500_sectors":
             table = Table(table_name, self.metadata,
                           Column('sector', String(20), primary_key=True, nullable=False),
-                          Column('equity_pct', Float, nullable=False),
-                          Column('category_pct', Float, nullable=False),
+                          Column('equity_pct', Numeric, nullable=False),
+                          Column('category_pct', Numeric, nullable=False),
                           extend_existing=True)
 
         elif table_name == "fundamentals":
@@ -157,24 +157,24 @@ class FREDatabase:
             table = Table(table_name, self.metadata,
                           Column('symbol', String(20), ForeignKey('sp500', onupdate="CASCADE", ondelete="CASCADE"),
                                  primary_key=True, nullable=False),
-                          Column('pe_ratio', Float),
-                          Column('dividend_yield', Float),
-                          Column('beta', Float),
-                          Column('high_52weeks', Float),
-                          Column('low_52weeks', Float),
-                          Column('ma_50days', Float),
-                          Column('ma_200days', Float),
+                          Column('pe_ratio', Numeric),
+                          Column('dividend_yield', Numeric),
+                          Column('beta', Numeric),
+                          Column('high_52weeks', Numeric),
+                          Column('low_52weeks', Numeric),
+                          Column('ma_50days', Numeric),
+                          Column('ma_200days', Numeric),
                           extend_existing=True)
 
         elif (table_name == "spy" or table_name == "us10y" or table_name == "stocks"):
             table = Table(table_name, self.metadata,
                           Column('symbol', String(20), primary_key=True, nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
-                          Column('open', Float, nullable=False),
-                          Column('high', Float, nullable=False),
-                          Column('low', Float, nullable=False),
-                          Column('close', Float, nullable=False),
-                          Column('adjusted_close', Float, nullable=False),
+                          Column('open', Numeric, nullable=False),
+                          Column('high', Numeric, nullable=False),
+                          Column('low', Numeric, nullable=False),
+                          Column('close', Numeric, nullable=False),
+                          Column('adjusted_close', Numeric, nullable=False),
                           Column('volume', Integer, nullable=False),
                           extend_existing=True)
 
@@ -184,13 +184,13 @@ class FREDatabase:
                                  primary_key=True, nullable=False),
                           Column('name', String(20), nullable=False),
                           Column('sector', String(20), nullable=False),
-                          Column('category_pct', Float, nullable=False),
+                          Column('category_pct', Numeric, nullable=False),
                           Column('open_date', DATE, nullable=False),
-                          Column('open_price', Float, nullable=False),
+                          Column('open_price', Numeric, nullable=False),
                           Column('close_date', DATE, nullable=False),
-                          Column('close_price', Float, nullable=False),
+                          Column('close_price', Numeric, nullable=False),
                           Column('shares', Integer, nullable=False),
-                          Column('profit_loss', Float, nullable=False),
+                          Column('profit_loss', Numeric, nullable=False),
                           extend_existing=True)
         else:
             raise ValueError("Table name not known")
