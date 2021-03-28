@@ -38,7 +38,7 @@ from system.sim_trading.client import client_config, client_receive, send_msg, s
 
 from system.ai_modeling.ga_portfolio import Stock, ProbationTestTrade
 from system.ai_modeling.ga_portfolio_select import build_ga_model, start_date, end_date
-from system.ai_modeling.ga_portfolio_back_test import ga_back_test
+from system.ai_modeling.ga_portfolio_back_test import ga_back_test, ga_back_test_result
 from system.ai_modeling.ga_portfolio_probation_test import ga_probation_test
 from system.sim_trading.network import PacketTypes, Packet
 
@@ -711,14 +711,14 @@ def ai_build_model():
 @app.route('/ai_back_test')
 @login_required
 def ai_back_test():
-    global portfolio_ys, spy_ys, bt_start_date, bt_end_date  # Used for function "ai_back_test_plot"
     best_portfolio, spy = ga_back_test(database)
 
-    bt_start_date = str(spy.price_df.index[0])[:10]
-    bt_end_date = str(spy.price_df.index[-1])[:10]
+    # Used for function "ai_back_test_plot"
+    ga_back_test_result.bt_start_date = str(spy.price_df.index[0])[:10]
+    ga_back_test_result.bt_end_date = str(spy.price_df.index[-1])[:10]
+    ga_back_test_result.portfolio_cum_rtn = best_portfolio.portfolio_daily_cumulative_returns.copy()
+    ga_back_test_result.spy_cum_rtn = spy.price_df['spy_daily_cumulative_return'].copy()
 
-    portfolio_ys = best_portfolio.portfolio_daily_cumulative_returns.copy()
-    spy_ys = spy.price_df['spy_daily_cumulative_return'].copy()
     portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
     spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
     return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
@@ -728,15 +728,15 @@ def ai_back_test():
 def ai_back_test_plot():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
-    n = len(portfolio_ys)
+    n = len(ga_back_test_result.portfolio_cum_rtn)
     line = np.zeros(n)
-    axis.plot(portfolio_ys, 'ro')
-    axis.plot(spy_ys, 'bd')
-    axis.plot(portfolio_ys.index, line, 'b')
+    axis.plot(ga_back_test_result.portfolio_cum_rtn, 'ro')
+    axis.plot(ga_back_test_result.spy_cum_rtn, 'bd')
+    axis.plot(ga_back_test_result.portfolio_cum_rtn.index, line, 'b')
 
     axis.set(xlabel="Date",
              ylabel="Cumulative Returns",
-             title=f"Portfolio Back Test ({bt_start_date} to {bt_end_date})")
+             title=f"Portfolio Back Test ({ga_back_test_result.bt_start_date} to {ga_back_test_result.bt_end_date})")
 
     axis.text(0.2, 0.9, 'Red - Portfolio, Blue - SPY',
               verticalalignment='center',

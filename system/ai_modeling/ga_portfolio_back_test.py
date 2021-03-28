@@ -15,6 +15,18 @@ from typing import Tuple
 from system.ai_modeling.ga_portfolio import GAPortfolio, Stock, Trade
 from system.ai_modeling.ga_portfolio_select import extract_spy, extract_us10y
 
+
+class GABackTestResult:
+    def __init__(self):
+        self.bt_start_date = ""
+        self.bt_end_date = ""
+        self.portfolio_cum_rtn = {}
+        self.spy_cum_rtn = {}
+
+
+ga_back_test_result = GABackTestResult()
+
+
 def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     """
     Do backtest; Calculate cumulative return of best_portfolio and spy
