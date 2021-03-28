@@ -25,8 +25,8 @@ from typing import Collection, List, Union
 #start_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
 #end_date = dt.datetime.today().strftime('%Y-%m-%d')
 
-back_testing_start_date = dt.date(2020, 8, 1).strftime('%Y-%m-%d')
-back_testing_end_date = dt.date(2020, 9, 15).strftime('%Y-%m-%d')
+#back_testing_start_date = dt.date(2020, 8, 1).strftime('%Y-%m-%d')
+#back_testing_end_date = dt.date(2020, 9, 15).strftime('%Y-%m-%d')
 
 database = FREDatabase()
 eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
@@ -138,7 +138,7 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
 
 def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float = 0.01,
                              sector: str = "Technology", start_date: str = "2020-01-01",\
-                             end_date: str = None) -> None:
+                             back_testing_start_date: str = None, end_date: str = None) -> None:
     """
     This function build a pair_trading model for a given sector of stocks in sp500 and update database tables
     :param corr_threshold: the threshold for stock pair correlation

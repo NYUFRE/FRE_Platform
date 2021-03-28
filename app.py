@@ -19,6 +19,8 @@ from sys import platform
 import io
 
 import numpy as np
+import pandas_market_calendars as mcal
+
 from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
 from flask_login import login_user, current_user, logout_user
 from itsdangerous import URLSafeTimedSerializer
@@ -558,13 +560,6 @@ def build_model():
         pair_trading_start_date = form_input['Start Date']
         pair_trading_end_date = form_input['End Date']
         sector = form_input['Sector']
-        back_testing_start_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d")+timedelta(270)).strftime("%Y-%m-%d")
-        back_testing_end_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d")+timedelta(330)).strftime("%Y-%m-%d")
-
-        client_config.pair_trading_start_date = pair_trading_start_date
-        client_config.pair_trading_end_date = pair_trading_end_date
-        client_config.back_testing_start_date = back_testing_start_date
-        client_config.back_testing_end_date = back_testing_end_date
 
         if not (corr_threshold and adf_threshold and pair_trading_end_date and pair_trading_start_date and sector):
             flash('Error!  Incorrect Values!', 'error')
@@ -575,24 +570,43 @@ def build_model():
             return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
         if float(adf_threshold) >= 1 or float(adf_threshold) <= 0:
-            flash('Error!  Incorrect P Value Threshold!', 'error')
+            flash('Error! Incorrect P Value Threshold!', 'error')
             return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
         if datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.now():
-            flash('Error!  Incorrect End Date! Should be no more than today!', 'error')
+            flash('Error! Incorrect End Date! Should not be later than today!', 'error')
             return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
-        least_end_date = datetime.strptime(pair_trading_start_date, "%Y-%m-%d") + timedelta(365)
-        if least_end_date >= datetime.strptime(pair_trading_end_date, "%Y-%m-%d"):
-            flash(f'Error!  Incorrect End Date! End date should be no earlier than {least_end_date.strftime("%Y-%m-%d")}!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+        least_start_date = datetime.strptime(pair_trading_end_date, "%Y-%m-%d") - timedelta(365)
+        if least_start_date < datetime.strptime(pair_trading_start_date, "%Y-%m-%d"):
+            flash('Error! Incorrect Date Range! At least one year data is needed, such as ' +
+                  f'{least_start_date.strftime("%Y-%m-%d")} ' + ' to ' +
+                  f'{datetime.strptime(pair_trading_end_date, "%Y-%m-%d").strftime("%Y-%m-%d")}', 'error')
+            return render_template("pair_trade_build_model_param.html",
+                                   sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+
+        trading_calendar = mcal.get_calendar('NYSE')
+        latest_trading_date = trading_calendar.schedule(
+            start_date=datetime.strptime(pair_trading_start_date, "%Y-%m-%d"),
+            end_date=datetime.strptime(pair_trading_end_date, "%Y-%m-%d")).index.strftime("%Y-%m-%d").tolist()[-1]
 
         max_db_date = database.execute_sql_statement("SELECT MAX(date) AS max FROM stocks;")["max"][0]
-        if datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.strptime(max_db_date, "%Y-%m-%d"):
+        if datetime.strptime(latest_trading_date, "%Y-%m-%d") > datetime.strptime(max_db_date, "%Y-%m-%d"):
             flash("Warning! There is not enough data in database. Should go to MarketData page and update first!")
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+            return render_template("pair_trade_build_model_param.html",
+                                   sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
 
-        build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, pair_trading_end_date)
+        back_testing_start_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d") +
+                                   timedelta(270)).strftime("%Y-%m-%d")
+        back_testing_end_date = (datetime.strptime(pair_trading_start_date, "%Y-%m-%d") +
+                                 timedelta(330)).strftime("%Y-%m-%d")
+
+        client_config.pair_trading_start_date = pair_trading_start_date
+        client_config.pair_trading_end_date = pair_trading_end_date
+        client_config.back_testing_start_date = back_testing_start_date
+        client_config.back_testing_end_date = back_testing_end_date
+
+        build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, back_testing_start_date, pair_trading_end_date)
         select_stmt = "SELECT * FROM stock_pairs;"
         result_df = database.execute_sql_statement(select_stmt)
         result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
@@ -640,13 +654,17 @@ def model_probation_testing():
         back_testing_end_date = client_config.back_testing_end_date
 
         if (not probation_testing_end_date) or (not probation_testing_start_date):
-            flash('Error!  Incorrect Values!', 'error')
+            flash('Error! Start or End Date missing!', 'error')
             return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
 
-        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d") \
-                or datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date,"%Y-%m-%d"):
-            flash('Error!  Incorrect Dates!', 'error')
-            return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d"):
+            flash('Error!  Start Date should be before End Date!', 'error')
+            return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
+
+        if datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date, "%Y-%m-%d"):
+            flash('Error! Incorrect Date Range! Probation Testing Start and End Dates should be between ' +
+                  f'{back_testing_end_date} ' + ' to ' + f'{pair_trading_end_date}', 'error')
+            return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
         pair_trade_probation_test(probation_testing_start_date, probation_testing_end_date)
 
