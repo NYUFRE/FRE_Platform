@@ -161,7 +161,7 @@ def build_ga_model(database) -> GAPortfolio:
     :return: Best portfolio selected by the model
     :rtype: GAPortfolio
     """    
-    modeling_testing_start_date = dt.date(2019, 6, 30).strftime('%Y-%m-%d')
+    modeling_testing_start_date = dt.date(2019, 1, 1).strftime('%Y-%m-%d')
     modeling_testing_end_date = dt.date(2020, 6, 30).strftime('%Y-%m-%d')
 
     # Extract SPY & us10y data from db 

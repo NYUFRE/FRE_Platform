@@ -219,7 +219,7 @@ def get_quote():
         price, error = iex_market_data.get_price(request.form.get("symbol"))
         quote['Latest Price'] = price['price']
 
-        if len(error) > 0:
+        if len(error) > 0 or len(price) == 0 or len(quote) == 0:
             flash('ERROR! Invalid symbol.', 'error')
             return render_template("get_quote.html")
         else:

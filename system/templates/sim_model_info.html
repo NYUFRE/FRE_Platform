@@ -34,7 +34,7 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							Bollinger Bands are a type of price envelope developed by John BollingerOpens. 
+							Bollinger Bands (BBs) are a type of price envelope developed by John Bollinger.
 							(Price envelopes define upper and lower price range levels.) Bollinger Bands are envelopes plotted at a standard deviation level above and below a simple moving average of the price. 
 							Because the distance of the bands is based on standard deviation, they adjust to volatility swings in the underlying price.
 						</p>
@@ -59,7 +59,7 @@
 						<p>
 							Reason: 
                             1.	S&P 500 components are with large size, high liquidity.
-                            2.	Since using intraday data for generating trading signals, we check the vol among minutes over one month (a short period)
+                            2.	The volatility among minutes for one-month intraday price data are checked for generating trading signals)
                             3.	Higher volatility may trigger signals more often, more signals can lead better test the efficacy of trading model (i.e. training params)
 
 						</p>
@@ -75,7 +75,7 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) X: The H-period SMA. This serves as both the center of the BBs, and the baseline for determining the location of the two bands
+							1) The H-period simple moving average (SMA). This serves as both the center of the BBs, and the baseline for determining the location of the two bands.
 						</p>
 					</td>
 				</tr>
@@ -97,15 +97,15 @@
 					<td width="881" valign="top">
 						<p>
 							4) Open Trades:
-								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open short position if Close >= Up, sell the stock 
-								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open long position if Close <= Down, buy the stock 
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open short position if Close Price >= Up, sell the stock
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open long position if Close Price <= Down, buy the stock
 						</p>
 					</td>
 				</tr>
 				<td width="881" valign="top">
 						<p>
 							5) Close Trades:
-								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open positions when Close return within Up and Down </br>
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open positions when Close Price return within Up and Down </br>
 						</p>
 					</td>
 				</tr>
