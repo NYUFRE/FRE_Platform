@@ -217,12 +217,12 @@ def get_quote():
         # Get quote data from IEX, quoted prices (Ask & Bid) are different from the latest price
         quote, error = iex_market_data.get_quote(request.form.get("symbol"))
         price, error = iex_market_data.get_price(request.form.get("symbol"))
-        quote['Latest Price'] = price['price']
 
         if len(error) > 0 or len(price) == 0 or len(quote) == 0:
             flash('ERROR! Invalid symbol.', 'error')
             return render_template("get_quote.html")
         else:
+            quote['Latest Price'] = price['price']
             return render_template("quote.html", dict=quote)
 
     else:
