@@ -14,7 +14,7 @@ Activate the virtual env
 ```
 .\venv\Scripts\activate
 ```
-Install the required packages
+Install the required packages (Do not use 3.9 as a few packages are not compatiable)
 ```
 pip install -r requirements.txt
 ```

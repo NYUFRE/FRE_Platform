@@ -19,16 +19,16 @@
 	<hr>
 	<div class="form-group">
 		<form action="/pair_trade_build_model_param" id="buy" method="POST">
-			<p style = "width:650px;" align="right">P Value Threshold: <input type = "text" name = "P Threshold" style = "width:200px;"></p>
-            <p style = "width:650px;" align="right">Corr Threshold: <input type = "text" name = "Corr Threshold" style = "width:200px;"></p>
-            <p style = "width:650px;" align="right">Start Date: <input type = "date" name = "Start Date" min = "2020-01-01" style = "width:200px;"></p>
-            <p style = "width:650px;" align="right">End Date: <input type = "date" name = "End Date" min = "2021-01-01" style = "width:200px;"></p>
-            <p style = "width:650px;" align="right">Sector: <select name = "Sector" action = '/' style = "width:200px;">
+			<p style = "width:500px;" align="right">P Value Threshold: <input type = "text" name = "P Threshold" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Corr Threshold: <input type = "text" name = "Corr Threshold" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Start Date: <input type = "date" name = "Start Date" min = "2020-01-01" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">End Date: <input type = "date" name = "End Date" min = "2021-01-01" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Sector: <select name = "Sector" action = '/' style = "width:200px;">
                 {%for sector in sector_list%}
                 <option value = "{{sector}}" selected>{{sector}}</option>>
                 {% endfor %}
             </select></p>
-			<p style = "height:300px;"><input type = "submit" value = "submit" /></p>
+			<p style = "height:100px;"><input type = "submit" value = "submit" /></p>
 		</form>
     </div>
 </main>
