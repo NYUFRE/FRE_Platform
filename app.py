@@ -418,8 +418,10 @@ def confirm_email(token):
         db.session.commit()
         flash('Thank you for confirming your email address!')
 
-        # TODO
-        session['user_id'] = 1
+        login_user(user)
+        user = database.get_user(email, '')
+        session["user_id"] = user["user_id"]
+        client_config.client_id = user['first_name']
 
     return redirect(url_for('index'))
 

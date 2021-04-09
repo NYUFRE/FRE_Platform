@@ -67,8 +67,8 @@ def populate_stock_data_from_db(tickers: Collection[str], table_name: str, start
 def cointegration_test(ticker1: str, ticker2: str) -> List[Union[str, float]]:
     """
     This function calculate the cointegration of two tickers
-    :param ticker1: name of the firts ticker
-    :param ticker1: name of the second ticker
+    :param ticker1: name of the first ticker
+    :param ticker2: name of the second ticker
     :return: a list of the linear regression results
     """
     select1_stmt = f"SELECT close FROM sector_stocks WHERE symbol = '{ticker1}';"
@@ -125,7 +125,8 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
         end_date = dt.datetime.today().strftime('%Y-%m-%d')
     table_list = ['sector_stocks', 'pair_info']
     database.create_table(table_list)
-
+    database.clear_table(table_list)
+    
     select_stmt = f"""SELECT symbol FROM sp500 WHERE sector ='{sector}' ORDER BY symbol;"""
     result_df = database.execute_sql_statement(select_stmt)
     symbol_list = result_df['symbol'].tolist()
