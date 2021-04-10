@@ -11,7 +11,7 @@ from typing import Collection
 
 class IEXMarketData:
     def __init__(self, api_token: str):
-        self.url_common = "https://cloud-sse.iexapis.com/stable/stock/"
+        self.url_common = "https://cloud.iexapis.com/stable/stock/"
         self.api_token = api_token
 
     def get_quote(self, symbol: str):
@@ -306,4 +306,5 @@ class EODMarketData:
                     executor.submit(stocks_data_helper, tickers=sub_tickers, start_date=start_date, end_date=end_date))
             for future in concurrent.futures.as_completed(futures):
                 result_df = result_df.append(future.result(), ignore_index=True)
+        result_df = result_df.drop_duplicates()
         result_df.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
