@@ -611,7 +611,14 @@ def build_model():
         client_config.back_testing_start_date = back_testing_start_date
         client_config.back_testing_end_date = back_testing_end_date
 
-        build_pair_trading_model(corr_threshold, adf_threshold, sector, pair_trading_start_date, back_testing_start_date, pair_trading_end_date)
+        error = build_pair_trading_model(corr_threshold, adf_threshold,
+                                         sector, pair_trading_start_date,
+                                         back_testing_start_date, pair_trading_end_date)
+        if len(error) > 0:
+            flash("Warning! " + error + " Select different Corr Threshold and P Threshold!")
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                                   done_pair_trade_model=client_config.done_pair_model)
+
         select_stmt = "SELECT * FROM stock_pairs;"
         result_df = database.execute_sql_statement(select_stmt)
         result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
@@ -858,11 +865,15 @@ def sim_server_down():
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
                 #TODO: Per Professor, a better clean-up logic needs to be added here
+                print("sim_server_down:", str(status))
+                client_config.server_tombstone = True
                 client_config.server_ready = False
-                flash("Failure in server: please restart the program")
+                #Even though connection to server failed such as return code 10016
+                #But set server_tomstone to True should get server stop
+                #flash("Failure in server: please restart the program")
                 return render_template("sim_server_down.html")
 
-            client_config.receiver_stop = False
+            client_config.receiver_stop = False     #TODO Look like it is not used
             client_config.server_tombstone = True
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
@@ -891,6 +902,7 @@ def sim_server_down():
         except(OSError, Exception):
             # TODO Need a Web page to indicate we throw an exception and print full stack.
             client_config.server_ready = False
+            client_config.server_tombstone = True
             client_config.client_thread_started = False
             return render_template("sim_server_down.html")
 
@@ -909,6 +921,8 @@ def sim_auto_trading():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
+                print("sim_auto_trading:", str(status))
+                #client_config.client_socket.close()
                 flash("Failure in server: please restart the program")
                 return render_template("error_auto_trading.html")
             client_config.client_up = True
@@ -1192,18 +1206,23 @@ def update_market_data():
                 eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
 
         # stock daily data (use multi-threads,takes 22 seconnds)
-        # TODO: try to use batch request from IEX data to further speed up. Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
+        # TODO: try to use batch request from IEX data to further speed up.
+        # Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
         database.create_table(['stocks'])
         tickers = database.get_sp500_symbols()
         if database.check_table_empty('stocks'):
-            eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
+            # TODO! Use non-multi-threading version for now as EDO data feed has strange behavior after its upgrade
+            # eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
+            eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
         else:
             select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
             last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
             begin_date_stocks = (datetime.strptime(last_date_stocks, '%Y-%m-%d') + timedelta(days=1)).strftime(
                 '%Y-%m-%d')  # add one day after the last date in table
             if begin_date_stocks <= today:
-                eod_market_data.populate_stocks_data_multi(tickers, "stocks", begin_date_stocks, today, 'US')
+                # TODO! Use non-multi-threading version for now as EDO data feed has strange behavior after its upgrade
+                # eod_market_data.populate_stocks_data_multi(tickers, "stocks", begin_date_stocks, today, 'US')
+                eod_market_data.populate_stock_data(tickers, "stocks", begin_date_stocks, today, 'US')
         flash("Stock daily data updated...")
 
         # sp500 index & sectors
