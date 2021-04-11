@@ -139,7 +139,7 @@ def create_stock_pairs(sector: str, start_date: str = "2020-01-01", end_date: st
 
 def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float = 0.01,
                              sector: str = "Technology", start_date: str = "2020-01-01",\
-                             back_testing_start_date: str = None, end_date: str = None) -> None:
+                             back_testing_start_date: str = None, end_date: str = None) -> str:
     """
     This function build a pair_trading model for a given sector of stocks in sp500 and update database tables
     :param corr_threshold: the threshold for stock pair correlation
@@ -153,6 +153,8 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     select_stmt = f"""SELECT symbol1, symbol2 FROM pair_info WHERE correlation >= {corr_threshold} 
                     AND adf_p_value <= {adf_threshold} ORDER BY symbol1, symbol2;"""
     pairs = database.execute_sql_statement(select_stmt)
+    if len(pairs) == 0:
+        return "No Eligible Stock Pairs."
 
     tables = ['stock_pairs', 'pair1_stocks', 'pair2_stocks', 'pair_prices', 'pair_trades']
     database.create_table(tables)
@@ -219,7 +221,7 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
 
     database.execute_sql_statement(update_st, True)
     database.drop_table('tmp')
-
+    return ""
 
 class StockPair:
     def __init__(self, symbol1, symbol2, volatility, price_mean):
