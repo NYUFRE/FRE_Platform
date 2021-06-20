@@ -428,3 +428,38 @@ class FREDatabase:
         else:
             self.engine.execute(f"UPDATE portfolios set shares = {shares} WHERE user_id = {uid} AND symbol = '{symbol}'")
             self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+
+    def create_short_transaction(self, uid, new_cash, symbol, shares, new_shares, price, timestamp):
+        """
+        Record the selling transaction info into database.
+        :param uid: user id
+        :param new_cash: cash after selling
+        :param symbol: stock ticker
+        :param shares: shares holding after selling
+        :param new_shares: negative, shares to sell
+        :param price: price to sell at
+        :param timestamp: when the transaction happens
+        :return: None
+        """
+        # Insert the selling record into transactions table
+        self.engine.execute(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
+                            f"VALUES ('{symbol}',{new_shares},{price},'{timestamp}',{uid})")
+
+        # Check position and cost
+        result = self.engine.execute(
+            f"SELECT shares, avg_cost FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+        data = result.fetchall()
+        # When holding same stock
+        if len(data) > 0:
+            existing_shares = data[0]['shares']
+            # Add new shares to the existing position
+            updated_shares = existing_shares + shares
+            # calculate avg cost
+            existing_cost = data[0]['avg_cost']
+            updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
+            self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
+                                f"WHERE user_id = {uid} AND symbol = '{symbol}'")
+        # Without holding the stock
+        else:
+            self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
+                                f"VALUES ({uid}, {shares}, '{symbol}',{price})")
