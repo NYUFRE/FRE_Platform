@@ -30,12 +30,21 @@ class IEXMarketData:
                 quote['Market'] = "Open" if data["isUSMarketOpen"] else "Closed"
                 # When latestVolume is None -> use previousVolume
                 if data["latestVolume"] is None:
-                    data["latestVolume"] = data["previousVolume"]
+                    if data["previousVolume"] is None:
+                        data["latestVolume"] = 0
+                    else:
+                        data["latestVolume"] = data["previousVolume"]
                 # When high, low are None -> Use week52Low and week52High
                 if data["low"] is None:
-                    data["low"] = data["week52Low"]
+                    if data["week52Low"] is None:
+                        data["low"] = 0
+                    else:
+                        data["low"] = data["week52Low"]
                 if data["high"] is None:
-                    data["high"] = data["week52High"]
+                    if data["week52High"] is None:
+                        data["high"] = 0
+                    else:
+                        data["high"] = data["week52High"]
                 if data.get("iexBidPrice", None) is not None and data.get("iexAskPrice", None) is not None:
                     # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
