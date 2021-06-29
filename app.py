@@ -1255,5 +1255,3 @@ if __name__ == "__main__":
         client_config.client_socket.close()
         sys.exit(0)
 
-    # Show James and Robin for rebase local branch with latest mater
-
