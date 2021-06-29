@@ -395,10 +395,13 @@ class FREDatabase:
             existing_shares = data[0]['shares']
             # Add new shares to the existing position
             updated_shares = existing_shares + shares
-            # calculate avg cost
-            existing_cost = data[0]['avg_cost']
-            updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
-            self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
+            if updated_shares == 0:
+                self.engine.execute(f"DELETE FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+            else:
+                # calculate avg cost
+                existing_cost = data[0]['avg_cost']
+                updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
+                self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
                                 f"WHERE user_id = {uid} AND symbol = '{symbol}'")
         # Without holding the stock
         else:
@@ -452,14 +455,14 @@ class FREDatabase:
         # When holding same stock
         if len(data) > 0:
             existing_shares = data[0]['shares']
-            # Add new shares to the existing position
-            updated_shares = existing_shares + shares
             # calculate avg cost
             existing_cost = data[0]['avg_cost']
-            updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
-            self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
+            updated_cost = (existing_cost * existing_shares + price * new_shares) / shares
+            self.engine.execute(f"UPDATE portfolios SET shares = {shares}, avg_cost = {updated_cost} "
                                 f"WHERE user_id = {uid} AND symbol = '{symbol}'")
+            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
         # Without holding the stock
         else:
             self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
                                 f"VALUES ({uid}, {shares}, '{symbol}',{price})")
+            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
