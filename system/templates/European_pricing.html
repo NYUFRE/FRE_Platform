@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}
+European
+{% endblock %}
+
+{% block content %}
+<style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+<body>
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active " href="/European_pricing">European Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/American_pricing">American Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/FixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/CDS">Credit Default Swap</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Pricing European Option</h3>
+    <div class="form-group">
+        <form action="/European_pricing" id="european" method="post">
+            <p style = "width:500px;" align="right">Spot Price:
+                <input id="spot" name="spot" value = {{input["spot"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Strike Price:
+                <input id="strike" name="strike" value = {{input["strike"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Day to maturity:
+                <input id="day" name="day" value = {{input["day"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Risk free rate:
+                <input id="rf" name="rf" value = {{input["rf"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Dividend rate:
+                <input id="div" name="div" value = {{input["div"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Volatility:
+                <input id="vol" name="vol" value = {{input["vol"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Graph X-axis Parameter: <select name = "xparameter" action = '/' style = "width:200px;">
+                {%for xparameter in x_parameter%}
+                <option value = {{xparameter}} selected>{{xparameter}}</option>>
+                {% endfor %}
+            </select></p>
+            <p style = "width:500px;" align="right">Graph Y-axis Parameter: <select name = "yparameter" action = '/' style = "width:200px;">
+                {%for yparameter in y_parameter%}
+                <option value = {{yparameter}} selected>{{yparameter}}</option>>
+                {% endfor %}
+            </select></p>
+
+            <input type="submit" value="Calculate"/>
+        </form>
+    </div>
+
+    <h3>Result</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Type</th>
+                <th style="text-align:center">Value</th>
+                <th style="text-align:center">Delta</th>
+                <th style="text-align:center">Gamma</th>
+                <th style="text-align:center">Vega</th>
+                <th style="text-align:center">Rho</th>
+                <th style="text-align:center">Theta</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>Call</td>
+                <td>{{call_dict["Value"]}}</td>
+                <td>{{call_dict["Delta"]}}</td>
+                <td>{{call_dict["Gamma"]}}</td>
+                <td>{{call_dict["Vega"]}}</td>
+                <td>{{call_dict["Rho"]}}</td>
+                <td>{{call_dict["Theta"]}}</td>
+            </tr>
+            <tr>
+                <td>Put</td>
+                <td>{{put_dict["Value"]}}</td>
+                <td>{{put_dict["Delta"]}}</td>
+                <td>{{put_dict["Gamma"]}}</td>
+                <td>{{put_dict["Vega"]}}</td>
+                <td>{{put_dict["Rho"]}}</td>
+                <td>{{put_dict["Theta"]}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Graph</h3>
+        <img src="/plot/european" alt="Image Placeholder" width="50%">
+</main>
+
+</body>
+
+{%endblock%}
