@@ -1541,3 +1541,4 @@ if __name__ == "__main__":
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
+
