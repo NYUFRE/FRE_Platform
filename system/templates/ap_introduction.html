@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}
+ap_introduction
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active " href="/ap_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_european_pricing">European Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/American_pricing">American Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/FixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/CDS">Credit Default Swap</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Assets Pricing Module</strong></h3>
+    <br>
+    <div align="center">
+        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+            <tbody>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+            <tr>
+                <td width="881" valign="top">
+                    <p>
+                        The assets pricing module is based on Quantlib package to price financial instrument.
+                        Current implemented pricing module are: 1. European option, 2. American option, 3. Fixed Rate Bond, 4. Credit Default Swap
+                    </p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>European option pricing module: </strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate European option value and greeks using analytic(Black Scholes) pricing engine, and
+                        display graph of y-variable with respect to change in x-variable while holding other variables constant</p>
+                    <p> Note: </p>
+                    <p> 1) Assume constant risk free rate, dividend rate and volatility </p>
+                    <p> 2) Follow Actual/Actual day convention </p>
+                    <p> 3) Using NYSE calendar to determine trading day</p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Spot Price: Current price of the underlying assets</p>
+                    <p> Strike Price: The set price at which the underlying assets can be bought or sold when option is exercised</p>
+                    <p> Day to Expiration: Number of days until the last day that the option is valid</p>
+                    <p> Risk Free Rate: The current risk-free rate or the rate to discount future cash flow</p>
+                    <p> Dividend Rate: Dollar dividend divided by underlying asset price</p>
+                    <p> Volatility: Estimate of the future volatility for the underlying asset </p>
+                    <p> X-axis Parameter: Parameter to display at X-axis</p>
+                    <p> Y-axis Parameter: Parameter to display at Y-axis</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>American option pricing module</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate American option value and greeks using Finite Difference Black Scholes pricing engine, and
+                        display graph of y-variable with respect to change in x-variable while holding other variables constant</p>
+                    <p> Note: </p>
+                    <p> 1) Assume constant risk free rate, dividend rate and volatility </p>
+                    <p> 2) Follow Actual/Actual day convention </p>
+                    <p> 3) Using NYSE calendar to determine trading day</p>
+                    <p> 4) Vega and Rho currently are not available</p>
+                    <p> 5) time grid and space grid are respectively set at 2000 and 200 for computing Finite Difference Black Scholes </p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Spot Price: Current price of the underlying assets</p>
+                    <p> Strike Price: The set price at which the underlying assets can be bought or sold when option is exercised</p>
+                    <p> Day to Expiration: Number of days until the last day that the option is valid</p>
+                    <p> Risk Free Rate: The current risk-free rate or the rate to discount future cash flow</p>
+                    <p> Dividend Rate: Dollar dividend divided by underlying asset price</p>
+                    <p> Volatility: Estimate of the future volatility for the underlying asset </p>
+                    <p> X-axis Parameter: Parameter to display at X-axis</p>
+                    <p> Y-axis Parameter: Parameter to display at Y-axis</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Fixed Rate Bond Module:</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate fixed rate bond price using discount cash flow pricing engine.</p>
+                    <p> Note: </p>
+                    <p> 1) Assume constant risk free rate, dividend rate and volatility </p>
+                    <p> 2) Follow 30/360 day convention </p>
+                    <p> 3) Using US government bond calendar to determine trading day</p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Face Value: The amount paid to the holder at maturity</p>
+                    <p> Coupon Rate: Annual coupon payments paid by the issuer relative to the bond's face </p>
+                    <p> Risk Free Rate: The current risk-free rate or the rate to discount future cash flow</p>
+                    <p> Valuation Date: The date when to price the bond</p>
+                    <p> Issue Date: the date on which bond begins to accrue interest </p>
+                    <p> Maturity Date: the ending date of the bond</p>
+                    <p> Frequency: Coupon Frequency</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Credit Default Swap Module</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate Credit Default Swap using mid point CDS pricing engine..</p>
+                    <p> Note: </p>
+                    <p> 1) Assume constant discount rate, recovery rate, harzard rate </p>
+                    <p> 2) Follow Actual/365Fixed day convention </p>
+                    <p> 3) Assume payment is transferred at 20th of payment month</p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Notional Value: The specified amount on which the periodic payments are based</p>
+                    <p> Spread: The percentage of the notional amount that the protection buyer must pay the protection seller over the length of the contract </p>
+                    <p> Recovery Rate: The percentage of notional value that can be recover if default happened</p>
+                    <p> Hazard Rate: The probability of default in a short interval </p>
+                    <p> Risk Free Rate: The current risk-free rate or the rate to discount future cash flow </p>
+                    <p> Issue Date: The start date of the contract</p>
+                    <p> Maturity Date: The ending date of the contract  </p>
+                    <p> Frequency: Payment exchange Frequency</p>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <hr>
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

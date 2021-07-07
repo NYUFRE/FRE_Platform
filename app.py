@@ -1234,7 +1234,12 @@ def update_market_data():
 
     return render_template("md_update_data.html")
 
-@app.route("/European_pricing", methods=["GET", "POST"])
+@app.route('/ap_introduction')
+@login_required
+def ap_introduction():
+    return render_template("ap_introduction.html")
+
+@app.route("/ap_european_pricing", methods=["GET", "POST"])
 def cal_european():
     input = {"spot": 0, "strike": 0, "day":0, "rf":0, "div":0,"vol":0, "yparameter" : "Value", "xparameter" : "Strike"}
     call = {}
@@ -1269,7 +1274,8 @@ def cal_european():
         call, put = assets_pricing.pricing_european(spot, strike, day, rf, div, vol)
         xparameter = request.form.get("xparameter")
         if xparameter == "Strike":
-            x_lst = [x for x in range (1,350,1)]
+            step = np.linspace(-int(0.8*strike),int(0.8*strike), 300)
+            x_lst = strike + step
             call_lst = []
             put_lst = []
             for strike in x_lst:
@@ -1277,7 +1283,9 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Spot":
-            x_lst = [x for x in range (1, 350, 1)]
+            # x_lst = [x for x in range (1, 350, 1)]
+            step = np.linspace(-int(0.8*spot),int(0.8*spot), 300)
+            x_lst = spot + step
             call_lst = []
             put_lst = []
             for spot in x_lst:
@@ -1293,7 +1301,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Risk_Free_Rate":
-            x_lst = [x/100 for x in range (0, 15,1)]
+            x_lst = [x/100 for x in range (0, 25,1)]
             call_lst = []
             put_lst = []
             for rf in x_lst:
@@ -1301,7 +1309,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Dividend":
-            x_lst = [x/100 for x in range (0, 15,1)]
+            x_lst = [x/100 for x in range (0, 25,1)]
             call_lst = []
             put_lst = []
             for div in x_lst:
@@ -1322,10 +1330,10 @@ def cal_european():
         asset_pricing_result.yparameter = request.form.get("yparameter")
         asset_pricing_result.xparameter = request.form.get("xparameter")
 
-        return render_template("European_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+        return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
                                x_parameter = xparameter_lst, input = input)
     else:
-        return render_template("European_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+        return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
                                x_parameter = xparameter_lst, input = input)
 
 @app.route('/plot/european')
@@ -1352,7 +1360,7 @@ def plot_european():
     return response
 
 
-@app.route("/American_pricing", methods=["GET", "POST"])
+@app.route("/ap_american_pricing", methods=["GET", "POST"])
 def cal_american():
     input = {"spot": 0, "strike": 0, "day":0, "rf":0, "div":0,"vol":0}
     call = {}
@@ -1387,7 +1395,8 @@ def cal_american():
         call, put = assets_pricing.pricing_american(spot, strike, day, rf, div, vol)
         xparameter = request.form.get("xparameter")
         if xparameter == "Strike":
-            x_lst = [strike + x for x in range (int(-0.8*strike),int(0.8*strike),int(0.025*strike))]
+            step = np.linspace(-int(0.8*strike),int(0.8*strike), 300)
+            x_lst = strike + step
             call_lst = []
             put_lst = []
             for strike in x_lst:
@@ -1395,7 +1404,9 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Spot":
-            x_lst = [x for x in range (1, 350, 1)]
+            # x_lst = [x for x in range (1, 350, 1)]
+            step = np.linspace(-int(0.8*spot),int(0.8*spot), 300)
+            x_lst = spot + step
             call_lst = []
             put_lst = []
             for spot in x_lst:
@@ -1411,7 +1422,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Risk_Free_Rate":
-            x_lst = [x/100 for x in range (0, 15,1)]
+            x_lst = [x/100 for x in range (0, 25,1)]
             call_lst = []
             put_lst = []
             for rf in x_lst:
@@ -1419,7 +1430,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Dividend":
-            x_lst = [x/100 for x in range (0, 15,1)]
+            x_lst = [x/100 for x in range (0, 25,1)]
             call_lst = []
             put_lst = []
             for div in x_lst:
@@ -1439,10 +1450,10 @@ def cal_american():
         asset_pricing_result.put = put_lst
         asset_pricing_result.yparameter = request.form.get("yparameter")
         asset_pricing_result.xparameter = request.form.get("xparameter")
-        return render_template("American_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+        return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
                                x_parameter = xparameter_lst, input = input)
     else:
-        return render_template("American_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+        return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
                                x_parameter = xparameter_lst, input = input)
 
 @app.route('/plot/american')
@@ -1468,7 +1479,7 @@ def plot_american():
     response.mimetype = 'image/png'
     return response
 
-@app.route('/FixedRateBond', methods=['POST', 'GET'])
+@app.route('/ap_fixedRateBond', methods=['POST', 'GET'])
 @login_required
 def prcing_fixedratebond():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
@@ -1490,11 +1501,11 @@ def prcing_fixedratebond():
         frequency = frequency_dict.get(frequency_forminput)
         bond = assets_pricing.pricing_fixedratebond(face_value, valuation_date, issue_date, maturity_date, frequency, coupon_rate, discount_rate)
 
-        return render_template("FixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
     else:
-        return render_template("FixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
 
-@app.route('/CDS', methods=['POST', 'GET'])
+@app.route('/ap_CDS', methods=['POST', 'GET'])
 @login_required
 def prcing_cds():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
@@ -1524,9 +1535,9 @@ def prcing_cds():
                                                   recovery_rate,
                                                   hazard_rate)
 
-        return render_template("CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
     else:
-        return render_template("CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]

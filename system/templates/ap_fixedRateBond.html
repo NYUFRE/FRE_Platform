@@ -8,28 +8,31 @@ FixedRateBond
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
   <ul class="nav nav-pills flex-column">
     <li class="nav-item">
-      <a class="nav-link " href="/European_pricing">European Option</a>
+      <a class="nav-link " href="/ap_introduction">Introduction</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link " href="/American_pricing">American Option</a>
+      <a class="nav-link " href="/ap_european_pricing">European Option</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link active " href="/FixedRateBond">Fixed Rate Bond</a>
+      <a class="nav-link " href="/ap_american_pricing">American Option</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link " href="/CDS">Credit Default Swap</a>
+      <a class="nav-link active " href="/ap_fixedRateBond">Fixed Rate Bond</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
     </li>
   </ul>
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-  <h3>Bond Parameters</h3>
+  <h3>Bond</h3>
   <hr>
   <div class="form-group">
-    <form action="/FixedRateBond" id="calculate" method="POST">
+    <form action="/ap_fixedRateBond" id="calculate" method="POST">
       <p style = "width:500px;" align="right">Face value: <input type = "text" name = "Face Value" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Coupon rate: <input type = "text" name = "Coupon Rate" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Discount rate: <input type = "text" name = "Discount Rate" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Coupon rate (in decimal): <input type = "text" name = "Coupon Rate" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Risk free rate (in decimal): <input type = "text" name = "Discount Rate" style = "width:200px;"></p>
       <p style = "width:500px;" align="right">Valuation Date: <input type = "date" name = "Valuation Date" min = "2010-01-01" style = "width:200px;"></p>
       <p style = "width:500px;" align="right">Issue Date: <input type = "date" name = "Issue Date" min = "2010-01-01" style = "width:200px;"></p>
       <p style = "width:500px;" align="right">Maturity Date: <input type = "date" name = "Maturity Date" min = "2010-01-01" style = "width:200px;"></p>

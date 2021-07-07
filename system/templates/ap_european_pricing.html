@@ -17,16 +17,19 @@ img {
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
-            <a class="nav-link active " href="/European_pricing">European Option</a>
+            <a class="nav-link " href="/ap_introduction">Introduction</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="/American_pricing">American Option</a>
+            <a class="nav-link active " href="/ap_european_pricing">European Option</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="/FixedRateBond">Fixed Rate Bond</a>
+            <a class="nav-link " href="/ap_american_pricing">American Option</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="/CDS">Credit Default Swap</a>
+            <a class="nav-link " href="/ap_fixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
         </li>
     </ul>
 </nav>
@@ -34,18 +37,18 @@ img {
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
     <h3>Pricing European Option</h3>
     <div class="form-group">
-        <form action="/European_pricing" id="european" method="post">
+        <form action="/ap_european_pricing" id="european" method="post">
             <p style = "width:500px;" align="right">Spot Price:
                 <input id="spot" name="spot" value = {{input["spot"]}} type="text"/></p>
             <p style = "width:500px;" align="right">Strike Price:
                 <input id="strike" name="strike" value = {{input["strike"]}} type="text"/></p>
-            <p style = "width:500px;" align="right">Day to maturity:
+            <p style = "width:500px;" align="right">Day to Expiration:
                 <input id="day" name="day" value = {{input["day"]}} type="text"/></p>
-            <p style = "width:500px;" align="right">Risk free rate:
+            <p style = "width:500px;" align="right">Risk free rate (in decimal):
                 <input id="rf" name="rf" value = {{input["rf"]}} type="text"/></p>
-            <p style = "width:500px;" align="right">Dividend rate:
+            <p style = "width:500px;" align="right">Dividend rate (in decimal):
                 <input id="div" name="div" value = {{input["div"]}} type="text"/></p>
-            <p style = "width:500px;" align="right">Volatility:
+            <p style = "width:500px;" align="right">Volatility (in decimal):
                 <input id="vol" name="vol" value = {{input["vol"]}} type="text"/></p>
             <p style = "width:500px;" align="right">Graph X-axis Parameter: <select name = "xparameter" action = '/' style = "width:200px;">
                 {%for xparameter in x_parameter%}
