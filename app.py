@@ -1569,17 +1569,29 @@ def plot_american():
 @login_required
 def prcing_fixedratebond():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
+    input = {"face_value": 0, "coupon_rate": 0, "discount_rate":0,
+             "valuation_date":str(np.datetime64('today')), "issue_date":str(np.datetime64('today')),
+             "maturity_date":str(np.datetime64('today')), "frequency":""}
     bond = {}
     if request.method == 'POST':
         form_input = request.form
         face_value = float(form_input['Face Value'])
+        input["face_value"] = face_value
         coupon_rate = float(form_input['Coupon Rate'])
+        input["coupon_rate"] = coupon_rate
         discount_rate = float(form_input['Discount Rate'])
+        input["discount_rate"] = discount_rate
         valuation_date = form_input['Valuation Date']
+        input["valuation_date"] = valuation_date
         issue_date = form_input['Issue Date']
+        input["issue_date"] = issue_date
         maturity_date = form_input['Maturity Date']
+        input["maturity_date"] = maturity_date
         frequency_forminput = form_input['Frequency']
+        input["frequency"] = frequency_forminput
 
+        print(input["valuation_date"])
+        print(type(input["valuation_date"]))
         frequency_dict = {"Monthly":"1m",
                           "Quarterly":"3m",
                           "Twice a year":"6m",
@@ -1587,33 +1599,43 @@ def prcing_fixedratebond():
         frequency = frequency_dict.get(frequency_forminput)
         bond = assets_pricing.pricing_fixedratebond(face_value, valuation_date, issue_date, maturity_date, frequency, coupon_rate, discount_rate)
 
-        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
     else:
-        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
 
 @app.route('/ap_CDS', methods=['POST', 'GET'])
 @login_required
 def prcing_cds():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
+    input = {"notional":0, "spread":0, "recovery_rate":0, "hazard_rate":0, "discount_rate":0,
+             "issue_date":str(np.datetime64('today')), "maturity_date":str(np.datetime64('today')), "frequency":""}
     buyer = {}
     seller = {}
     if request.method == 'POST':
         form_input = request.form
-        nominal_value = float(form_input['Nominal'])
+        notional_value = float(form_input['Notional'])
+        input["notional"] = notional_value
         spread = float(form_input['Spread'])
+        input["spread"] = spread
         recovery_rate = float(form_input['Recovery Rate'])
+        input["recovery_rate"] = recovery_rate
         hazard_rate = float(form_input['Hazard Rate'])
+        input["hazard_rate"] = hazard_rate
         discount_rate = float(form_input['Discount Rate'])
+        input["discount_rate"] = discount_rate
         issue_date = form_input['Issue Date']
+        input["issue_date"] = issue_date
         maturity_date = form_input['Maturity Date']
+        input["maturity_date"] = maturity_date
         frequency_forminput = form_input['Frequency']
+        input["frequency"] = frequency_forminput
 
         frequency_dict = {"Monthly":"1m",
                           "Quarterly":"3m",
                           "Twice a year":"6m",
                           "Annually":"1Y"}
         frequency = frequency_dict.get(frequency_forminput)
-        buyer,seller = assets_pricing.pricing_cds(nominal_value, spread,
+        buyer,seller = assets_pricing.pricing_cds(notional_value, spread,
                                                   issue_date,
                                                   maturity_date,
                                                   frequency,
@@ -1621,9 +1643,9 @@ def prcing_cds():
                                                   recovery_rate,
                                                   hazard_rate)
 
-        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
     else:
-        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
