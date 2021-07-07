@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Sell
+    Short
 {% endblock %}
 
 {% block content %}
-     <script>
-         $(document).ready(function() {
+        <script>
+            $(document).ready(function() {
 
-                $('#sell').submit(function() {
+                $('#short').submit(function() {
 
-                    if ($('#sell input[name=symbol]').val() == '')
+                    if ($('#short input[name=symbol]').val() == '')
                     {
                         alert('Missing symbol');
                         return false;
                     }
-                    else if ($('#sell input[name=shares]').val() == '')
+                    else if ($('#short input[name=shares]').val() == '')
                     {
                         alert('Missing shares');
                         return false;
                     }
-                    else if (isNaN($('#sell input[name=shares]').val())) 
+                    else if (isNaN($('#short input[name=shares]').val()))
                     {
                         alert('Shares must be a number');
                         return false;
                     }
                     // the input data type is text, but how to fix this?
-                    else if (+$('#sell input[name=shares]').val() != parseInt($('#sell input[name=shares]').val())) 
+                    else if (+$('#short input[name=shares]').val() != parseInt($('#short input[name=shares]').val()))
                     {
                         alert('Shares must be an integer');
                         return false;
                     }
-                    else if ($('#sell input[name=shares]').val()<=0) 
+                    else if ($('#short input[name=shares]').val()<=0)
                     {
                         alert('Shares must be positive');
                         return false;
@@ -43,8 +43,7 @@
             });
 
         </script>
-        
-     
+
     <body>
         <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
             <ul class="nav nav-pills flex-column">
@@ -61,29 +60,28 @@
                     <a class="nav-link" href="/buy">Buy Stock</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="/sell">Sell Stock</a>
+                    <a class="nav-link" href="/sell">Sell Stock</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/short">Short Stock</a>
+                    <a class="nav-link active" href="/short">Short Stock</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/history">History</a>
                 </li>
             </ul>
         </nav>
-	
+
 		<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-			<h3>Sell Stock Shares</h3>
+			<h3>Short Stock Shares</h3>
 			<div class="form-group">
-				 <form action="/sell" id="sell" method="post">
+				<form action="/short" id="short" method="post">
 					<input id="symbol" name="symbol" placeholder="Symbol" type="text"/>
-					<input id="price" name="price" placeholder="Price" type="text"/>
+                    <input id="price" name="price" placeholder="Price" type="text"/>
 					<input id="shares" name="shares" placeholder="Shares" type="text"/>
-                    <input type="submit" value="Sell"/>
+					<input type="submit" value="Short"/>
 				</form>
 			</div>
 		</main>
-		
-    </body>  
-    
+
+    </body>
 {%endblock%}
