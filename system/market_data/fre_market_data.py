@@ -53,17 +53,23 @@ class IEXMarketData:
                         quote["bidPrice"] = data["iexBidPrice"]
                         quote["bidSize"] = data["iexBidSize"]
                     # Bid Price is 0 in Market Closed, generate bid price and size
-                    elif quote['Market'] == "Closed":
+                    # found that quote price could be zero even though market status is open
+                    #elif quote['Market'] == "Closed":
+                    else:
                         quote["bidPrice"] = data["low"]
-                        quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                        #quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                        quote["bidSize"] = int(random_ratio * data["latestVolume"] / 6.5 / 3600)
                     # AskPrice & Size exists
                     if data["iexAskPrice"] != 0:
                         quote["askPrice"] = data["iexAskPrice"]
                         quote["askSize"] = data["iexAskSize"]
                     # Ask Price is 0 in Market Closed, generate ask price and size
-                    elif quote['Market'] == "Closed":
+                    # found that quote price could be zero even though market status is open
+                    #elif quote['Market'] == "Closed":
+                    else:
                         quote["askPrice"] = data["high"]
-                        quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
+                        #quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
+                        quote["askSize"] = int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600)
 
                 else:
                     # When data form not containing keys, generate price and size
@@ -71,9 +77,11 @@ class IEXMarketData:
                     # print(data)
                     random_ratio = int.from_bytes(os.urandom(8), byteorder="big") / ((1 << 64) - 1)
                     quote["bidPrice"] = data["low"]
-                    quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                    #quote["bidSize"] = round(int(random_ratio * data["latestVolume"] / 6.5 / 3600), -2)
+                    quote["bidSize"] = int(random_ratio * data["latestVolume"] / 6.5 / 3600)
                     quote["askPrice"] = data["high"]
-                    quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
+                    #quote["askSize"] = round(int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600), -2)
+                    quote["askSize"] = int((1 - random_ratio) * data["latestVolume"] / 6.5 / 3600)
             return quote, error
 
         except(OSError, Exception):
