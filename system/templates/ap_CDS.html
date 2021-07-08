@@ -30,13 +30,20 @@ CDS
     <hr>
     <div class="form-group">
         <form action="/ap_CDS" id="calculate" method="POST">
-            <p style = "width:500px;" align="right">Notional value: <input type = "text" name = "Nominal" style = "width:200px;"></p>
-            <p style = "width:500px;" align="right">Spread (in basis point) : <input type = "text" name = "Spread" style = "width:200px;"> </p>
-            <p style = "width:500px;" align="right">Recovery rate (in decimal): <input type = "text" name = "Recovery Rate" style = "width:200px;"></p>
-            <p style = "width:500px;" align="right">Hazard rate (in decimal): <input type = "text" name = "Hazard Rate" style = "width:200px;"></p>
-            <p style = "width:500px;" align="right">Risk-free rate (in decimal): <input type = "text" name = "Discount Rate" style = "width:200px;"></p>
-            <p style = "width:500px;" align="right">Issue Date: <input type = "date" name = "Issue Date" min = "2010-01-01" style = "width:200px;"></p>
-            <p style = "width:500px;" align="right">Maturity Date: <input type = "date" name = "Maturity Date" min = "2010-01-01" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Notional value:
+                <input type = "text" value = {{input["notional"]}} name = "Notional" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Spread (in basis point) :
+                <input type = "text" value = {{input["spread"]}} name = "Spread" style = "width:200px;"> </p>
+            <p style = "width:500px;" align="right">Recovery rate (in decimal):
+                <input type = "text" value = {{input["recovery_rate"]}} name = "Recovery Rate" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Hazard rate (in decimal):
+                <input type = "text" value = {{input["hazard_rate"]}} name = "Hazard Rate" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Risk-free rate (in decimal):
+                <input type = "text" value = {{input["discount_rate"]}} name = "Discount Rate" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Issue Date:
+                <input type = "date" value = {{input["issue_date"]}} name = "Issue Date" min = "2010-01-01" style = "width:200px;"></p>
+            <p style = "width:500px;" align="right">Maturity Date:
+                <input type = "date" value = {{input["maturity_date"]}} name = "Maturity Date" min = "2010-01-01" style = "width:200px;"></p>
             <p style = "width:500px;" align="right">Frequency: <select name = "Frequency" action = '/' style = "width:200px;">
                 {%for frequency in frequency_list%}
                 <option value = "{{frequency}}" selected>{{frequency}}</option>>
@@ -56,6 +63,7 @@ CDS
                 <th style="text-align:center">NPV</th>
                 <th style="text-align:center">Default Leg</th>
                 <th style="text-align:center">Coupon Leg</th>
+                <th style="text-align:center">Payment Frequency</th>
             </tr>
             </thead>
             <tbody>
@@ -65,6 +73,7 @@ CDS
                 <td>{{seller_result["NPV"]}}</td>
                 <td>{{seller_result["default leg"]}}</td>
                 <td>{{seller_result["coupon leg"]}}</td>
+                <td>{{input["frequency"]}}</td>
             </tr>
             <tr>
                 <td>buyer</td>
@@ -72,6 +81,7 @@ CDS
                 <td>{{buyer_result["NPV"]}}</td>
                 <td>{{buyer_result["default leg"]}}</td>
                 <td>{{buyer_result["coupon leg"]}}</td>
+                <td>{{input["frequency"]}}</td>
             </tr>
             </tbody>
         </table>

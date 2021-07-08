@@ -30,13 +30,20 @@ FixedRateBond
   <hr>
   <div class="form-group">
     <form action="/ap_fixedRateBond" id="calculate" method="POST">
-      <p style = "width:500px;" align="right">Face value: <input type = "text" name = "Face Value" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Coupon rate (in decimal): <input type = "text" name = "Coupon Rate" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Risk free rate (in decimal): <input type = "text" name = "Discount Rate" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Valuation Date: <input type = "date" name = "Valuation Date" min = "2010-01-01" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Issue Date: <input type = "date" name = "Issue Date" min = "2010-01-01" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Maturity Date: <input type = "date" name = "Maturity Date" min = "2010-01-01" style = "width:200px;"></p>
-      <p style = "width:500px;" align="right">Frequency: <select name = "Frequency" action = '/' style = "width:200px;">
+      <p style = "width:500px;" align="right">Face value:
+        <input type = "text" value = {{input["face_value"]}} name = "Face Value" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Coupon rate (in decimal):
+        <input type = "text" value = {{input["coupon_rate"]}} name = "Coupon Rate" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Risk free rate (in decimal):
+        <input type = "text" value = {{input["discount_rate"]}} name = "Discount Rate" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Valuation Date:
+        <input type = "date" value = {{input["valuation_date"]}} name = "Valuation Date" min = "2010-01-01" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Issue Date:
+        <input type = "date" value = {{input["issue_date"]}} name = "Issue Date" min = "2010-01-01" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Maturity Date:
+        <input type = "date" value = {{input["maturity_date"]}} name = "Maturity Date" min = "2010-01-01" style = "width:200px;"></p>
+      <p style = "width:500px;" align="right">Frequency:
+        <select name = "Frequency" action = '/' style = "width:200px;">
         {%for frequency in frequency_list%}
         <option value = "{{frequency}}" selected>{{frequency}}</option>>
         {% endfor %}
@@ -56,6 +63,7 @@ FixedRateBond
         <th style="text-align:center">Bond Yield</th>
         <th style="text-align:center">Previous Coupon Rate</th>
         <th style="text-align:center">Next Coupon Rate</th>
+        <th style="text-align:center">Coupon Frequency</th>
       </tr>
       </thead>
 
@@ -67,6 +75,7 @@ FixedRateBond
         <td>{{bond_result["bondYield"]}}</td>
         <td>{{bond_result["previousCouponRate"]}}</td>
         <td>{{bond_result["nextCouponRate"]}}</td>
+        <td>{{input["frequency"]}}</td>
       </tr>
       </tbody>
     </table>
