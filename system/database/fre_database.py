@@ -272,7 +272,11 @@ class FREDatabase:
         result = self.engine.execute("SELECT * FROM sp500")
         data = result.fetchall()
         for stock_data in data:
-            sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
+            # An data quaility issue was found, a SP500 stock did not belong to any SP500 industry
+            # The issue is recorded as issue #126
+            # The fix is to check the sector for a stock before adding into map
+            if stock_data['sector'] in sectors:
+                sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
         return sp500_symbol_map
 
     def get_user(self, email_address: str, uid: int) -> Dict[str, Union[int, float, str]]:
