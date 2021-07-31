@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+<body>
+
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_analysis">Earnings Impact Analysis</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Earnings Impact Analysis</h3>
+    <div class="form-group">
+        <form action="/ei_analysis" id="ei" method="post">
+            <p style = "width:500px;" align="right">Begin Date:
+                <input id="date_from" name="date_from" value = {{input["date_from"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">End Date:
+                <input id="date_to" name="date_to" value = {{input["date_to"]}} type="text"/></p>
+            <input type="submit" value="Calculate"/>
+        </form>
+    </div>
+
+    <h3>Cumulative Abnormal Return Table</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Gruop</th>
+                <th style="text-align:center">30 days before</th>
+                <th style="text-align:center">20 days before</th>
+                <th style="text-align:center">10 days before</th>
+                <th style="text-align:center">announcement day</th>
+                <th style="text-align:center">10 days later</th>
+                <th style="text-align:center">20 days later</th>
+                <th style="text-align:center">30 days later</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>Beat</td>
+                <td>{{BeatInfo[0]}}</td>
+                <td>{{BeatInfo[1]}}</td>
+                <td>{{BeatInfo[2]}}</td>
+                <td>{{BeatInfo[3]}}</td>
+                <td>{{BeatInfo[4]}}</td>
+                <td>{{BeatInfo[5]}}</td>
+                <td>{{BeatInfo[6]}}</td>
+            </tr>
+            <tr>
+                <td>Meat</td>
+                <td>{{MeatInfo[0]}}</td>
+                <td>{{MeatInfo[1]}}</td>
+                <td>{{MeatInfo[2]}}</td>
+                <td>{{MeatInfo[3]}}</td>
+                <td>{{MeatInfo[4]}}</td>
+                <td>{{MeatInfo[5]}}</td>
+                <td>{{MeatInfo[6]}}</td>
+            </tr>
+            <tr>
+                <td>Miss</td>
+                <td>{{MissInfo[0]}}</td>
+                <td>{{MissInfo[1]}}</td>
+                <td>{{MissInfo[2]}}</td>
+                <td>{{MissInfo[3]}}</td>
+                <td>{{MissInfo[4]}}</td>
+                <td>{{MissInfo[5]}}</td>
+                <td>{{MissInfo[6]}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Cumulative Abnormal Return Plot</h3>
+        <img src="/plot/ei" alt="Image Placeholder" width="50%">
+</main>
+
+</body>
+
+{%endblock%}

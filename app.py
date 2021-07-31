@@ -13,6 +13,7 @@ import time
 import warnings
 from datetime import datetime, timedelta
 from sys import platform
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas_market_calendars as mcal
@@ -46,6 +47,10 @@ from system.utility.config import trading_queue, trading_event
 from system.utility.helpers import error_page, login_required, usd, get_python_pid
 from system.assets_pricing import assets_pricing
 from system.assets_pricing.assets_pricing import asset_pricing_result
+
+from system.earnings_impact.earnings_impact import load_earnings_impact, get_returns, slice_period_group, \
+    group_to_array, OneSample, BootStrap, earnings_impact_data
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1646,6 +1651,60 @@ def prcing_cds():
         return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
     else:
         return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
+
+@app.route('/ei_introduction')
+@login_required
+def ei_introduction():
+    return render_template("ei_introduction.html")
+
+@app.route("/ei_analysis", methods=["GET", "POST"])
+def ei_analysis():
+    input = {'date_from': '20190101', 'date_to': '20190401'}
+    BeatInfo, MeatInfo, MissInfo = [], [], []
+    if request.method == "POST":
+        date_from = request.form.get('date_from')
+        date_from = str(date_from)
+
+        date_to = request.form.get('date_to')
+        date_to = str(date_to)
+
+        table, SPY_component = load_earnings_impact()
+        returns = get_returns(SPY_component)
+        miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+        miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
+        miss_arr, meet_arr, beat_arr = BootStrap(miss_arr), BootStrap(meet_arr), BootStrap(beat_arr)
+
+
+        for i in [0, 9, 19, 29, 39, 49, 59]:
+            BeatInfo.append('%.2f%%' % (beat_arr[i] * 100))
+            MeatInfo.append('%.2f%%' % (meet_arr[i] * 100))
+            MissInfo.append('%.2f%%' % (miss_arr[i] * 100))
+        earnings_impact_data.Beat = beat_arr
+        earnings_impact_data.Meet = meet_arr
+        earnings_impact_data.Miss = miss_arr
+
+        return render_template("ei_analysis.html", BeatInfo = BeatInfo, MeatInfo = MeatInfo, MissInfo = MissInfo, input = input)
+    else:
+        return render_template("ei_analysis.html", BeatInfo = BeatInfo, MeatInfo = MeatInfo, MissInfo = MissInfo, input = input)
+
+@app.route('/plot/ei')
+def plot_ei():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.plot(earnings_impact_data.Beat, label='Beat')
+    axis.plot(earnings_impact_data.Meet, label='Meet')
+    axis.plot(earnings_impact_data.Miss, label='Miss')
+    axis.legend(loc='best')
+    axis.axvline(x=30, linewidth=1.0)
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]

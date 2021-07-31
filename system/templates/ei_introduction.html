@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_analysis">Earnings Impact Analysis</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Earnings Impact Analysis</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							This module conduct the earnings impact analysis in sp500 stocks
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Get earnings calendar from the Internet using packages.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Split earnings calendar according to eps surprise and group into three.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Get historical returns in the Internet.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Locate announcement day and fill 60 returns nearby into nparray.
+						</p>
+					</td>
+				</tr>
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							5) Conduct the bootstrap analysis.
+						</p>
+					</td>
+				</tr>
+
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
