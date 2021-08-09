@@ -1,14 +1,19 @@
 import datetime
-# from yahoo_earnings_calendar import YahooEarningsCalendar
+from yahoo_earnings_calendar import YahooEarningsCalendar
 import pandas as pd
-# from tqdm import tqdm
+from tqdm import tqdm
 import numpy as np
 # import pandas_datareader.data as web
 import datetime
 import os
-# import yfinance as yfin
+import yfinance as yfin
 import matplotlib.pyplot as plt
 import random
+from system import database
+yfin.pdr_override()
+import talib
+from talib import abstract
+
 
 
 def load_earnings_impact():
@@ -37,6 +42,28 @@ def load_earnings_impact():
         table = table.dropna(subset=['epssurprise'])
         table.to_pickle('./system/earnings_impact/earnings_calendar_xz.pkl.compress', compression='xz')
     return table, SPY_component
+
+
+# def load_earnings_impact(SPY_component):
+#     yec = YahooEarningsCalendar()
+#     df = []
+#     fail_ticker = []
+#     for symbol in tqdm(SPY_component):
+#         try:
+#             earnings_list = yec.get_earnings_of(symbol)
+#             earnings_df = pd.DataFrame(earnings_list)
+#             df.append(earnings_df)
+#         except:
+#             fail_ticker.append(symbol)
+#             print('fail', symbol)
+#     for ticker in fail_ticker:
+#         SPY_component.remove(ticker)
+#     table = pd.concat(df, axis=0)
+#     table['startdatetime'] = table['startdatetime'].apply(lambda x: datetime.datetime.strptime(x[:10], '%Y-%m-%d'))
+#     table['epssurprise'] = table['epsactual'] - table['epsestimate']
+#     table = table[['ticker', 'startdatetime', 'epssurprise']]
+#     table = table.dropna(subset=['epssurprise'])
+#     return table, SPY_component
 
 
 def get_returns(SPY_component):
@@ -92,7 +119,7 @@ def group_to_array(lose, draw, beat, earnings_calendar, returns):
     lose_arr = np.zeros((len(lose), 60))
     for i, ticker in enumerate(lose):
         date = earnings_calendar.loc[ticker]['startdatetime']
-        if date in list(returns.index):
+        if date in list(returns.index) and ticker in list(returns.columns):
             ind = list(returns.index).index(date)
             lose_arr[i] = np.array(returns[ticker].iloc[ind - 30:ind + 30])
         else:
@@ -100,7 +127,7 @@ def group_to_array(lose, draw, beat, earnings_calendar, returns):
     draw_arr = np.zeros((len(draw), 60))
     for i, ticker in enumerate(draw):
         date = earnings_calendar.loc[ticker]['startdatetime']
-        if date in list(returns.index):
+        if date in list(returns.index) and ticker in list(returns.columns):
             ind = list(returns.index).index(date)
             draw_arr[i] = np.array(returns[ticker].iloc[ind - 30:ind + 30])
         else:
@@ -108,7 +135,7 @@ def group_to_array(lose, draw, beat, earnings_calendar, returns):
     beat_arr = np.zeros((len(beat), 60))
     for i, ticker in enumerate(beat):
         date = earnings_calendar.loc[ticker]['startdatetime']
-        if date in list(returns.index):
+        if date in list(returns.index) and ticker in list(returns.columns):
             ind = list(returns.index).index(date)
             beat_arr[i] = np.array(returns[ticker].iloc[ind - 30:ind + 30])
         else:
@@ -133,11 +160,13 @@ def BootStrap(arr):
         result = (k / (k + 1.0)) * result + (1 / (k + 1.0)) * np.cumsum(OneSample(arr))
     return result
 
+
 class EarningsImpactData:
     def __init__(self):
         self.Beat = []
         self.Meet = []
         self.Miss = []
+
 
 earnings_impact_data = EarningsImpactData()
 
@@ -164,3 +193,4 @@ earnings_impact_data = EarningsImpactData()
 # plt.legend(loc='best')
 # plt.show()
 # plt.close()
+

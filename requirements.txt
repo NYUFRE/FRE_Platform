@@ -51,3 +51,6 @@ trading-calendars==2.1.0
 urllib3==1.25.9
 Werkzeug==1.0.1
 WTForms==2.3.3
+yahoo_earnings_calendar
+tqdm
+TA-Lib
