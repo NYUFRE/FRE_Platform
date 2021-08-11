@@ -13,5 +13,163 @@
 
 
 
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Alpha Test Analysis</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							This is a factor backtesting system where users could test many famous technical factor.<br>
+							Factors are backtested throughout the whole period of the database.
+						</p>
+					</td>
+				</tr>
+
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Retrieve Data From DataBase</strong>
+					</th>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Retrieve price and return data of SPY500 stocks and SPY in this period of time
+						</p>
+					</td>
+				</tr>
+
+								<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Define each day's tommorrow's return as our target to predict.
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Technical Indicator Calculation</strong>
+					</th>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							1) Iterated by each stock to calculate the technical indicator.
+						</p>
+					</td>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Pack the open, high, low, close, volume data of each stock in a dict data type.
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Use the package TA-Lib's build-in method function to calculate the technical indicator.
+						</p>
+					</td>
+				</tr>
+
+
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Technical Indicator Evaluation</strong>
+					</th>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							1) Evaluation is based on a daily regression. The target is regressed against the indicator each day.
+						</p>
+					</td>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Daily single variable regression beta is calculated.<br>
+                            BETAt = COV(xt,yt)/VAR(xt)<br>
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Daily information coefficient(correlation) is calculated.<br>
+                            Rhot = COV(xt,yt) / Std(xt) / Std(yt)
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Information ratio of a period of time is calculated.<br>
+                            It is basically a hypothesis test that daily IC is not zero.<br>
+                            ICIR = mean(Rhot) / sqrt(VAR(Rhot)/n)
+						</p>
+					</td>
+				</tr>
+
+
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Evaluation Display</strong>
+					</th>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							1) All these metrics aggregated by year is displays in a table.
+						</p>
+					</td>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Cumulative summation of daily beta is plotted.<br>
+                            In this plot alpha's direction in different time period is showed.
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Barplot of yearly IC is plotted.<br>
+                            In this plot alpha's yearly stronghood is showed.
+						</p>
+					</td>
+				</tr>
+
+
+
+
+
+
+
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
 
 {% endblock %}

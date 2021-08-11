@@ -21,42 +21,107 @@
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							This module conduct the earnings impact analysis in sp500 stocks
+							This is a analysis system where users perform research on how the earnings surprise affect the stock returns.<br>
+							Users would select a period of time to analyze.
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Get Earnings Calendar</strong>
+					</th>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Get earnings calendar from Yahoo Finance for a period of time.
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							1) Get earnings calendar from the Internet using packages.
+							2) Calculate earnings surprise for each stock:<br>
+							   Surprise % = (Actual EPS – EPS Estimate) ÷ EPS Estimate
 						</p>
 					</td>
 				</tr>
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							2) Split earnings calendar according to eps surprise and group into three.
+							3) Sort all the surprises in ascending order, and split all the stocks into 3 groups with relatively equivalent numbers of stocks:<br>
+							   i. Highest surprise group: Beat Estimate Group<br>
+							   ii. Lowest surprise group: Miss Estimate Group<br>
+							   iii. The rest stocks in between: Meet Estimate Group
 						</p>
 					</td>
 				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Retrieve Data From DataBase</strong>
+					</th>
+				</tr>
+
 				<tr>
 					<td width="881" valign="top">
 						<p>
-							3) Get historical returns in the Internet.
+							1) Retrieve price and return data of SPY500 stocks and SPY in this period of time
 						</p>
 					</td>
 				</tr>
-				<tr>
+
+								<tr>
 					<td width="881" valign="top">
 						<p>
-							4) Locate announcement day and fill 60 returns nearby into nparray.
+							2) Define day “zero” for a stock as the day the earning is announced.<br>
+							   Then align the announcement day's data for each record.
 						</p>
 					</td>
 				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Conduct The Bootstrap Analysis</strong>
+					</th>
+				</tr>
+
                 <tr>
 					<td width="881" valign="top">
 						<p>
-							5) Conduct the bootstrap analysis.
+							1) Sampling the stocks by randomly selecting 30 stocks from each group, total 90 stocks.
+						</p>
+					</td>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) For each stock calculate the daily returns Rit for 30 days before the day “zero” and 30 days after: t = -30, -29,...-1, 0, 1,..., 29, 30:<br>
+							   Rit = (Pricet – Pricet-1)/ Pricet-1 (adjusted daily closing price is used for calculation)
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Calculate the corresponding daily return Rmt for SPY for the same days.<br>
+							   Define abnormal returns as the difference ARit= Rit–Rmt.<br>
+							   Calculate average daily abnormal returns for each group of stocks for all 60 reference days<br>
+							   Cumulate the returns on the first T days to CAAR
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							4) Repeat steps a to g 30 times and then Calculate:<br>
+							   i. Average AAR and CAAR for 30 samplings for each group<br>
+							   ii. Standard Deviation of AAR and CAAR for each group
 						</p>
 					</td>
 				</tr>

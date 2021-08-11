@@ -1781,7 +1781,6 @@ def at_analysis():
     target = returns.shift(-1).fillna(0)
 
     if request.method == "POST":
-        print('in post')
         AlphaName = request.form.get('AlphaName')
         AlphaName = str(AlphaName)
         Timeperiod = request.form.get('Timeperiod')
@@ -1806,7 +1805,6 @@ def at_analysis():
         return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
                                table_year_data=table_year_data)
     else:
-        print('not in post')
         return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
                                table_year_data=table_year_data)
 
@@ -1845,22 +1843,6 @@ def plot_at2():
     return response
 
 
-# select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
-# spy500 = database.execute_sql_statement(select_stmt)
-# close = pd.pivot_table(spy500, index=['date'], columns=['symbol'])['adjusted_close']
-# close = close.fillna(method='ffill')
-# returns = (close / close.shift(1) - 1).fillna(0)
-# target = returns.shift(-1).fillna(0)
-#
-# func, t = 'RSI', 5
-# alpha = TALIB(close, abstract.Function(func), t)
-# alpha = returns.rolling(2, axis = 0).mean().fillna(0)
-# alpha = pd.DataFrame(alpha, index = close.index, columns = close.columns).fillna(0)
-# alpha_table, alpha_table_agg = Test(alpha, target)
-# alpha_table_agg.reset_index(inplace=True)
-#
-# print(alpha_table)
-# print(alpha_table_agg)
 
 
 if __name__ == "__main__":
