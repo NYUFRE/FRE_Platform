@@ -1957,34 +1957,6 @@ def opt_back_test_plot4():
     return response
 
 
-
-@app.route('/optimize_introduction')
-@login_required
-def optimize_introduction():
-    return render_template("optimize_introduction.html")
-
-@app.route("/optimize_build", methods=["GET", "POST"])
-def optimize_build():
-    if request.method == 'POST':
-        if not request.form.get("symbol"):
-            flash('ERROR! symbol missing.', 'error')
-            return render_template("optimize_build.html")
-
-        # Get quote data from IEX, quoted prices (Ask & Bid) are different from the latest price
-        quote, error = iex_market_data.get_quote(request.form.get("symbol"))
-        price, error = iex_market_data.get_price(request.form.get("symbol"))
-
-        if len(error) > 0 or len(price) == 0 or len(quote) == 0:
-            flash('ERROR! Invalid symbol.', 'error')
-            return render_template("get_quote.html")
-        else:
-            quote['Latest Price'] = price['price']
-            return render_template("quote.html", dict=quote)
-
-    else:
-        return render_template("get_quote.html")
-
-
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
     database.create_table(table_list)
