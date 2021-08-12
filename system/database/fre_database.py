@@ -166,7 +166,20 @@ class FREDatabase:
                           Column('ma_200days', Numeric),
                           extend_existing=True)
 
-        elif (table_name == "spy" or table_name == "us10y" or table_name == "stocks"):
+        elif table_name == "spy" or table_name == "us10y" or table_name == "stocks" or table_name == "stocks_price" or \
+                table_name == "stocks_price_current":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('open', Numeric, nullable=False),
+                          Column('high', Numeric, nullable=False),
+                          Column('low', Numeric, nullable=False),
+                          Column('close', Numeric, nullable=False),
+                          Column('adjusted_close', Numeric, nullable=False),
+                          Column('volume', Integer, nullable=False),
+                          extend_existing=True)
+
+        elif table_name == "bonds_price" or table_name == "bonds_price_current":
             table = Table(table_name, self.metadata,
                           Column('symbol', String(20), primary_key=True, nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),
@@ -192,6 +205,12 @@ class FREDatabase:
                           Column('shares', Integer, nullable=False),
                           Column('profit_loss', Numeric, nullable=False),
                           extend_existing=True)
+        elif table_name == "optimal_portfolio":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('name', String(20), nullable=False),
+                          Column('weights', Numeric, nullable=False),
+                          )
         else:
             raise ValueError("Table name not known")
         return table
