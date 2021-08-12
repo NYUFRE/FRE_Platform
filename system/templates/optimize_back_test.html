@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}
+optimize_introduction
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/optimize_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/optimize_build">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/optimize_back_test">Back Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Portfolio Optimization Back Test</strong></h3>
+		<h5 style="text-align:center"> Max Sharpe Ratio Cumulative Return:   ==>  {{ cum_return[1] }} %</h5>
+		<h5 style="text-align:center"> Market Cumulative Return:   ==>  {{ cum_return[0] }} %</h5>
+        <hr>
+		<img align="center" src="/plot/opt_back_test_plot1" alt="Image Placeholder" width="50%">
+		<hr>
+        <p></p>
+        <h5 style="text-align:center"> Min Volatility Cumulative Return:   ==>  {{ cum_return[2] }} %</h5>
+		<h5 style="text-align:center"> Market Cumulative Return:   ==>  {{ cum_return[0] }} %</h5>
+        <hr>
+		<img align="center" src="/plot/opt_back_test_plot2" alt="Image Placeholder" width="50%">
+		<hr>
+        <p></p>
+        <h5 style="text-align:center"> Max Sharpe Constraint Cumulative Return:   ==>  {{ cum_return[3] }} %</h5>
+		<h5 style="text-align:center"> Market Cumulative Return:   ==>  {{ cum_return[0] }} %</h5>
+        <hr>
+		<img align="center" src="/plot/opt_back_test_plot3" alt="Image Placeholder" width="50%">
+		<hr>
+        <p></p>
+        <h5 style="text-align:center"> Min Volatility Constraint Cumulative Return:   ==>  {{ cum_return[4] }} %</h5>
+		<h5 style="text-align:center"> Market Cumulative Return:   ==>  {{ cum_return[0] }} %</h5>
+        <hr>
+		<img align="center" src="/plot/opt_back_test_plot4" alt="Image Placeholder" width="50%">
+		<hr>
+        <p></p>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
