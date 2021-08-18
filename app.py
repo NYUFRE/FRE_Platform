@@ -1741,7 +1741,7 @@ def at_introduction():
 
 @app.route("/at_analysis", methods=["GET", "POST"])
 def at_analysis():
-    input = {"AlphaName": 'Not selected', "Timeperiod": 5}
+    input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
     AlphaName_list = ['EMA', 'RSI', 'T3', 'TRIMA', 'CMO', 'ROCP', 'ROC', 'LINEARREG_ANGLE', 'VAR']
     table_year_data = []
     # fetch 500 stocks price volumn data
