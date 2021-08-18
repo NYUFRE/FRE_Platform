@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}
+Yield Curve
+{% endblock %}
+
+{% block content %}
+
+<body>
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_european_pricing">European Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_american_pricing">American Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link  " href="/ap_CDS">Credit Default Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fra">Forward Rate Agreement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_swap">Interest Rate Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/ap_yield_curve">Plot Yield Curve</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <div class="form-group">
+        <form action="/ap_yield_curve" id="Yield_curve" method="POST">
+            <p style = "width:500px;" align="right">Benchmark: <select name = "benchmark" action = '/' style = "width:200px;">
+                {%for benchmark in benchmark_lst%}
+                <option value = "{{benchmark}}" selected>{{benchmark}}</option>>
+                {% endfor %}
+            </select></p>
+            <p style = "height:100px;"><input type = "submit" value = "calculate" /></p>
+        </form>
+    </div>
+
+    <h3>Plot Yield Curve</h3>
+    <img src="/plot/yield" alt="Image Placeholder" width="50%">
+    <h3>Plot Discount Curve</h3>
+    <img src="/plot/discount" alt="Image Placeholder" width="50%">
+</main>
+
+</body>
+
+{%endblock%}

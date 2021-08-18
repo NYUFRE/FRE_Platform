@@ -20,6 +20,15 @@ ap_introduction
         <li class="nav-item">
             <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fra">Forward Rate Agreement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_swap">Interest Rate Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_yield_curve">Plot Yield Curve</a>
+        </li>
     </ul>
 </nav>
 
@@ -34,7 +43,8 @@ ap_introduction
                 <td width="881" valign="top">
                     <p>
                         The assets pricing module is based on Quantlib package to price financial instrument.
-                        Current implemented pricing module are: 1. European option, 2. American option, 3. Fixed Rate Bond, 4. Credit Default Swap
+                        Current implemented pricing module are: 1. European Option, 2. American Option, 3. Fixed Rate Bond, 4. Credit Default Swap
+                        5. Forward Rate Agreement, 6. Interest Rate Swap, 7.Plot Yield Curve
                     </p>
                 </td>
             </tr>
@@ -95,7 +105,7 @@ ap_introduction
             <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
                 <th width="881" valign="top">
                     <p>
-                        <strong>Fixed Rate Bond Module:</strong>
+                        <strong>Fixed rate bond module:</strong>
                     </p>
                 </th>
             </tr>
@@ -119,7 +129,7 @@ ap_introduction
             <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
                 <th width="881" valign="top">
                     <p>
-                        <strong>Credit Default Swap Module</strong>
+                        <strong>Credit default swap module</strong>
                     </p>
                 </th>
             </tr>
@@ -139,6 +149,65 @@ ap_introduction
                     <p> Issue Date: The start date of the contract</p>
                     <p> Maturity Date: The ending date of the contract  </p>
                     <p> Frequency: Payment exchange Frequency</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Forward rate agreement module</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate forward rate agreement using discounting pricing engine..</p>
+                    <p> Note: </p>
+                    <p> 1) The underlying index is USD Libor rate </p>
+                    <p> 2) The forward rate agreement follows the same day count convention as the USD Libor </p>
+                    <p> 3) Continuous compounding for discount factor, but simple compounding for forward rate </p>
+                    <p> 4) The yield curve is built based on the data from valuation date</p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Notional Value: The specified amount on which the periodic payments are based</p>
+                    <p> Valuation Date: The "current" date to price FRA </p>
+                    <p> Months to contract start from valuation date: The number of months to contract start date from valuation date </p>
+                    <p> Months to contract termination from valuation date: The number of months to contract start expire date from valuation date  </p>
+                    <p> Fixed rate for the forward rate agreement: The rate for the fixed payment.</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Interest rate swap module</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Calculate interest rate swap using discounting pricing engine..</p>
+                    <p> Note: </p>
+                    <p> 1) The underlying index is USD Libor rate </p>
+                    <p> 2) The float rate payment and the fixed rate payment exchanged at the same date and at the same frequency </p>
+                    <p> 3) No spread on the floating rate</p>
+                    <p> 4) float rate payment follows actual/360-day convention and fixed rate payment follows 30/360-day convention </p>
+                    <p> 5) The yield curve is built based on the data from valuation date</p>
+                    <p> Input Parameter Definition: </p>
+                    <p> Notional Value: The specified amount on which the periodic payments are based</p>
+                    <p> Swap Start Date: The date when swap contract starts </p>
+                    <p> Payment frequency in month : The number of months between exchanging the payment </p>
+                    <p> Contract period in month: The number of months for the swap contract  </p>
+                    <p> Fixed rate: The rate for the fixed payment.</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Yield curve module</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Plot today's yield curve</p>
                 </td>
             </tr>
             </tbody>

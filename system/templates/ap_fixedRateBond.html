@@ -22,6 +22,15 @@ FixedRateBond
     <li class="nav-item">
       <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link " href="/ap_fra">Forward Rate Agreement</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link " href="/ap_swap">Interest Rate Swap</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link " href="/ap_yield_curve">Plot Yield Curve</a>
+    </li>
   </ul>
 </nav>
 
@@ -57,6 +66,7 @@ FixedRateBond
     <table class="table table-striped">
       <thead>
       <tr>
+        <th style="text-align:center">NPV</th>
         <th style="text-align:center">Clean Price</th>
         <th style="text-align:center">Dirty Price</th>
         <th style="text-align:center">Accrued Amount</th>
@@ -69,6 +79,7 @@ FixedRateBond
 
       <tbody>
       <tr>
+        <td>{{bond_result["NPV"]}}</td>
         <td>{{bond_result["cleanPrice"]}}</td>
         <td>{{bond_result["dirtyPrice"]}}</td>
         <td>{{bond_result["accruedAmount"]}}</td>
