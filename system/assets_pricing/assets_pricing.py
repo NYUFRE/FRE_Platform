@@ -271,11 +271,13 @@ def build_yield_curve(benchmark: str, date = None, combine = False):
     else:
         if benchmark == "Libor":
             for libor_term in libor_term_list:
-                libor_last_day = get_libor(libor_term, last_week_date.strftime("%Y-%m-%d"), date_datetime_object.strftime("%Y-%m-%d"), os.environ.get("EOD_API_KEY"))[-1]
+                libor_last_day = get_libor(libor_term, last_week_date.strftime("%Y-%m-%d"),
+                                           date_datetime_object.strftime("%Y-%m-%d"), os.environ.get("EOD_API_KEY"))[-1]
                 instructment.append(("Libor", libor_term, libor_last_day["adjusted_close"]))
         else:
             for bond_term in bond_term_list:
-                bond_last_day = get_bond_rate(bond_term, last_week_date.strftime("%Y-%m-%d"), date_datetime_object.strftime("%Y-%m-%d"), os.environ.get("EOD_API_KEY"))[-1]
+                bond_last_day = get_bond_rate(bond_term, last_week_date.strftime("%Y-%m-%d"),
+                                              date_datetime_object.strftime("%Y-%m-%d"), os.environ.get("EOD_API_KEY"))[-1]
                 instructment.append(("US Treasury", bond_term, bond_last_day["adjusted_close"]))
     print(instructment)
 
