@@ -1671,7 +1671,6 @@ def prcing_cds():
                                input=input)
 
 
-<<<<<<< HEAD
 @app.route('/ap_fra', methods=['POST', 'GET'])
 @login_required
 def prcing_fra():
@@ -1792,8 +1791,6 @@ def plot_discount_curve():
     return response
 
 
-=======
->>>>>>> 0e145224ea9926ee779625d6ffa5a2beae9c342b
 @app.route('/optimize_introduction')
 @login_required
 def optimize_introduction():
