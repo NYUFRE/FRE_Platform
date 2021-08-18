@@ -108,8 +108,8 @@
                 <tr>
 					<td width="881" valign="top">
 						<p>
-							3) Daily information coefficient(correlation) is calculated.<br>
-                            Rhot = COV(xt,yt) / Std(xt) / Std(yt)
+							3) Daily Information Coefficient(IC)(correlation) is calculated.<br>
+                            ICt = COV(xt,yt) / (Std(xt) * Std(yt))
 						</p>
 					</td>
 				</tr>
@@ -117,12 +117,25 @@
                 <tr>
 					<td width="881" valign="top">
 						<p>
-							3) Information ratio of a period of time is calculated.<br>
+							3) Information Ratio of a period of time is calculated.<br>
                             It is basically a hypothesis test that daily IC is not zero.<br>
-                            ICIR = mean(Rhot) / sqrt(VAR(Rhot)/n)
+                            IR = mean(Rhot) / sqrt(VAR(Rhot)/n)
 						</p>
 					</td>
 				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							For example, a perfect prediction's Beta and IC are both 1.<br>
+                            A bad prediction's Beta and IC are both approximate zero.<br>
+                            In fact a single indicator just have a little prediction power.<br>
+							A combination of indicators could have good effect.
+						</p>
+					</td>
+				</tr>
+
+
 
 
                 <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
@@ -157,8 +170,29 @@
 					</td>
 				</tr>
 
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Reference</strong>
+					</th>
+				</tr>
 
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							1) Methodology comes from Barra's multi-factor model.<br>
+                            https://app2.msci.com/products/analytics/models/
+						</p>
+					</td>
+				</tr>
 
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Technical indicator comes from open source financial analysis.<br>
+                            https://ta-lib.org
+						</p>
+					</td>
+				</tr>
 
 
 

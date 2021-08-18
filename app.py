@@ -50,8 +50,9 @@ from system.utility.helpers import error_page, login_required, usd, get_python_p
 from system.assets_pricing import assets_pricing
 from system.assets_pricing.assets_pricing import asset_pricing_result
 
-from system.earnings_impact.earnings_impact import load_earnings_impact, get_returns, slice_period_group, \
-    group_to_array, OneSample, BootStrap, earnings_impact_data
+from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
+    group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
+    load_calendar_from_database
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 
 
@@ -1683,39 +1684,9 @@ def ei_introduction():
 
 @app.route("/ei_analysis", methods=["GET", "POST"])
 def ei_analysis():
-    # fetch spy and 500 stocks then concatenate into a dataframe
-    select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
-    spy500 = database.execute_sql_statement(select_stmt)
-    spy500 = pd.pivot_table(spy500, index=['date'], columns=['symbol'])['adjusted_close']
-    select_stmt = 'SELECT symbol, date, adjusted_close FROM spy'
-    spy = database.execute_sql_statement(select_stmt)
-    spy = pd.pivot_table(spy, index=['date'], columns=['symbol'])['adjusted_close']
-    # don't know why 5 missing days in table spy
-    for d in spy500.index:
-        if d not in spy.index:
-            spy.loc[d, 'spy'] = np.nan
-    spy500 = spy500.sort_index()
-    spy = spy.sort_index()
-    returns = pd.concat([spy, spy500], axis=1)
-    returns = (returns / returns.shift(1) - 1)
-    returns = returns.sub(returns['spy'], axis=0).fillna(0)
-    returns.columns = list(returns.columns)
-    returns.index = list(datetime.strptime(x, '%Y-%m-%d') for x in returns.index)
-
-    # fetch earnings calendar
+    returns = load_returns()
     SPY_component = database.get_sp500_symbols()
-    database.create_table(['earnings_calendar'])
-    if database.check_table_empty('earnings_calendar'):
-        table, _ = load_earnings_impact()
-        # table, SPY_component = load_earnings_impact(SPY_component)
-        table = table[table['ticker'].isin(SPY_component)]
-        for idx, row in table.iterrows():
-            database.create_earnings_calendar(row['ticker'], row['startdatetime'], row['epssurprise'])
-    else:
-        select_stmt = 'SELECT symbol, date, surprise FROM earnings_calendar'
-        table = database.execute_sql_statement(select_stmt)
-        table.columns = ['ticker', 'startdatetime', 'epssurprise']
-        table['startdatetime'] = table['startdatetime'].apply(lambda x: datetime.strptime(x[:10], '%Y-%m-%d'))
+    table = load_calendar_from_database(SPY_component)
     input = {'date_from': '20190901', 'date_to': '20191201'}
     BeatInfo, MeatInfo, MissInfo = [], [], []
     if request.method == "POST":
@@ -1723,7 +1694,8 @@ def ei_analysis():
         date_from = str(date_from)
         date_to = request.form.get('date_to')
         date_to = str(date_to)
-
+        input['date_from'] = date_from
+        input['date_to'] = date_to
         # returns = get_returns(SPY_component)
         miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
         miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
@@ -1769,8 +1741,8 @@ def at_introduction():
 
 @app.route("/at_analysis", methods=["GET", "POST"])
 def at_analysis():
-    input = {"AlphaName": 'RSI', "Timeperiod": 5}
-    AlphaName_list = ['RollingReturn', 'RSI']
+    input = {"AlphaName": 'Not selected', "Timeperiod": 5}
+    AlphaName_list = ['EMA', 'RSI', 'T3', 'TRIMA', 'CMO', 'ROCP', 'ROC', 'LINEARREG_ANGLE', 'VAR']
     table_year_data = []
     # fetch 500 stocks price volumn data
     select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
@@ -1785,13 +1757,10 @@ def at_analysis():
         AlphaName = str(AlphaName)
         Timeperiod = request.form.get('Timeperiod')
         Timeperiod = int(Timeperiod)
-        if AlphaName == 'RollingReturn':
-            alpha = returns.rolling(Timeperiod, axis=0).mean().fillna(0)
-            alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
-
-        elif AlphaName == 'RSI':
-            alpha = TALIB(close, abstract.Function(AlphaName), Timeperiod)
-            alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
+        input['AlphaName'] = AlphaName
+        input['Timeperiod'] = Timeperiod
+        alpha = TALIB(close, abstract.Function(AlphaName), Timeperiod)
+        alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
 
         alpha_table, alpha_table_agg = Test(alpha, target)
         alphatestdata.table = alpha_table
@@ -1832,8 +1801,6 @@ def plot_at2():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
     axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
-    # years = table_agg['year'][:-1].apply(lambda x: datetime.strptime(str(x), '%Y'))
-    # axis.bar(years, table_agg['ic'][:-1])
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -1841,7 +1808,6 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-
 
 
 
