@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}
+FRA
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_european_pricing">European Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_american_pricing">American Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/ap_fra">Forward Rate Agreement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_swap">Interest Rate Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_yield_curve">Plot Yield Curve</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Forward Rate Agreement</h3>
+    <hr>
+    <div class="form-group">
+        <form action="/ap_fra" id="calculate" method="POST">
+            <p style = "width:800px;" align="right">Notional Value:
+                <input type = "text" value = {{input["notional_value"]}} name = "Notional Value" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">Valuation Date:
+                <input type = "date" value = {{input["valuation_date"]}} name = "Valuation Date" min = "2010-01-01" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">Number of months until contract start:
+                <input type = "text" value = {{input["month_to_start"]}} name = "Month To Start" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">Number of months until contract terminate:
+                <input type = "text" value = {{input["month_to_termination"]}} name = "Month To Termination" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">FRA Quote (In decimal point):
+                <input type = "text" value = {{input["fra_quote"]}} name = "FRA Quote" style = "width:200px;"></p>
+            <p style = "height:100px;"><input type = "submit" value = "calculate" /></p>
+        </form>
+    </div>
+
+    <h3>Result</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Position</th>
+                <th style="text-align:center">NPV</th>
+                <th style="text-align:center">forwardRate</th>
+                <th style="text-align:center">sportValue</th>
+                <th style="text-align:center">forwardValue</th>
+                <th style="text-align:center">impliedYield</th>
+                <th style="text-align:center">marketZeroRate</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>Buyer</td>
+                <td>{{buyer_result["NPV"]}}</td>
+                <td>{{buyer_result["forwardRate"]}}</td>
+                <td>{{buyer_result["sportValue"]}}</td>
+                <td>{{buyer_result["forwardValue"]}}</td>
+                <td>{{buyer_result["impliedYield"]}}</td>
+                <td>{{buyer_result["marketZeroRate"]}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}

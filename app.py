@@ -1647,6 +1647,127 @@ def prcing_cds():
     else:
         return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
 
+@app.route('/ap_fra', methods=['POST', 'GET'])
+@login_required
+def prcing_fra():
+    input = {"notional_value":0, "month_to_start":0, "month_to_termination":0, "fra_quote":0,
+             "valuation_date":str(np.datetime64('today'))}
+    buyer = {}
+    if request.method == 'POST':
+        form_input = request.form
+        notional_value = float(form_input['Notional Value'])
+        input["notional_value"] = notional_value
+        valuation_date = form_input['Valuation Date']
+        input["valuation_date"] = valuation_date
+        month_to_start = float(form_input['Month To Start'])
+        input["month_to_start"] = month_to_start
+        month_to_termination = float(form_input['Month To Termination'])
+        input["month_to_termination"] = month_to_termination
+        fra_quote = float(form_input['FRA Quote'])
+        input["fra_quote"] = fra_quote
+
+        buyer = assets_pricing.pricing_fra(notional_value, valuation_date, month_to_start, month_to_termination, fra_quote)
+        return render_template("ap_fra.html", buyer_result = buyer, input = input)
+    else:
+        return render_template("ap_fra.html", buyer_result = buyer, input = input)
+
+@app.route('/ap_swap', methods=['POST', 'GET'])
+@login_required
+def prcing_swap():
+    input = {"notional_value":0, "frequency":0, "contract_period":0, "fixed_rate":0,
+             "start_date":str(np.datetime64('today'))}
+    payer = {}
+    if request.method == 'POST':
+        form_input = request.form
+        notional_value = float(form_input['Notional Value'])
+        input["notional_value"] = notional_value
+        start_date = form_input['Start Date']
+        input["start_date"] = start_date
+        frequency = int(form_input['Frequency'])
+        input["frequency"] = frequency
+        contract_period = int(form_input['Contract Period'])
+        input["contract_period"] = contract_period
+        fixed_rate = float(form_input['Fixed Rate'])
+        input["fixed_rate"] = fixed_rate
+
+        if contract_period > 60:
+            flash("Invalid contract period, maximum contract period is 60", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
+        if frequency > contract_period:
+            flash("Invalid input, payment frequency must less than contract period")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
+        payer, swap_history = assets_pricing.pricing_swap(notional_value, start_date, frequency, contract_period, fixed_rate)
+        return render_template("ap_swap.html", payer_result = payer, input = input, tables=[swap_history.to_html(classes='data')], titles = swap_history.columns.values)
+    else:
+        return render_template("ap_swap.html", payer_result = payer, input = input)
+
+@app.route('/ap_yield_curve', methods=['POST', 'GET'])
+@login_required
+def ap_yield_curve():
+    benchmark_lst = ["Libor", "US Treasury"]
+
+    if request.method == "POST":
+        benchmark_input = request.form.get('benchmark')
+
+        yield_curve, discount_curve = assets_pricing.build_yield_curve(benchmark_input)
+        asset_pricing_result.yield_curve = yield_curve
+        asset_pricing_result.discount_curve = discount_curve
+        asset_pricing_result.curve_benchmark = benchmark_input
+        return render_template("ap_yield_curve.html", benchmark_lst = benchmark_lst)
+    else:
+        return render_template("ap_yield_curve.html", benchmark_lst = benchmark_lst)
+
+@app.route('/plot/yield')
+def plot_yield_curve():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    yield_curve = assets_pricing.asset_pricing_result.yield_curve
+    date_lst = []
+    rate_lst = []
+    if yield_curve is not None:
+        for dt,rate in yield_curve.nodes():
+            date_lst.append(dt.to_date())
+            rate_lst.append(rate)
+    axis.plot(date_lst, rate_lst, marker='o')
+    axis.set(title = asset_pricing_result.curve_benchmark + " Yield Curve")
+    axis.legend()
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/plot/discount')
+def plot_discount_curve():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    discount_curve = assets_pricing.asset_pricing_result.discount_curve
+    date_lst = []
+    rate_lst = []
+    if discount_curve is not None:
+        for dt,rate in discount_curve.nodes():
+            date_lst.append(dt.to_date())
+            rate_lst.append(rate)
+    axis.plot(date_lst, rate_lst, marker='o')
+    axis.set(title = asset_pricing_result.curve_benchmark + " Discount Curve")
+    axis.legend()
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
     database.create_table(table_list)
