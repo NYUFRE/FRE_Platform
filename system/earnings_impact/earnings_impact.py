@@ -146,7 +146,6 @@ class EarningsImpactData:
         self.Meet = []
         self.Miss = []
 
-
 earnings_impact_data = EarningsImpactData()
 
 ### test code

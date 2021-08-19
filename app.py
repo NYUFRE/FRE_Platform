@@ -55,6 +55,7 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
     load_calendar_from_database
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 
+from talib import abstract
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1808,6 +1809,262 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+
+
+
+@app.route('/ap_fra', methods=['POST', 'GET'])
+@login_required
+def prcing_fra():
+    input = {"notional_value":0, "month_to_start":0, "month_to_termination":0, "fra_quote":0,
+             "valuation_date":str(np.datetime64('today'))}
+    buyer = {}
+    if request.method == 'POST':
+        form_input = request.form
+        notional_value = float(form_input['Notional Value'])
+        input["notional_value"] = notional_value
+        valuation_date = form_input['Valuation Date']
+        input["valuation_date"] = valuation_date
+        month_to_start = float(form_input['Month To Start'])
+        input["month_to_start"] = month_to_start
+        month_to_termination = float(form_input['Month To Termination'])
+        input["month_to_termination"] = month_to_termination
+        fra_quote = float(form_input['FRA Quote'])
+        input["fra_quote"] = fra_quote
+
+        buyer = assets_pricing.pricing_fra(notional_value, valuation_date, month_to_start, month_to_termination, fra_quote)
+        return render_template("ap_fra.html", buyer_result = buyer, input = input)
+    else:
+        return render_template("ap_fra.html", buyer_result = buyer, input = input)
+
+@app.route('/ap_swap', methods=['POST', 'GET'])
+@login_required
+def prcing_swap():
+    input = {"notional_value":0, "frequency":0, "contract_period":0, "fixed_rate":0,
+             "start_date":str(np.datetime64('today'))}
+    payer = {}
+    if request.method == 'POST':
+        form_input = request.form
+        notional_value = float(form_input['Notional Value'])
+        input["notional_value"] = notional_value
+        start_date = form_input['Start Date']
+        input["start_date"] = start_date
+        frequency = int(form_input['Frequency'])
+        input["frequency"] = frequency
+        contract_period = int(form_input['Contract Period'])
+        input["contract_period"] = contract_period
+        fixed_rate = float(form_input['Fixed Rate'])
+        input["fixed_rate"] = fixed_rate
+
+        if contract_period > 60:
+            flash("Invalid contract period, maximum contract period is 60", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
+        if frequency > contract_period:
+            flash("Invalid input, payment frequency must less than contract period")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
+        payer, swap_history = assets_pricing.pricing_swap(notional_value, start_date, frequency, contract_period, fixed_rate)
+        return render_template("ap_swap.html", payer_result = payer, input = input, tables=[swap_history.to_html(classes='data')], titles = swap_history.columns.values)
+    else:
+        return render_template("ap_swap.html", payer_result = payer, input = input)
+
+@app.route('/ap_yield_curve', methods=['POST', 'GET'])
+@login_required
+def ap_yield_curve():
+    benchmark_lst = ["Libor", "US Treasury"]
+
+    if request.method == "POST":
+        benchmark_input = request.form.get('benchmark')
+
+        yield_curve, discount_curve = assets_pricing.build_yield_curve(benchmark_input)
+        asset_pricing_result.yield_curve = yield_curve
+        asset_pricing_result.discount_curve = discount_curve
+        asset_pricing_result.curve_benchmark = benchmark_input
+        return render_template("ap_yield_curve.html", benchmark_lst = benchmark_lst)
+    else:
+        return render_template("ap_yield_curve.html", benchmark_lst = benchmark_lst)
+
+@app.route('/plot/yield')
+def plot_yield_curve():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    yield_curve = assets_pricing.asset_pricing_result.yield_curve
+    date_lst = []
+    rate_lst = []
+    if yield_curve is not None:
+        for dt,rate in yield_curve.nodes():
+            date_lst.append(dt.to_date())
+            rate_lst.append(rate)
+    axis.plot(date_lst, rate_lst, marker='o')
+    axis.set(title = asset_pricing_result.curve_benchmark + " Yield Curve")
+    axis.legend()
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/plot/discount')
+def plot_discount_curve():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    discount_curve = assets_pricing.asset_pricing_result.discount_curve
+    date_lst = []
+    rate_lst = []
+    if discount_curve is not None:
+        for dt,rate in discount_curve.nodes():
+            date_lst.append(dt.to_date())
+            rate_lst.append(rate)
+    axis.plot(date_lst, rate_lst, marker='o')
+    axis.set(title = asset_pricing_result.curve_benchmark + " Discount Curve")
+    axis.legend()
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/ei_introduction')
+@login_required
+def ei_introduction():
+    return render_template("ei_introduction.html")
+
+
+@app.route("/ei_analysis", methods=["GET", "POST"])
+def ei_analysis():
+    returns = load_returns()
+    SPY_component = database.get_sp500_symbols()
+    table = load_calendar_from_database(SPY_component)
+    input = {'date_from': '20190901', 'date_to': '20191201'}
+    BeatInfo, MeatInfo, MissInfo = [], [], []
+    if request.method == "POST":
+        date_from = request.form.get('date_from')
+        date_from = str(date_from)
+        date_to = request.form.get('date_to')
+        date_to = str(date_to)
+        input['date_from'] = date_from
+        input['date_to'] = date_to
+        # returns = get_returns(SPY_component)
+        miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+        miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
+        miss_arr, meet_arr, beat_arr = BootStrap(miss_arr), BootStrap(meet_arr), BootStrap(beat_arr)
+
+        for i in [0, 9, 19, 29, 39, 49, 59]:
+            BeatInfo.append('%.2f%%' % (beat_arr[i] * 100))
+            MeatInfo.append('%.2f%%' % (meet_arr[i] * 100))
+            MissInfo.append('%.2f%%' % (miss_arr[i] * 100))
+        earnings_impact_data.Beat = beat_arr
+        earnings_impact_data.Meet = meet_arr
+        earnings_impact_data.Miss = miss_arr
+
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+    else:
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+
+
+@app.route('/plot/ei')
+def plot_ei():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.plot(earnings_impact_data.Beat, label='Beat')
+    axis.plot(earnings_impact_data.Meet, label='Meet')
+    axis.plot(earnings_impact_data.Miss, label='Miss')
+    axis.legend(loc='best')
+    axis.axvline(x=30, linewidth=1.0)
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/at_introduction')
+@login_required
+def at_introduction():
+    return render_template("at_introduction.html")
+
+
+@app.route("/at_analysis", methods=["GET", "POST"])
+def at_analysis():
+    input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
+    AlphaName_list = ['EMA', 'RSI', 'T3', 'TRIMA', 'CMO', 'ROCP', 'ROC', 'LINEARREG_ANGLE', 'VAR']
+    table_year_data = []
+    # fetch 500 stocks price volumn data
+    select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
+    spy500 = database.execute_sql_statement(select_stmt)
+    close = pd.pivot_table(spy500, index=['date'], columns=['symbol'])['adjusted_close']
+    close = close.fillna(method='ffill')
+    returns = (close / close.shift(1) - 1).fillna(0)
+    target = returns.shift(-1).fillna(0)
+
+    if request.method == "POST":
+        AlphaName = request.form.get('AlphaName')
+        AlphaName = str(AlphaName)
+        Timeperiod = request.form.get('Timeperiod')
+        Timeperiod = int(Timeperiod)
+        input['AlphaName'] = AlphaName
+        input['Timeperiod'] = Timeperiod
+        alpha = TALIB(close, abstract.Function(AlphaName), Timeperiod)
+        alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
+
+        alpha_table, alpha_table_agg = Test(alpha, target)
+        alphatestdata.table = alpha_table
+        alphatestdata.table_agg = alpha_table_agg
+        alpha_table_agg.reset_index(inplace=True)
+        for i in range(len(alpha_table_agg)):
+            temp = alpha_table_agg.iloc[i, :].copy()
+            temp[1:] = temp[1:].apply(lambda x: '%.4f' % float(x))
+            table_year_data.append(temp)
+
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+    else:
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+
+
+@app.route('/plot/at1')
+def plot_at1():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.grid(linestyle='-.')
+    axis.plot(table['beta'].cumsum())
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+@app.route('/plot/at2')
+def plot_at2():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
 
 
 

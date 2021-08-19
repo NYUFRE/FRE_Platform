@@ -54,3 +54,4 @@ WTForms==2.3.3
 yahoo_earnings_calendar
 tqdm
 TA-Lib
+

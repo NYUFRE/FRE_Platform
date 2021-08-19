@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}
+Interest Rate Swap
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_european_pricing">European Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_american_pricing">American Option</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fixedRateBond">Fixed Rate Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_CDS">Credit Default Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_fra">Forward Rate Agreement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/ap_swap">Interest Rate Swap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/ap_yield_curve">Plot Yield Curve</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Interest Rate Swap</h3>
+    <hr>
+    <div class="form-group">
+        <form action="/ap_swap" id="calculate" method="POST">
+            <p style = "width:800px;" align="right">Notional Value:
+                <input type = "text" value = {{input["notional_value"]}} name = "Notional Value" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">Start Date:
+                <input type = "date" value = {{input["start_date"]}} name = "Start Date" min = "2010-01-01" style = "width:200px;"></p>
+            <p style = "width:800px;" align="right">Frequency (in months) :
+                <input type = "text" value = {{input["frequency"]}} name = "Frequency" style = "width:200px;"> </p>
+            <p style = "width:800px;" align="right">Contract Period (in months) :
+                <input type = "text" value = {{input["contract_period"]}} name = "Contract Period" style = "width:200px;"> </p>
+            <p style = "width:800px;" align="right">Fixed Rate (In decimal point):
+                <input type = "text" value = {{input["fixed_rate"]}} name = "Fixed Rate" style = "width:200px;"></p>
+            <p style = "height:100px;"><input type = "submit" value = "calculate" /></p>
+        </form>
+    </div>
+
+    <h3>Result</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Position</th>
+                <th style="text-align:center">NPV</th>
+                <th style="text-align:center">fair Rate</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>Fixed Rate Payer</td>
+                <td>{{payer_result["NPV"]}}</td>
+                <td>{{payer_result["fairRate"]}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+    .inline-block {
+        display: inline-block;
+        width: 40%;
+    }
+    </style>
+
+    <h1>Transaction history</h1>
+    <div class="inline-block">
+        {% for table in tables %}
+            {{titles[loop.index]}}
+            {{ table|safe }}
+        {% endfor %}
+    </div>
+
+</main>
+{% endblock %}
