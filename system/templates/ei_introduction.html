@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/ei_analysis">Earnings Impact Analysis</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Earnings Impact Analysis</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							This is a analysis system where users perform research on how the earnings surprise affect the stock returns.<br>
+							Users would select a period of time to analyze.
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Get Earnings Calendar</strong>
+					</th>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Get earnings calendar from Yahoo Finance for a period of time.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Calculate earnings surprise for each stock:<br>
+							   Surprise % = (Actual EPS – EPS Estimate) ÷ EPS Estimate
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Sort all the surprises in ascending order, and split all the stocks into 3 groups with relatively equivalent numbers of stocks:<br>
+							   i. Highest surprise group: Beat Estimate Group<br>
+							   ii. Lowest surprise group: Miss Estimate Group<br>
+							   iii. The rest stocks in between: Meet Estimate Group
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Retrieve Data From DataBase</strong>
+					</th>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Retrieve price and return data of SPY500 stocks and SPY in this period of time
+						</p>
+					</td>
+				</tr>
+
+								<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Define day “zero” for a stock as the day the earning is announced.<br>
+							   Then align the announcement day's data for each record.
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Conduct The Bootstrap Analysis</strong>
+					</th>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							1) Sampling the stocks by randomly selecting 30 stocks from each group, total 90 stocks.
+						</p>
+					</td>
+				</tr>
+
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) For each stock calculate the daily returns Rit for 30 days before the day “zero” and 30 days after: t = -30, -29,...-1, 0, 1,..., 29, 30:<br>
+							   Rit = (Pricet – Pricet-1)/ Pricet-1 (adjusted daily closing price is used for calculation)
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							3) Calculate the corresponding daily return Rmt for SPY for the same days.<br>
+							   Define abnormal returns as the difference ARit= Rit–Rmt.<br>
+							   Calculate average daily abnormal returns for each group of stocks for all 60 reference days<br>
+							   Cumulate the returns on the first T days to CAAR
+						</p>
+					</td>
+				</tr>
+
+                <tr>
+					<td width="881" valign="top">
+						<p>
+							4) Repeat steps 1 to 3 30 times and then Calculate:<br>
+							   i. Average AAR and CAAR for 30 samplings for each group<br>
+							   ii. Standard Deviation of AAR and CAAR for each group
+						</p>
+					</td>
+				</tr>
+
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

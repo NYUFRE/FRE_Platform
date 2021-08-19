@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from sys import platform
 
 import numpy as np
+import pandas as pd
 import pandas_market_calendars as mcal
 import plotly
 import plotly.express as px
@@ -50,6 +51,14 @@ from system.model_optimization.optimization import create_database_table, extrac
 from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
 from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
 from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
+
+from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
+    group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
+    load_calendar_from_database
+from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+from talib import abstract
+
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1695,6 +1704,7 @@ def prcing_fra():
     else:
         return render_template("ap_fra.html", buyer_result = buyer, input = input)
 
+      
 @app.route('/ap_swap', methods=['POST', 'GET'])
 @login_required
 def prcing_swap():
@@ -1790,7 +1800,7 @@ def plot_discount_curve():
     response.mimetype = 'image/png'
     return response
 
-
+  
 @app.route('/optimize_introduction')
 @login_required
 def optimize_introduction():
@@ -1845,6 +1855,55 @@ def opt_back_test_plot1():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
+
+@app.route('/ei_introduction')
+@login_required
+def ei_introduction():
+    return render_template("ei_introduction.html")
+
+
+@app.route("/ei_analysis", methods=["GET", "POST"])
+def ei_analysis():
+    returns = load_returns()
+    SPY_component = database.get_sp500_symbols()
+    table = load_calendar_from_database(SPY_component)
+    input = {'date_from': '20190901', 'date_to': '20191201'}
+    BeatInfo, MeatInfo, MissInfo = [], [], []
+    if request.method == "POST":
+        date_from = request.form.get('date_from')
+        date_from = str(date_from)
+        date_to = request.form.get('date_to')
+        date_to = str(date_to)
+        input['date_from'] = date_from
+        input['date_to'] = date_to
+        # returns = get_returns(SPY_component)
+        miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+        miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
+        miss_arr, meet_arr, beat_arr = BootStrap(miss_arr), BootStrap(meet_arr), BootStrap(beat_arr)
+
+        for i in [0, 9, 19, 29, 39, 49, 59]:
+            BeatInfo.append('%.2f%%' % (beat_arr[i] * 100))
+            MeatInfo.append('%.2f%%' % (meet_arr[i] * 100))
+            MissInfo.append('%.2f%%' % (miss_arr[i] * 100))
+        earnings_impact_data.Beat = beat_arr
+        earnings_impact_data.Meet = meet_arr
+        earnings_impact_data.Miss = miss_arr
+
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+    else:
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+
+
+@app.route('/plot/ei')
+def plot_ei():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.plot(earnings_impact_data.Beat, label='Beat')
+    axis.plot(earnings_impact_data.Meet, label='Meet')
+    axis.plot(earnings_impact_data.Miss, label='Miss')
+    axis.legend(loc='best')
+    axis.axvline(x=30, linewidth=1.0)
+    '''
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -1853,9 +1912,10 @@ def opt_back_test_plot1():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+    '''
 
 
-@app.route('/plot/opt_back_test_plot2')
+@app.route(''/plot/opt_back_test_plot2')
 def opt_back_test_plot2():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
@@ -1880,6 +1940,62 @@ def opt_back_test_plot2():
               color='black', fontsize=10)
 
     axis.grid(True)
+
+           
+@app.route('/at_introduction')
+@login_required
+def at_introduction():
+    return render_template("at_introduction.html")
+
+
+@app.route("/at_analysis", methods=["GET", "POST"])
+def at_analysis():
+    input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
+    AlphaName_list = ['EMA', 'RSI', 'T3', 'TRIMA', 'CMO', 'ROCP', 'ROC', 'LINEARREG_ANGLE', 'VAR']
+    table_year_data = []
+    # fetch 500 stocks price volumn data
+    select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
+    spy500 = database.execute_sql_statement(select_stmt)
+    close = pd.pivot_table(spy500, index=['date'], columns=['symbol'])['adjusted_close']
+    close = close.fillna(method='ffill')
+    returns = (close / close.shift(1) - 1).fillna(0)
+    target = returns.shift(-1).fillna(0)
+
+    if request.method == "POST":
+        AlphaName = request.form.get('AlphaName')
+        AlphaName = str(AlphaName)
+        Timeperiod = request.form.get('Timeperiod')
+        Timeperiod = int(Timeperiod)
+        input['AlphaName'] = AlphaName
+        input['Timeperiod'] = Timeperiod
+        alpha = TALIB(close, abstract.Function(AlphaName), Timeperiod)
+        alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
+
+        alpha_table, alpha_table_agg = Test(alpha, target)
+        alphatestdata.table = alpha_table
+        alphatestdata.table_agg = alpha_table_agg
+        alpha_table_agg.reset_index(inplace=True)
+        for i in range(len(alpha_table_agg)):
+            temp = alpha_table_agg.iloc[i, :].copy()
+            temp[1:] = temp[1:].apply(lambda x: '%.4f' % float(x))
+            table_year_data.append(temp)
+
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+    else:
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+
+
+@app.route('/plot/at1')
+def plot_at1():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.grid(linestyle='-.')
+    axis.plot(table['beta'].cumsum())
+    '''
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -1887,6 +2003,7 @@ def opt_back_test_plot2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+    '''
 
 
 @app.route('/plot/opt_back_test_plot3')
@@ -1914,6 +2031,16 @@ def opt_back_test_plot3():
               color='black', fontsize=10)
 
     axis.grid(True)
+
+           
+@app.route('/plot/at2')
+def plot_at2():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
+    '''
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -1921,7 +2048,7 @@ def opt_back_test_plot3():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-
+    '''
 
 @app.route('/plot/opt_back_test_plot4')
 def opt_back_test_plot4():
