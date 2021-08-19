@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/at_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/at_analysis">Alpha Test Analysis</a>
+        </li>
+    </ul>
+</nav>
+
+
+
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Alpha Test Module</h3>
+    <div class="form-group">
+        <form action="/at_analysis" id="at_analysis" method="post">
+            <p style = "width:500px;" align="right">Alpha Selection<select name = "AlphaName" action = '/' style = "width:200px;">
+                {%for AlphaName in AlphaName_list%}
+                <option value = {{AlphaName}} selected>{{AlphaName}}</option>>
+                {% endfor %}
+            </select></p>
+            <p style = "width:500px;" align="right">Alpha Name:
+                <input id="AlphaName" name="AlphaName" value = {{input["AlphaName"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Time Period:
+                <input id="Timeperiod" name="Timeperiod" value = {{input["Timeperiod"]}} type="text"/></p>
+
+            <input type="submit" value="Calculate"/>
+        </form>
+    </div>
+
+    <h3>Result</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Year</th>
+                <th style="text-align:center">Beta</th>
+                <th style="text-align:center">IC</th>
+                <th style="text-align:center">ICIR</th>
+            </tr>
+            </thead>
+            <tbody>
+            {%for data in table_year_data%}
+            <tr>
+                <td>{{data["year"]}}</td>
+                <td>{{data["beta"]}}</td>
+                <td>{{data["ic"]}}</td>
+                <td>{{data["icir"]}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Simple Beta Cumsum</h3>
+        <img src="/plot/at1" alt="Image Placeholder" width="50%">
+    <h3>Simple Beta IC</h3>
+        <img src="/plot/at2" alt="Image Placeholder" width="50%">
+
+</main>
+
+</body>
+
+{%endblock%}
