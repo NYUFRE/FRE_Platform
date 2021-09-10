@@ -51,7 +51,8 @@ trading-calendars==2.1.0
 urllib3==1.25.9
 Werkzeug==1.0.1
 WTForms==2.3.3
-yahoo_earnings_calendar
-tqdm
-TA-Lib
-
+pyportfolioopt==1.4.2
+yahoo_earnings_calendar==0.6.0
+yfinance==0.1.63
+tqdm==4.62.1
+TA_Lib-0.4.21-cp38-cp38-win_amd64.whl

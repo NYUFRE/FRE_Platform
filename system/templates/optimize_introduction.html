@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}
+optimize_introduction
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/optimize_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/optimize_build">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/optimize_back_test">Back Testing</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Portfolio Optimization</strong></h3>
+    <br>
+    <div align="center">
+        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+            <tbody>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+            <tr>
+                <td width="881" valign="top">
+                    <p>
+                        Portfolio optimization in finance is the technique of creating portfolio that maximize
+                        the investment return and minimize the risk.
+                        The key idea of portfolio optimization is based on the Modern Portfolio Theory and the Efficient Frontier.
+                        The goal of the model is optimizing returns of portfolio with stocks and bonds while minimizing the risk.
+                    </p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Build Portfolio: </strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Use data from 2010-01-01 to 2020-01-01 as input data to analysis the optimal portfolio.</p>
+                    <p> Generate four different optimal portfolio using PyPortfolioOpt package.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Maximize Sharpe Ratio.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Minimize Volatility.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Maximize Sharpe Ratio with constraint.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Minimize Volatility with Constraint.
+                    </p>
+                    <p>Demonstrate 4 portfolios' Return, Volatility, and Sharpe Ratio.</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Back Testing: </strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Use data from 2020-06-01 to 2021-06-01 to back test the model.
+                        Compare and plot the graph of the cumulative daily returns of the portfolio and the SPY 500</p>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <hr>
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

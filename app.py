@@ -49,6 +49,10 @@ from system.utility.config import trading_queue, trading_event
 from system.utility.helpers import error_page, login_required, usd, get_python_pid
 from system.assets_pricing import assets_pricing
 from system.assets_pricing.assets_pricing import asset_pricing_result
+from system.model_optimization.optimization import create_database_table, extract_database_stock, extract_database_rf
+from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
+from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
+from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
@@ -1676,7 +1680,7 @@ def prcing_cds():
         return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result=buyer, seller_result=seller,
                                input=input)
 
-
+'''
 @app.route('/ei_introduction')
 @login_required
 def ei_introduction():
@@ -1809,8 +1813,7 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-
-
+'''
 
 @app.route('/ap_fra', methods=['POST', 'GET'])
 @login_required
@@ -1836,6 +1839,7 @@ def prcing_fra():
     else:
         return render_template("ap_fra.html", buyer_result = buyer, input = input)
 
+      
 @app.route('/ap_swap', methods=['POST', 'GET'])
 @login_required
 def prcing_swap():
@@ -1931,6 +1935,148 @@ def plot_discount_curve():
     response.mimetype = 'image/png'
     return response
 
+  
+@app.route('/optimize_introduction')
+@login_required
+def optimize_introduction():
+    return render_template("optimize_introduction.html")
+
+
+@app.route("/optimize_build")
+@login_required
+def optimize_build():
+    create_database_table(database, eod_market_data)
+    tickers = get_ticker()
+    length = len(tickers)
+    stocks = extract_database_stock(database)
+    rf = extract_database_rf(database)
+    max_sharpe = find_optimal_sharpe(stocks, rf)
+    min_vol = find_optimal_vol(stocks, rf)
+    max_const = find_optimal_max_constraint(stocks, rf)
+    min_const = find_optimal_min_constraint(stocks, rf)
+    return render_template('optimize_build.html', max_sharpe=max_sharpe, min_vol=min_vol, max_const=max_const,
+                           min_const=min_const, length=length, tickers=tickers)
+
+
+@app.route("/optimize_back_test")
+@login_required
+def optimize_back_test():
+    tickers = get_ticker()
+    cum_return = opt_back_testing(database, eod_market_data, tickers)
+    return render_template('optimize_back_test.html', cum_return=cum_return)
+
+
+@app.route('/plot/opt_back_test_plot1')
+def opt_back_test_plot1():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    results = get_results()
+    start_date_back, end_date_back = get_dates()
+    portfolio_ret = results[0]
+    spy_ret = results[1]
+    n = len(spy_ret)
+    line = np.zeros(n)
+    axis.plot(portfolio_ret["cum_ret_max"], 'ro')
+    axis.plot(spy_ret["cum_daily_return"], 'bd')
+    axis.plot(portfolio_ret.index, line, 'b')
+
+    axis.set(xlabel="Date",
+             ylabel="Cumulative Returns",
+             title=f"Portfolio Back Test ({start_date_back} to {end_date_back})")
+
+    axis.text(0.2, 0.9, 'Red - Max Sharpe Ratio, Blue - SPY',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+@app.route('/plot/opt_back_test_plot2')
+def opt_back_test_plot2():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    results = get_results()
+    start_date_back, end_date_back = get_dates()
+    portfolio_ret = results[0]
+    spy_ret = results[1]
+    n = len(spy_ret)
+    line = np.zeros(n)
+    axis.plot(portfolio_ret["cum_ret_min"], 'ro')
+    axis.plot(spy_ret["cum_daily_return"], 'bd')
+    axis.plot(portfolio_ret.index, line, 'b')
+
+    axis.set(xlabel="Date",
+             ylabel="Cumulative Returns",
+             title=f"Portfolio Back Test ({start_date_back} to {end_date_back})")
+
+    axis.text(0.2, 0.9, 'Red - Min Volatility, Blue - SPY',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+    axis.grid(True)
+
+
+@app.route('/plot/opt_back_test_plot3')
+def opt_back_test_plot3():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    results = get_results()
+    start_date_back, end_date_back = get_dates()
+    portfolio_ret = results[0]
+    spy_ret = results[1]
+    n = len(spy_ret)
+    line = np.zeros(n)
+    axis.plot(portfolio_ret["cum_ret_max_const"], 'ro')
+    axis.plot(spy_ret["cum_daily_return"], 'bd')
+    axis.plot(portfolio_ret.index, line, 'b')
+
+    axis.set(xlabel="Date",
+             ylabel="Cumulative Returns",
+             title=f"Portfolio Back Test ({start_date_back} to {end_date_back})")
+
+    axis.text(0.2, 0.9, 'Red - Max Sharpe Constraint, Blue - SPY',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+    axis.grid(True)
+
+
+@app.route('/plot/opt_back_test_plot4')
+def opt_back_test_plot4():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    results = get_results()
+    start_date_back, end_date_back = get_dates()
+    portfolio_ret = results[0]
+    spy_ret = results[1]
+    n = len(spy_ret)
+    line = np.zeros(n)
+    axis.plot(portfolio_ret["cum_ret_min_const"], 'ro')
+    axis.plot(spy_ret["cum_daily_return"], 'bd')
+    axis.plot(portfolio_ret.index, line, 'b')
+
+    axis.set(xlabel="Date",
+             ylabel="Cumulative Returns",
+             title=f"Portfolio Back Test ({start_date_back} to {end_date_back})")
+
+    axis.text(0.2, 0.9, 'Red - Minimize Volatility Constraint, Blue - SPY',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
 
 @app.route('/ei_introduction')
 @login_required
@@ -1979,6 +2125,7 @@ def plot_ei():
     axis.plot(earnings_impact_data.Miss, label='Miss')
     axis.legend(loc='best')
     axis.axvline(x=30, linewidth=1.0)
+    '''
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -1987,6 +2134,7 @@ def plot_ei():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+    '''
 
 
 @app.route('/at_introduction')
@@ -2042,6 +2190,7 @@ def plot_at1():
     axis = fig.add_subplot(1, 1, 1)
     axis.grid(linestyle='-.')
     axis.plot(table['beta'].cumsum())
+    '''
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -2049,6 +2198,7 @@ def plot_at1():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+    '''
 
 @app.route('/plot/at2')
 def plot_at2():
@@ -2057,6 +2207,7 @@ def plot_at2():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
     axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
+    '''
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -2064,8 +2215,7 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-
-
+    '''
 
 
 if __name__ == "__main__":
