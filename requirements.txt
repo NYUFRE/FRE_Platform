@@ -26,7 +26,7 @@ kiwisolver==1.2.0
 korean-lunar-calendar==0.2.1
 MarkupSafe==1.1.1
 matplotlib==3.3.0
-numpy==1.19.1
+numpy==1.20.1
 pandas==1.0.5
 pandas-market-calendars==1.6.1
 passlib==1.7.2
@@ -51,8 +51,8 @@ trading-calendars==2.1.0
 urllib3==1.25.9
 Werkzeug==1.0.1
 WTForms==2.3.3
-pyportfolioopt==1.4.2
 yahoo_earnings_calendar==0.6.0
 yfinance==0.1.63
 tqdm==4.62.1
 TA_Lib-0.4.21-cp38-cp38-win_amd64.whl
+pyportfolioopt==1.4.2
