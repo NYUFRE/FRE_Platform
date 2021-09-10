@@ -13,6 +13,7 @@ import time
 import warnings
 from datetime import datetime, timedelta
 from sys import platform
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -26,6 +27,7 @@ from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from sqlalchemy.exc import IntegrityError, SAWarning
+from talib import abstract
 
 warnings.simplefilter(action='ignore', category=SAWarning)
 
@@ -52,9 +54,8 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+
 from talib import abstract
-
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -391,6 +392,7 @@ def sell():
     else:
         return render_template("sell.html")
 
+
 @app.route("/short", methods=["GET", "POST"])
 @login_required
 def short():
@@ -421,7 +423,7 @@ def short():
             return render_template("short.html")
 
         cash = portfolio['cash']
-        threshold = cash/4
+        threshold = cash / 4
 
         # Get quote bid price -> potential sell price
         quote, error = iex_market_data.get_quote(symbol)
@@ -476,6 +478,7 @@ def short():
         return redirect(url_for("portfolio"))
     else:
         return render_template("short.html")
+
 
 @app.route("/history")
 @login_required
@@ -657,19 +660,23 @@ def build_model():
 
         if not (corr_threshold and adf_threshold and pair_trading_end_date and pair_trading_start_date and sector):
             flash('Error!  Incorrect Values!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                                   done_pair_trade_model=client_config.done_pair_model)
 
         if float(corr_threshold) >= 1 or float(corr_threshold) <= - 1:
             flash('Error!  Incorrect Correlation Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                                   done_pair_trade_model=client_config.done_pair_model)
 
         if float(adf_threshold) >= 1 or float(adf_threshold) <= 0:
             flash('Error! Incorrect P Value Threshold!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                                   done_pair_trade_model=client_config.done_pair_model)
 
         if datetime.strptime(pair_trading_end_date, "%Y-%m-%d") > datetime.now():
             flash('Error! Incorrect End Date! Should not be later than today!', 'error')
-            return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+            return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                                   done_pair_trade_model=client_config.done_pair_model)
 
         least_start_date = datetime.strptime(pair_trading_end_date, "%Y-%m-%d") - timedelta(365)
         if least_start_date < datetime.strptime(pair_trading_start_date, "%Y-%m-%d"):
@@ -720,7 +727,8 @@ def build_model():
         select_stmt = "SELECT DISTINCT sector FROM sp500;"
         result_df = database.execute_sql_statement(select_stmt)
         sector_list = list(result_df['sector'])
-        return render_template("pair_trade_build_model_param.html", sector_list=sector_list, done_pair_trade_model=client_config.done_pair_model)
+        return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
+                               done_pair_trade_model=client_config.done_pair_model)
 
 
 @app.route('/pair_trade_back_test')
@@ -756,13 +764,15 @@ def model_probation_testing():
 
         if (not probation_testing_end_date) or (not probation_testing_start_date):
             flash('Error! Start or End Date missing!', 'error')
-            return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
+            return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
-        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,"%Y-%m-%d"):
+        if datetime.strptime(probation_testing_start_date, "%Y-%m-%d") >= datetime.strptime(probation_testing_end_date,
+                                                                                            "%Y-%m-%d"):
             flash('Error!  Start Date should be before End Date!', 'error')
             return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
-        if datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date, "%Y-%m-%d"):
+        if datetime.strptime(probation_testing_end_date, "%Y-%m-%d") > datetime.strptime(pair_trading_end_date,
+                                                                                         "%Y-%m-%d"):
             flash('Error! Incorrect Date Range! Probation Testing Start and End Dates should be between ' +
                   f'{back_testing_end_date} ' + ' to ' + f'{pair_trading_end_date}', 'error')
             return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
@@ -782,7 +792,7 @@ def model_probation_testing():
         return render_template("pair_trade_probation_test_result.html", trade_list=trade_results, total=usd(total))
     else:
         back_testing_end_date = client_config.back_testing_end_date
-        return render_template("pair_trade_probation_test.html", back_testing_end_date = back_testing_end_date)
+        return render_template("pair_trade_probation_test.html", back_testing_end_date=back_testing_end_date)
 
 
 # AI modeling
@@ -953,16 +963,16 @@ def sim_server_down():
             client_config.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
-                #TODO: Per Professor, a better clean-up logic needs to be added here
+                # TODO: Per Professor, a better clean-up logic needs to be added here
                 print("sim_server_down:", str(status))
                 client_config.server_tombstone = True
                 client_config.server_ready = False
-                #Even though connection to server failed such as return code 10016
-                #But set server_tomstone to True should get server stop
-                #flash("Failure in server: please restart the program")
+                # Even though connection to server failed such as return code 10016
+                # But set server_tomstone to True should get server stop
+                # flash("Failure in server: please restart the program")
                 return render_template("sim_server_down.html")
 
-            client_config.receiver_stop = False     #TODO Look like it is not used
+            client_config.receiver_stop = False  # TODO Look like it is not used
             client_config.server_tombstone = True
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
@@ -1011,7 +1021,7 @@ def sim_auto_trading():
             status = client_config.client_socket.connect_ex(client_config.ADDR)
             if status != 0:
                 print("sim_auto_trading:", str(status))
-                #client_config.client_socket.close()
+                # client_config.client_socket.close()
                 flash("Failure in server: please restart the program")
                 return render_template("error_auto_trading.html")
             client_config.client_up = True
@@ -1329,14 +1339,17 @@ def update_market_data():
 
     return render_template("md_update_data.html")
 
+
 @app.route('/ap_introduction')
 @login_required
 def ap_introduction():
     return render_template("ap_introduction.html")
 
+
 @app.route("/ap_european_pricing", methods=["GET", "POST"])
 def cal_european():
-    input = {"spot": 0, "strike": 0, "day":0, "rf":0, "div":0,"vol":0, "yparameter" : "Value", "xparameter" : "Strike"}
+    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0, "yparameter": "Value",
+             "xparameter": "Strike"}
     call = {}
     put = {}
     yparameter_lst = ["Value", "Delta", "Gamma", "Vega", "Rho", "Theta"]
@@ -1369,7 +1382,7 @@ def cal_european():
         call, put = assets_pricing.pricing_european(spot, strike, day, rf, div, vol)
         xparameter = request.form.get("xparameter")
         if xparameter == "Strike":
-            step = np.linspace(-int(0.8*strike),int(0.8*strike), 300)
+            step = np.linspace(-int(0.8 * strike), int(0.8 * strike), 300)
             x_lst = strike + step
             call_lst = []
             put_lst = []
@@ -1379,7 +1392,7 @@ def cal_european():
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Spot":
             # x_lst = [x for x in range (1, 350, 1)]
-            step = np.linspace(-int(0.8*spot),int(0.8*spot), 300)
+            step = np.linspace(-int(0.8 * spot), int(0.8 * spot), 300)
             x_lst = spot + step
             call_lst = []
             put_lst = []
@@ -1388,7 +1401,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Days_to_Maturity":
-            x_lst = [x for x in range (1, 3*365,5)]
+            x_lst = [x for x in range(1, 3 * 365, 5)]
             call_lst = []
             put_lst = []
             for day in x_lst:
@@ -1396,7 +1409,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Risk_Free_Rate":
-            x_lst = [x/100 for x in range (0, 25,1)]
+            x_lst = [x / 100 for x in range(0, 25, 1)]
             call_lst = []
             put_lst = []
             for rf in x_lst:
@@ -1404,7 +1417,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Dividend":
-            x_lst = [x/100 for x in range (0, 25,1)]
+            x_lst = [x / 100 for x in range(0, 25, 1)]
             call_lst = []
             put_lst = []
             for div in x_lst:
@@ -1412,7 +1425,7 @@ def cal_european():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Volatility":
-            x_lst = [x/100 for x in range (0, 50,2)]
+            x_lst = [x / 100 for x in range(0, 50, 2)]
             call_lst = []
             put_lst = []
             for vol in x_lst:
@@ -1425,11 +1438,12 @@ def cal_european():
         asset_pricing_result.yparameter = request.form.get("yparameter")
         asset_pricing_result.xparameter = request.form.get("xparameter")
 
-        return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
-                               x_parameter = xparameter_lst, input = input)
+        return render_template("ap_european_pricing.html", call_dict=call, put_dict=put, y_parameter=yparameter_lst,
+                               x_parameter=xparameter_lst, input=input)
     else:
-        return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
-                               x_parameter = xparameter_lst, input = input)
+        return render_template("ap_european_pricing.html", call_dict=call, put_dict=put, y_parameter=yparameter_lst,
+                               x_parameter=xparameter_lst, input=input)
+
 
 @app.route('/plot/european')
 def plot_european():
@@ -1438,11 +1452,11 @@ def plot_european():
     x_lst = assets_pricing.asset_pricing_result.xvalue
     call_lst = assets_pricing.asset_pricing_result.call
     put_lst = assets_pricing.asset_pricing_result.put
-    axis.plot(x_lst, call_lst, label = "Call Option")
-    axis.plot(x_lst, put_lst, label = "Put Option")
+    axis.plot(x_lst, call_lst, label="Call Option")
+    axis.plot(x_lst, put_lst, label="Put Option")
     axis.set(xlabel=assets_pricing.asset_pricing_result.xparameter,
              ylabel=assets_pricing.asset_pricing_result.yparameter,
-             title = f"European Option {assets_pricing.asset_pricing_result.yparameter} VS {assets_pricing.asset_pricing_result.xparameter}")
+             title=f"European Option {assets_pricing.asset_pricing_result.yparameter} VS {assets_pricing.asset_pricing_result.xparameter}")
     axis.legend()
 
     axis.grid(True)
@@ -1457,7 +1471,7 @@ def plot_european():
 
 @app.route("/ap_american_pricing", methods=["GET", "POST"])
 def cal_american():
-    input = {"spot": 0, "strike": 0, "day":0, "rf":0, "div":0,"vol":0}
+    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0}
     call = {}
     put = {}
     yparameter_lst = ["Value", "Delta", "Gamma", "Theta"]
@@ -1490,7 +1504,7 @@ def cal_american():
         call, put = assets_pricing.pricing_american(spot, strike, day, rf, div, vol)
         xparameter = request.form.get("xparameter")
         if xparameter == "Strike":
-            step = np.linspace(-int(0.8*strike),int(0.8*strike), 300)
+            step = np.linspace(-int(0.8 * strike), int(0.8 * strike), 300)
             x_lst = strike + step
             call_lst = []
             put_lst = []
@@ -1500,7 +1514,7 @@ def cal_american():
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Spot":
             # x_lst = [x for x in range (1, 350, 1)]
-            step = np.linspace(-int(0.8*spot),int(0.8*spot), 300)
+            step = np.linspace(-int(0.8 * spot), int(0.8 * spot), 300)
             x_lst = spot + step
             call_lst = []
             put_lst = []
@@ -1509,7 +1523,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Days_to_Maturity":
-            x_lst = [x for x in range (1, 3*365,5)]
+            x_lst = [x for x in range(1, 3 * 365, 5)]
             call_lst = []
             put_lst = []
             for day in x_lst:
@@ -1517,7 +1531,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Risk_Free_Rate":
-            x_lst = [x/100 for x in range (0, 25,1)]
+            x_lst = [x / 100 for x in range(0, 25, 1)]
             call_lst = []
             put_lst = []
             for rf in x_lst:
@@ -1525,7 +1539,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Dividend":
-            x_lst = [x/100 for x in range (0, 25,1)]
+            x_lst = [x / 100 for x in range(0, 25, 1)]
             call_lst = []
             put_lst = []
             for div in x_lst:
@@ -1533,7 +1547,7 @@ def cal_american():
                 call_lst.append(call_at_value[request.form.get("yparameter")])
                 put_lst.append(put_at_value[request.form.get("yparameter")])
         elif xparameter == "Volatility":
-            x_lst = [x/100 for x in range (0, 50,2)]
+            x_lst = [x / 100 for x in range(0, 50, 2)]
             call_lst = []
             put_lst = []
             for vol in x_lst:
@@ -1545,11 +1559,12 @@ def cal_american():
         asset_pricing_result.put = put_lst
         asset_pricing_result.yparameter = request.form.get("yparameter")
         asset_pricing_result.xparameter = request.form.get("xparameter")
-        return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
-                               x_parameter = xparameter_lst, input = input)
+        return render_template("ap_american_pricing.html", call_dict=call, put_dict=put, y_parameter=yparameter_lst,
+                               x_parameter=xparameter_lst, input=input)
     else:
-        return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
-                               x_parameter = xparameter_lst, input = input)
+        return render_template("ap_american_pricing.html", call_dict=call, put_dict=put, y_parameter=yparameter_lst,
+                               x_parameter=xparameter_lst, input=input)
+
 
 @app.route('/plot/american')
 def plot_american():
@@ -1558,11 +1573,11 @@ def plot_american():
     x_lst = assets_pricing.asset_pricing_result.xvalue
     call_lst = assets_pricing.asset_pricing_result.call
     put_lst = assets_pricing.asset_pricing_result.put
-    axis.plot(x_lst, call_lst, label = "Call Option")
-    axis.plot(x_lst, put_lst, label = "Put Option")
+    axis.plot(x_lst, call_lst, label="Call Option")
+    axis.plot(x_lst, put_lst, label="Put Option")
     axis.set(xlabel=assets_pricing.asset_pricing_result.xparameter,
              ylabel=assets_pricing.asset_pricing_result.yparameter,
-             title = f"American Option {assets_pricing.asset_pricing_result.yparameter} VS {assets_pricing.asset_pricing_result.xparameter}")
+             title=f"American Option {assets_pricing.asset_pricing_result.yparameter} VS {assets_pricing.asset_pricing_result.xparameter}")
     axis.legend()
 
     axis.grid(True)
@@ -1574,13 +1589,14 @@ def plot_american():
     response.mimetype = 'image/png'
     return response
 
+
 @app.route('/ap_fixedRateBond', methods=['POST', 'GET'])
 @login_required
 def prcing_fixedratebond():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"face_value": 0, "coupon_rate": 0, "discount_rate":0,
-             "valuation_date":str(np.datetime64('today')), "issue_date":str(np.datetime64('today')),
-             "maturity_date":str(np.datetime64('today')), "frequency":""}
+    input = {"face_value": 0, "coupon_rate": 0, "discount_rate": 0,
+             "valuation_date": str(np.datetime64('today')), "issue_date": str(np.datetime64('today')),
+             "maturity_date": str(np.datetime64('today')), "frequency": ""}
     bond = {}
     if request.method == 'POST':
         form_input = request.form
@@ -1601,23 +1617,25 @@ def prcing_fixedratebond():
 
         print(input["valuation_date"])
         print(type(input["valuation_date"]))
-        frequency_dict = {"Monthly":"1m",
-                          "Quarterly":"3m",
-                          "Twice a year":"6m",
-                          "Annually":"1Y"}
+        frequency_dict = {"Monthly": "1m",
+                          "Quarterly": "3m",
+                          "Twice a year": "6m",
+                          "Annually": "1Y"}
         frequency = frequency_dict.get(frequency_forminput)
-        bond = assets_pricing.pricing_fixedratebond(face_value, valuation_date, issue_date, maturity_date, frequency, coupon_rate, discount_rate)
+        bond = assets_pricing.pricing_fixedratebond(face_value, valuation_date, issue_date, maturity_date, frequency,
+                                                    coupon_rate, discount_rate)
 
-        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result=bond, input=input)
     else:
-        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
+        return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result=bond, input=input)
+
 
 @app.route('/ap_CDS', methods=['POST', 'GET'])
 @login_required
 def prcing_cds():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"notional":0, "spread":0, "recovery_rate":0, "hazard_rate":0, "discount_rate":0,
-             "issue_date":str(np.datetime64('today')), "maturity_date":str(np.datetime64('today')), "frequency":""}
+    input = {"notional": 0, "spread": 0, "recovery_rate": 0, "hazard_rate": 0, "discount_rate": 0,
+             "issue_date": str(np.datetime64('today')), "maturity_date": str(np.datetime64('today')), "frequency": ""}
     buyer = {}
     seller = {}
     if request.method == 'POST':
@@ -1639,22 +1657,160 @@ def prcing_cds():
         frequency_forminput = form_input['Frequency']
         input["frequency"] = frequency_forminput
 
-        frequency_dict = {"Monthly":"1m",
-                          "Quarterly":"3m",
-                          "Twice a year":"6m",
-                          "Annually":"1Y"}
+        frequency_dict = {"Monthly": "1m",
+                          "Quarterly": "3m",
+                          "Twice a year": "6m",
+                          "Annually": "1Y"}
         frequency = frequency_dict.get(frequency_forminput)
-        buyer,seller = assets_pricing.pricing_cds(notional_value, spread,
-                                                  issue_date,
-                                                  maturity_date,
-                                                  frequency,
-                                                  discount_rate,
-                                                  recovery_rate,
-                                                  hazard_rate)
+        buyer, seller = assets_pricing.pricing_cds(notional_value, spread,
+                                                   issue_date,
+                                                   maturity_date,
+                                                   frequency,
+                                                   discount_rate,
+                                                   recovery_rate,
+                                                   hazard_rate)
 
-        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result=buyer, seller_result=seller,
+                               input=input)
     else:
-        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
+        return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result=buyer, seller_result=seller,
+                               input=input)
+
+
+@app.route('/ei_introduction')
+@login_required
+def ei_introduction():
+    return render_template("ei_introduction.html")
+
+
+@app.route("/ei_analysis", methods=["GET", "POST"])
+def ei_analysis():
+    returns = load_returns()
+    SPY_component = database.get_sp500_symbols()
+    table = load_calendar_from_database(SPY_component)
+    input = {'date_from': '20190901', 'date_to': '20191201'}
+    BeatInfo, MeatInfo, MissInfo = [], [], []
+    if request.method == "POST":
+        date_from = request.form.get('date_from')
+        date_from = str(date_from)
+        date_to = request.form.get('date_to')
+        date_to = str(date_to)
+        input['date_from'] = date_from
+        input['date_to'] = date_to
+        # returns = get_returns(SPY_component)
+        miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+        miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
+        miss_arr, meet_arr, beat_arr = BootStrap(miss_arr), BootStrap(meet_arr), BootStrap(beat_arr)
+
+        for i in [0, 9, 19, 29, 39, 49, 59]:
+            BeatInfo.append('%.2f%%' % (beat_arr[i] * 100))
+            MeatInfo.append('%.2f%%' % (meet_arr[i] * 100))
+            MissInfo.append('%.2f%%' % (miss_arr[i] * 100))
+        earnings_impact_data.Beat = beat_arr
+        earnings_impact_data.Meet = meet_arr
+        earnings_impact_data.Miss = miss_arr
+
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+    else:
+        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+
+
+@app.route('/plot/ei')
+def plot_ei():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.plot(earnings_impact_data.Beat, label='Beat')
+    axis.plot(earnings_impact_data.Meet, label='Meet')
+    axis.plot(earnings_impact_data.Miss, label='Miss')
+    axis.legend(loc='best')
+    axis.axvline(x=30, linewidth=1.0)
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
+@app.route('/at_introduction')
+@login_required
+def at_introduction():
+    return render_template("at_introduction.html")
+
+
+@app.route("/at_analysis", methods=["GET", "POST"])
+def at_analysis():
+    input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
+    AlphaName_list = ['EMA', 'RSI', 'T3', 'TRIMA', 'CMO', 'ROCP', 'ROC', 'LINEARREG_ANGLE', 'VAR']
+    table_year_data = []
+    # fetch 500 stocks price volumn data
+    select_stmt = 'SELECT symbol, date, adjusted_close FROM stocks'
+    spy500 = database.execute_sql_statement(select_stmt)
+    close = pd.pivot_table(spy500, index=['date'], columns=['symbol'])['adjusted_close']
+    close = close.fillna(method='ffill')
+    returns = (close / close.shift(1) - 1).fillna(0)
+    target = returns.shift(-1).fillna(0)
+
+    if request.method == "POST":
+        AlphaName = request.form.get('AlphaName')
+        AlphaName = str(AlphaName)
+        Timeperiod = request.form.get('Timeperiod')
+        Timeperiod = int(Timeperiod)
+        input['AlphaName'] = AlphaName
+        input['Timeperiod'] = Timeperiod
+        alpha = TALIB(close, abstract.Function(AlphaName), Timeperiod)
+        alpha = pd.DataFrame(alpha, index=close.index, columns=close.columns).fillna(0)
+
+        alpha_table, alpha_table_agg = Test(alpha, target)
+        alphatestdata.table = alpha_table
+        alphatestdata.table_agg = alpha_table_agg
+        alpha_table_agg.reset_index(inplace=True)
+        for i in range(len(alpha_table_agg)):
+            temp = alpha_table_agg.iloc[i, :].copy()
+            temp[1:] = temp[1:].apply(lambda x: '%.4f' % float(x))
+            table_year_data.append(temp)
+
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+    else:
+        return render_template("at_analysis.html", input=input, AlphaName_list=AlphaName_list,
+                               table_year_data=table_year_data)
+
+
+@app.route('/plot/at1')
+def plot_at1():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.grid(linestyle='-.')
+    axis.plot(table['beta'].cumsum())
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+@app.route('/plot/at2')
+def plot_at2():
+    table = alphatestdata.table
+    table_agg = alphatestdata.table_agg
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
 
 @app.route('/ap_fra', methods=['POST', 'GET'])
 @login_required
@@ -1925,4 +2081,3 @@ if __name__ == "__main__":
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
-
