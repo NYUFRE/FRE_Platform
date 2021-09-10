@@ -25,7 +25,7 @@ Jinja2==2.11.2
 kiwisolver==1.2.0
 korean-lunar-calendar==0.2.1
 MarkupSafe==1.1.1
-matplotlib==3.3.0
+matplotlib==3.4.3
 numpy==1.20.1
 pandas==1.0.5
 pandas-market-calendars==1.6.1
