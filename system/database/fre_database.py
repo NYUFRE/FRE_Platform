@@ -205,17 +205,24 @@ class FREDatabase:
                           Column('shares', Integer, nullable=False),
                           Column('profit_loss', Numeric, nullable=False),
                           extend_existing=True)
+
         elif table_name == "optimal_portfolio":
             table = Table(table_name, self.metadata,
                           Column('symbol', String(20), primary_key=True, nullable=False),
                           Column('name', String(20), nullable=False),
                           Column('weights', Numeric, nullable=False),
                           )
+
+        elif table_name == "earnings_calendar":
+            table = Table(table_name, self.metadata,
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('date', DATE, primary_key=True, nullable=False),
+                          Column('surprise', Numeric, nullable=False),
+                          extend_existing=True)
+
         else:
             raise ValueError("Table name not known")
         return table
-
-
 
 
     def create_table(self, table_list: Collection[str]) -> None:
@@ -489,3 +496,7 @@ class FREDatabase:
             self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
                                 f"VALUES ({uid}, {shares}, '{symbol}',{price})")
             self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+
+    def create_earnings_calendar(self, symbol, date, surprise):
+        self.engine.execute(f"INSERT INTO earnings_calendar "
+                            f"VALUES ('{symbol}','{date}',{surprise})")
