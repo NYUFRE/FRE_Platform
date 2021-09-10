@@ -1360,27 +1360,57 @@ def cal_european():
     xparameter_lst = ["Strike", "Spot", "Days_to_Maturity", "Risk_Free_Rate", "Dividend", "Volatility"]
     if request.method == "POST":
         spot_input = request.form.get('spot')
-        spot = float(spot_input)
+        try:
+            spot = float(spot_input)
+        except:
+            flash("invalid spot price input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["spot"] = spot_input
 
         strike_input = request.form.get('strike')
-        strike = float(strike_input)
+        try:
+            strike = float(strike_input)
+        except:
+            flash("invalid strike price input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["strike"] = strike_input
 
         day_input = request.form.get('day')
-        day = int(day_input)
+        try:
+            day = int(day_input)
+        except:
+            flash("invalid day to expiration input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["day"] = day_input
 
         rf_input = request.form.get('rf')
-        rf = float(rf_input)
+        try:
+            rf = float(rf_input)
+        except:
+            flash("invalid risk free input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                               x_parameter = xparameter_lst, input = input)
         input["rf"] = rf_input
 
         div_input = request.form.get('div')
-        div = float(div_input)
+        try:
+            div = float(div_input)
+        except:
+            flash("invalid dividend rate input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                               x_parameter = xparameter_lst, input = input)
         input["div"] = div_input
 
         vol_input = request.form.get('vol')
-        vol = float(vol_input)
+        try:
+            vol = float(vol_input)
+        except:
+            flash("invalid implied volatility input", "error")
+            return render_template("ap_european_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                               x_parameter = xparameter_lst, input = input)
         input["vol"] = vol_input
 
         call, put = assets_pricing.pricing_european(spot, strike, day, rf, div, vol)
@@ -1482,27 +1512,57 @@ def cal_american():
     xparameter_lst = ["Strike", "Spot", "Days_to_Maturity", "Risk_Free_Rate", "Dividend", "Volatility"]
     if request.method == "POST":
         spot_input = request.form.get('spot')
-        spot = float(spot_input)
+        try:
+            spot = float(spot_input)
+        except:
+            flash("invalid spot value input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["spot"] = spot_input
 
         strike_input = request.form.get('strike')
-        strike = float(strike_input)
+        try:
+            strike = float(strike_input)
+        except:
+            flash("invalid strike input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["strike"] = strike_input
 
         day_input = request.form.get('day')
-        day = int(day_input)
+        try:
+            day = int(day_input)
+        except:
+            flash("invalid day to expiration input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["day"] = day_input
 
         rf_input = request.form.get('rf')
-        rf = float(rf_input)
+        try:
+            rf = float(rf_input)
+        except:
+            flash("invalid risk free rate input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["rf"] = rf_input
 
         div_input = request.form.get('div')
-        div = float(div_input)
+        try:
+            div = float(div_input)
+        except:
+            flash("Invalid dividend rate input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["div"] = div_input
 
         vol_input = request.form.get('vol')
-        vol = float(vol_input)
+        try:
+            vol = float(vol_input)
+        except:
+            flash("Invalid implied volatility input", "error")
+            return render_template("ap_american_pricing.html", call_dict = call, put_dict = put, y_parameter=yparameter_lst,
+                                   x_parameter = xparameter_lst, input = input)
         input["vol"] = vol_input
 
         call, put = assets_pricing.pricing_american(spot, strike, day, rf, div, vol)
@@ -1604,12 +1664,27 @@ def prcing_fixedratebond():
     bond = {}
     if request.method == 'POST':
         form_input = request.form
-        face_value = float(form_input['Face Value'])
+        try:
+            face_value = float(form_input['Face Value'])
+        except:
+            flash("invalid face value input","error")
+            return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
+
         input["face_value"] = face_value
-        coupon_rate = float(form_input['Coupon Rate'])
+        try:
+            coupon_rate = float(form_input['Coupon Rate'])
+        except:
+            flash("invalid coupon rate input","error")
+            return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
         input["coupon_rate"] = coupon_rate
-        discount_rate = float(form_input['Discount Rate'])
+
+        try:
+            discount_rate = float(form_input['Discount Rate'])
+        except:
+            flash("invalid discount rate input","error")
+            return render_template("ap_fixedRateBond.html", frequency_list=frequency_list, bond_result = bond, input = input)
         input["discount_rate"] = discount_rate
+
         valuation_date = form_input['Valuation Date']
         input["valuation_date"] = valuation_date
         issue_date = form_input['Issue Date']
@@ -1644,16 +1719,41 @@ def prcing_cds():
     seller = {}
     if request.method == 'POST':
         form_input = request.form
-        notional_value = float(form_input['Notional'])
+        try:
+            notional_value = float(form_input['Notional'])
+        except:
+            flash("invalid notional value input", "error")
+            return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
         input["notional"] = notional_value
-        spread = float(form_input['Spread'])
+
+        try:
+            spread = float(form_input['Spread'])
+        except:
+            flash("invalid spread value input", "error")
+            return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
         input["spread"] = spread
-        recovery_rate = float(form_input['Recovery Rate'])
+
+        try:
+            recovery_rate = float(form_input['Recovery Rate'])
+        except:
+            flash("invalid recovery rate input", "error")
+            return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
         input["recovery_rate"] = recovery_rate
-        hazard_rate = float(form_input['Hazard Rate'])
+
+        try:
+            hazard_rate = float(form_input['Hazard Rate'])
+        except:
+            flash("invalid hazard rate input", "error")
+            return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
         input["hazard_rate"] = hazard_rate
-        discount_rate = float(form_input['Discount Rate'])
+
+        try:
+            discount_rate = float(form_input['Discount Rate'])
+        except:
+            flash("invalid discount rate input", "error")
+            return render_template("ap_CDS.html", frequency_list=frequency_list, buyer_result = buyer, seller_result = seller, input = input)
         input["discount_rate"] = discount_rate
+
         issue_date = form_input['Issue Date']
         input["issue_date"] = issue_date
         maturity_date = form_input['Maturity Date']
@@ -1823,15 +1923,35 @@ def prcing_fra():
     buyer = {}
     if request.method == 'POST':
         form_input = request.form
-        notional_value = float(form_input['Notional Value'])
+        try:
+            notional_value = float(form_input['Notional Value'])
+        except:
+            flash("Invalid notional value input", "error")
+            return render_template("ap_fra.html", buyer_result = buyer, input = input)
         input["notional_value"] = notional_value
+
         valuation_date = form_input['Valuation Date']
         input["valuation_date"] = valuation_date
-        month_to_start = float(form_input['Month To Start'])
+
+        try:
+            month_to_start = float(form_input['Month To Start'])
+        except:
+            flash("Invalid month to start input", "error")
+            return render_template("ap_fra.html", buyer_result = buyer, input = input)
         input["month_to_start"] = month_to_start
-        month_to_termination = float(form_input['Month To Termination'])
+
+        try:
+            month_to_termination = float(form_input['Month To Termination'])
+        except:
+            flash("Invalid month to termination input", "error")
+            return render_template("ap_fra.html", buyer_result = buyer, input = input)
         input["month_to_termination"] = month_to_termination
-        fra_quote = float(form_input['FRA Quote'])
+
+        try:
+            fra_quote = float(form_input['FRA Quote'])
+        except:
+            flash("Invalid FRA quote input", "error")
+            return render_template("ap_fra.html", buyer_result = buyer, input = input)
         input["fra_quote"] = fra_quote
 
         buyer = assets_pricing.pricing_fra(notional_value, valuation_date, month_to_start, month_to_termination, fra_quote)
@@ -1848,15 +1968,35 @@ def prcing_swap():
     payer = {}
     if request.method == 'POST':
         form_input = request.form
-        notional_value = float(form_input['Notional Value'])
+        try:
+            notional_value = float(form_input['Notional Value'])
+        except:
+            flash("invalid notional value input", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
         input["notional_value"] = notional_value
+
         start_date = form_input['Start Date']
         input["start_date"] = start_date
-        frequency = int(form_input['Frequency'])
+
+        try:
+            frequency = int(form_input['Frequency'])
+        except:
+            flash("invalid payment frequency input", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
         input["frequency"] = frequency
-        contract_period = int(form_input['Contract Period'])
+
+        try:
+            contract_period = int(form_input['Contract Period'])
+        except:
+            flash("invalid contract period input", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
         input["contract_period"] = contract_period
-        fixed_rate = float(form_input['Fixed Rate'])
+
+        try:
+            fixed_rate = float(form_input['Fixed Rate'])
+        except:
+            flash("invalid fixed rate input", "error")
+            return render_template("ap_swap.html", payer_result = payer, input = input)
         input["fixed_rate"] = fixed_rate
 
         if contract_period > 60:
