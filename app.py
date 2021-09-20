@@ -2131,7 +2131,7 @@ def plot_ei():
     axis.plot(earnings_impact_data.Miss, label='Miss')
     axis.legend(loc='best')
     axis.axvline(x=30, linewidth=1.0)
-    '''
+    
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2140,7 +2140,7 @@ def plot_ei():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-    '''
+    
 
 
 @app.route('/at_introduction')
