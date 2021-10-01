@@ -1947,28 +1947,21 @@ def plot_discount_curve():
 def optimize_introduction():
     return render_template("optimize_introduction.html")
 
-#Shan add exception here
+
 @app.route("/optimize_build")
 @login_required
 def optimize_build():
-    try:
-        create_database_table(database, eod_market_data)
-        tickers = get_ticker()
-        length = len(tickers)
-        stocks = extract_database_stock(database)
-        print(stocks)
-        rf = extract_database_rf(database)
-        max_sharpe = find_optimal_sharpe(stocks, rf)
-        min_vol = find_optimal_vol(stocks, rf)
-        max_const = find_optimal_max_constraint(stocks, rf)
-        min_const = find_optimal_min_constraint(stocks, rf)
-        return render_template('optimize_build.html', max_sharpe=max_sharpe, min_vol=min_vol, max_const=max_const,
-                               min_const=min_const, length=length, tickers=tickers)
-    except ValueError:
-        flash('Error! Portfolio has poor data quality, unable to optimize, please change the portfolio and try again!')
-        #may be can do improvement：present which ticker had the poor data, guide on which ticker to replace
-        return render_template("optimize_introduction.html")
-
+    create_database_table(database, eod_market_data)
+    tickers = get_ticker()
+    length = len(tickers)
+    stocks = extract_database_stock(database)
+    rf = extract_database_rf(database)
+    max_sharpe = find_optimal_sharpe(stocks, rf)
+    min_vol = find_optimal_vol(stocks, rf)
+    max_const = find_optimal_max_constraint(stocks, rf)
+    min_const = find_optimal_min_constraint(stocks, rf)
+    return render_template('optimize_build.html', max_sharpe=max_sharpe, min_vol=min_vol, max_const=max_const,
+                           min_const=min_const, length=length, tickers=tickers)
 
 
 @app.route("/optimize_back_test")
@@ -2003,16 +1996,6 @@ def opt_back_test_plot1():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    #Shan add 1
-    axis.grid(True)
-    fig.autofmt_xdate()
-    canvas = FigureCanvas(fig)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    response = make_response(output.getvalue())
-    response.mimetype = 'image/png'
-    return response
-
 @app.route('/plot/opt_back_test_plot2')
 def opt_back_test_plot2():
     fig = Figure()
@@ -2037,15 +2020,7 @@ def opt_back_test_plot2():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    # Shan add 2
     axis.grid(True)
-    fig.autofmt_xdate()
-    canvas = FigureCanvas(fig)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    response = make_response(output.getvalue())
-    response.mimetype = 'image/png'
-    return response
 
 
 @app.route('/plot/opt_back_test_plot3')
@@ -2072,15 +2047,7 @@ def opt_back_test_plot3():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    # Shan add 3
     axis.grid(True)
-    fig.autofmt_xdate()
-    canvas = FigureCanvas(fig)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    response = make_response(output.getvalue())
-    response.mimetype = 'image/png'
-    return response
 
 
 @app.route('/plot/opt_back_test_plot4')

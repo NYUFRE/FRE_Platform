@@ -12,11 +12,10 @@ import numpy as np
 
 sys.path.append('../')
 
-#Shan: load real-time data from EOD during a time period, here is 10 yrs data
 start_date = dt.date(2010, 1, 4).strftime('%Y-%m-%d')
 end_date = dt.date(2020, 1, 4).strftime('%Y-%m-%d')
 
-tickers = ['BAC', 'NFLX', 'AFL', 'BBY', 'C', 'T', 'AAPL', 'AMZN', 'AXP', 'TMUS', 'SHY', 'VGSH','TLT', 'IEF']
+tickers = ['BAC', 'NFLX', 'AFL', 'BBY', 'C', 'T', 'AAPL', 'AMZN', 'AXP', 'TMUS', 'SHY', 'VGSH', 'TLT', 'IEF']
 weights_results = []
 sector_mapper = {'BAC': 'stocks',
                  'NFLX': 'stocks',
@@ -29,7 +28,7 @@ sector_mapper = {'BAC': 'stocks',
                  'AXP': 'stocks',
                  'TMUS': 'stocks',
                  'SHY': 'bonds',
-                 'VGSH': 'bonds',# EOD data issue, not compatible with other data, maybe lack or have more rows than others-does work after delete this one from tickers
+                 'VGSH': 'bonds',
                  'TLT': 'bonds',
                  'IEF': 'bonds'}
 sector_lower = {'stocks': 0.7, 'bonds': 0.3}
@@ -86,7 +85,6 @@ def extract_database_stock(database):
     stocks_df = stocks_df.drop(columns='adjusted_close')
 
     for ticker in tickers:
-        print(ticker)
         stock_select = f"""
             SELECT adjusted_close
             FROM stocks_price
@@ -106,9 +104,9 @@ def find_optimal_sharpe(stocks_df, rf):
     ef = EfficientFrontier(ret, vol)
     ef.add_sector_constraints(sector_mapper, sector_lower, sector_upper)
     ef.add_objective(objective_functions.L2_reg)
-    ef.max_sharpe(rf)
+    ef.max_sharpe(risk_free_rate=rf)
     cleaned_weights = ef.clean_weights()
-    portfolio_ret, portfolio_vol, sharpe_ratio = ef.portfolio_performance(rf)
+    portfolio_ret, portfolio_vol, sharpe_ratio = ef.portfolio_performance(risk_free_rate=rf)
     weights_results.append(cleaned_weights)
 
     portfolio_ret = '{:.2f}'.format(portfolio_ret * 100)
