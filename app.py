@@ -242,7 +242,7 @@ def get_quote():
 @login_required
 def buy():
     if request.method == "POST":
-        symbol = request.form.get('symbol')
+        symbol = request.form.get('symbol').upper()
         if not symbol:
             flash('ERROR! Symbol can not be blank.', 'error')
             return render_template("buy.html")
@@ -319,7 +319,7 @@ def buy():
 @login_required
 def sell():
     if request.method == "POST":
-        symbol = request.form.get('symbol')
+        symbol = request.form.get('symbol').upper()
         if not symbol:
             flash('ERROR! Symbol can not be blank.', 'error')
             return render_template("sell.html")
@@ -369,7 +369,7 @@ def sell():
             price = quote["bidPrice"]
         # Sell at input price
         else:
-            price = float(input_price)
+            price = float(input_price.lstrip('$'))
             if not price > 0:
                 flash('ERROR! Price must be positive.', 'error')
                 return render_template("sell.html")
@@ -401,7 +401,7 @@ def sell():
 @login_required
 def short():
     if request.method == "POST":
-        symbol = request.form.get('symbol')
+        symbol = request.form.get('symbol').upper()
         if not symbol:
             flash('ERROR! Symbol can not be blank.', 'error')
             return render_template("short.html")
