@@ -2104,6 +2104,13 @@ def ei_analysis():
         date_to = str(date_to)
         input['date_from'] = date_from
         input['date_to'] = date_to
+
+        # Check validity of input dates
+        if datetime.strptime(input['date_to'], '%Y%m%d') <= datetime.strptime(input['date_from'], '%Y%m%d') or \
+            datetime.strptime(input['date_to'], '%Y%m%d') > datetime.now():
+            flash("Error! Invalid End Date")
+            return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+
         # returns = get_returns(SPY_component)
         miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
         miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
@@ -2131,7 +2138,6 @@ def plot_ei():
     axis.plot(earnings_impact_data.Miss, label='Miss')
     axis.legend(loc='best')
     axis.axvline(x=30, linewidth=1.0)
-    '''
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2140,7 +2146,6 @@ def plot_ei():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-    '''
 
 
 @app.route('/at_introduction')
