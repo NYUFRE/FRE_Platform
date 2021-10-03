@@ -126,7 +126,7 @@ def OneSample(arr):
     length = arr.shape[-1]
     arr, result = np.array(arr), np.zeros(length)
     for i in range(30):
-        rand = random.randint(0, length)
+        rand = random.randint(0, arr.shape[0] - 1)
         temp = arr[rand]
         result = (i / (i + 1.0)) * result + (1 / (i + 1.0)) * temp
     return result
