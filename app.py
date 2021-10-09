@@ -1087,8 +1087,8 @@ def market_data_sp500():
         database.clear_table(table_list)
         eod_market_data.populate_sp500_data('SPY', 'US')
     select_stmt = """
-    SELECT symbol, name as company_name, sector, industry, 
-            printf("%.2f", weight) as weight 
+    SELECT symbol, name as company_name, sector, industry,
+            printf("%.2f", weight) as weight
     FROM sp500 ORDER BY symbol ASC;
     """
     result_df = database.execute_sql_statement(select_stmt)
@@ -1106,9 +1106,9 @@ def market_data_sp500_sectors():
     if database.check_table_empty('sp500_sectors'):
         eod_market_data.populate_sp500_data('SPY', 'US')
     select_stmt = """
-    SELECT sector as sector_name, 
-            printf("%.4f", equity_pct) as equity_pct, 
-            printf("%.4f", category_pct) as category_pct 
+    SELECT sector as sector_name,
+            printf("%.4f", equity_pct) as equity_pct,
+            printf("%.4f", category_pct) as category_pct
     FROM sp500_sectors ORDER BY sector ASC;
     """
     result_df = database.execute_sql_statement(select_stmt)
@@ -1135,13 +1135,13 @@ def market_data_spy():
         if begin_date <= today:
             eod_market_data.populate_stock_data(['spy'], "spy", begin_date, today, 'US')
     select_stmt = """
-    SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
+    SELECT symbol, date,
+            printf("%.2f", open) as open,
+            printf("%.2f", high) as high,
+            printf("%.2f", low) as low,
             printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close, 
-            volume 
+            printf("%.2f", adjusted_close) as adjusted_close,
+            volume
     FROM spy ORDER BY date DESC;
     """
     result_df = database.execute_sql_statement(select_stmt)
@@ -1167,12 +1167,12 @@ def market_data_us10y():
         if begin_date <= today:
             eod_market_data.populate_stock_data(['US10Y'], "us10y", begin_date, today, 'INDX')
     select_stmt = """
-    SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
+    SELECT symbol, date,
+            printf("%.2f", open) as open,
+            printf("%.2f", high) as high,
+            printf("%.2f", low) as low,
             printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close 
+            printf("%.2f", adjusted_close) as adjusted_close
     FROM us10y ORDER BY date DESC;
     """
     result_df = database.execute_sql_statement(select_stmt)
@@ -1193,14 +1193,14 @@ def market_data_fundamentals():
         eod_market_data.populate_fundamental_data(tickers, 'US')
 
     select_stmt = """
-    SELECT symbol, 
-            printf("%.4f", pe_ratio) as pe_ratio, 
+    SELECT symbol,
+            printf("%.4f", pe_ratio) as pe_ratio,
             printf("%.4f", dividend_yield) as dividend_yield,
-            printf("%.4f", beta) as beta, 
-            printf("%.2f", high_52weeks) as high_52weeks, 
+            printf("%.4f", beta) as beta,
+            printf("%.2f", high_52weeks) as high_52weeks,
             printf("%.2f", low_52weeks) as low_52weeks,
-            printf("%.2f", ma_50days) as ma_50days, 
-            printf("%.2f", ma_200days) as ma_200days 
+            printf("%.2f", ma_50days) as ma_50days,
+            printf("%.2f", ma_200days) as ma_200days
     FROM fundamentals ORDER BY symbol;
     """
     result_df = database.execute_sql_statement(select_stmt)
@@ -1242,13 +1242,13 @@ def market_data_stock():
                 flash('Can\'t find data. Please enter correct ticker name and dates.')
 
         select_stmt = f"""
-        SELECT symbol, date, 
-            printf("%.2f", open) as open, 
-            printf("%.2f", high) as high, 
-            printf("%.2f", low) as low, 
+        SELECT symbol, date,
+            printf("%.2f", open) as open,
+            printf("%.2f", high) as high,
+            printf("%.2f", low) as low,
             printf("%.2f", close) as close,
-            printf("%.2f", adjusted_close) as adjusted_close, 
-            volume 
+            printf("%.2f", adjusted_close) as adjusted_close,
+            volume
         FROM stocks
         WHERE symbol = "{ticker}" AND strftime('%Y-%m-%d', date) BETWEEN "{date1}" AND "{date2}"
         ORDER BY date;
@@ -1825,7 +1825,7 @@ def prcing_fra():
     else:
         return render_template("ap_fra.html", buyer_result = buyer, input = input)
 
-      
+
 @app.route('/ap_swap', methods=['POST', 'GET'])
 @login_required
 def prcing_swap():
@@ -1941,7 +1941,7 @@ def plot_discount_curve():
     response.mimetype = 'image/png'
     return response
 
-  
+
 @app.route('/optimize_introduction')
 @login_required
 def optimize_introduction():
@@ -2146,7 +2146,13 @@ def ei_analysis():
             return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
 
         # returns = get_returns(SPY_component)
-        miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+
+        try:
+            miss, meet, beat, earnings_calendar = slice_period_group(table, date_from, date_to)
+        except ValueError as e:
+            flash(str(e), 'error')
+            return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+
         miss_arr, meet_arr, beat_arr = group_to_array(miss, meet, beat, earnings_calendar, returns)
         miss_arr, meet_arr, beat_arr = BootStrap(miss_arr), BootStrap(meet_arr), BootStrap(beat_arr)
 
@@ -2158,9 +2164,7 @@ def ei_analysis():
         earnings_impact_data.Meet = meet_arr
         earnings_impact_data.Miss = miss_arr
 
-        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
-    else:
-        return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
+    return render_template("ei_analysis.html", BeatInfo=BeatInfo, MeatInfo=MeatInfo, MissInfo=MissInfo, input=input)
 
 
 @app.route('/plot/ei')
@@ -2172,7 +2176,7 @@ def plot_ei():
     axis.plot(earnings_impact_data.Miss, label='Miss')
     axis.legend(loc='best')
     axis.axvline(x=30, linewidth=1.0)
-    
+
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2181,7 +2185,7 @@ def plot_ei():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-    
+
 
 @app.route('/at_introduction')
 @login_required
