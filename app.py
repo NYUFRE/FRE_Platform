@@ -56,7 +56,7 @@ from system.model_optimization.opt_back_test import opt_back_testing, get_result
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
-    load_calendar_from_database
+    load_calendar_from_database, local_earnings_calendar_exists
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 
 from talib import abstract
@@ -2126,12 +2126,17 @@ def ei_introduction():
 
 @app.route("/ei_analysis", methods=["GET", "POST"])
 def ei_analysis():
-    returns = load_returns()
-    SPY_component = database.get_sp500_symbols()
-    table = load_calendar_from_database(SPY_component)
+    if not local_earnings_calendar_exists():
+        flash("Local earnings calendar does not exist. Click Calculate to download data. " + \
+            f"The whole process would take {25}~{30} minutes", 'info')
+
     input = {'date_from': '20190901', 'date_to': '20191201'}
     BeatInfo, MeatInfo, MissInfo = [], [], []
     if request.method == "POST":
+        returns = load_returns()
+        SPY_component = database.get_sp500_symbols()
+        table = load_calendar_from_database(SPY_component)
+
         date_from = request.form.get('date_from')
         date_from = str(date_from)
         date_to = request.form.get('date_to')

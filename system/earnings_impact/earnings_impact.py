@@ -12,7 +12,10 @@ yfin.pdr_override()
 # Import earnings crawler
 from .earnings_crawler import *
 import sys
+import time
 
+
+LOCAL_EARNINGS_CALENDAR_RELATIVE_PATH = "./system/earnings_impact/earnings_calendar_xz.pkl.compress"
 
 def load_returns():
     # fetch spy and 500 stocks then concatenate into a dataframe
@@ -38,21 +41,22 @@ def load_returns():
 
     return returns
 
+def local_earnings_calendar_exists():
+    return os.path.exists(LOCAL_EARNINGS_CALENDAR_RELATIVE_PATH)
 
 def load_local_earnings_impact(SPY_component):
-    compressed_file = "./system/earnings_impact/earnings_calendar_xz.pkl.compress"
+    if not local_earnings_calendar_exists():
+        raise ValueError(f"{LOCAL_EARNINGS_CALENDAR_RELATIVE_PATH} does not exist")
 
-    if not os.path.exists(compressed_file):
-        raise ValueError(f"{compressed_file} does not exist")
-
-    table = pd.read_pickle(compressed_file, compression='xz')
+    table = pd.read_pickle(LOCAL_EARNINGS_CALENDAR_RELATIVE_PATH, compression='xz')
     SPY_component = list(set(list(table['ticker'])))
 
     return table, SPY_component
 
-
 def load_earnings_impact(SPY_component):
     df, failed_tickers, error_messages = [], [], []
+
+    start_time = time.time()
 
     for ticker in tqdm(SPY_component):
         print(f"Processing {ticker}")
@@ -76,6 +80,10 @@ def load_earnings_impact(SPY_component):
         earnings_df = pd.DataFrame(dct)
         df.append(earnings_df)
 
+    end_time = time.time()
+
+    print(f"It took {end_time - start_time} seconds to pull the data")
+
     print("Error messages:")
     for em in error_messages:
         print(em, file=sys.stderr)
@@ -91,10 +99,9 @@ def load_earnings_impact(SPY_component):
     table['epssurprise'] = table['surprise']
     table_refined = table[['ticker', 'startdatetime', 'epssurprise']]
     table_refined = table_refined.dropna(subset=['epssurprise'])
-    table_refined.to_pickle("./system/earnings_impact/earnings_calendar_xz.pkl.compress", compression='xz')
+    table_refined.to_pickle(LOCAL_EARNINGS_CALENDAR_RELATIVE_PATH, compression='xz')
 
     return table_refined, SPY_component
-
 
 def load_calendar_from_database(SPY_component):
     SPY_component = database.get_sp500_symbols()
@@ -118,7 +125,6 @@ def load_calendar_from_database(SPY_component):
 
     return table
 
-
 def slice_period_group(table, date_from, date_to):
     date_from = datetime.strptime(date_from, '%Y%m%d')
     date_to = datetime.strptime(date_to, '%Y%m%d')
@@ -132,7 +138,7 @@ def slice_period_group(table, date_from, date_to):
     if date_to > max(table['startdatetime']):
         os.remove("./system/earnings_impact/earnings_calendar_xz.pkl.compress")
         database.execute_sql_statement("DROP TABLE earnings_calendar;", change=True)
-        raise ValueError("Error: Database is outdated. Try again to update it.")
+        raise ValueError("Error: Database is outdated. Click Calculate again to update it.")
 
     earnings_calendar = table.dropna(subset=['epssurprise'])
     earnings_calendar = earnings_calendar.loc[earnings_calendar['startdatetime'].between(date_from, date_to)]
@@ -149,7 +155,6 @@ def slice_period_group(table, date_from, date_to):
     num = int(len(tickers) / 3)
     lose, draw, beat = tickers[:num], tickers[num:2 * num], tickers[2 * num:]
     return lose, draw, beat, earnings_calendar
-
 
 def group_to_array(lose, draw, beat, earnings_calendar, returns):
     lose_arr = np.zeros((len(lose), 60))
@@ -178,7 +183,6 @@ def group_to_array(lose, draw, beat, earnings_calendar, returns):
             print(ticker, date)
     return lose_arr, draw_arr, beat_arr
 
-
 def OneSample(arr):
     length = arr.shape[-1]
     arr, result = np.array(arr), np.zeros(length)
@@ -189,14 +193,12 @@ def OneSample(arr):
         result = (i / (i + 1.0)) * result + (1 / (i + 1.0)) * temp
     return result
 
-
 def BootStrap(arr):
     length = arr.shape[-1]  # arr is (x, 60)
     arr, result = np.array(arr), np.zeros(length)
     for k in range(30):
         result = (k / (k + 1.0)) * result + (1 / (k + 1.0)) * np.cumsum(OneSample(arr))
     return result
-
 
 class EarningsImpactData:
     def __init__(self):
