@@ -21,7 +21,7 @@ import pandas_market_calendars as mcal
 import plotly
 import plotly.express as px
 import plotly.graph_objs as go
-from flask import flash, abort, redirect, url_for, render_template, session, make_response, request
+from flask import flash, abort, redirect, url_for, render_template, session, make_response, request,send_file
 from flask_login import login_user, current_user, logout_user
 from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -60,7 +60,7 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 
 from talib import abstract
-
+import base64
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -2232,11 +2232,16 @@ def at_analysis():
 def plot_at1():
     table = alphatestdata.table
     table_agg = alphatestdata.table_agg
+    # Create a empty figure when there is missing data
+    if len(table) == 0 or len(table_agg) == 0:
+        gif = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        gif_str = base64.b64decode(gif)
+        return send_file(io.BytesIO(gif_str), mimetype='image/gif')
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
     axis.grid(linestyle='-.')
     axis.plot(table['beta'].cumsum())
-    '''
+
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -2244,16 +2249,22 @@ def plot_at1():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-    '''
+
 
 @app.route('/plot/at2')
 def plot_at2():
     table = alphatestdata.table
     table_agg = alphatestdata.table_agg
+    # Create a empty figure when there is missing data
+    if len(table) == 0 or len(table_agg) == 0:
+        gif = 'R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+        gif_str = base64.b64decode(gif)
+        return send_file(io.BytesIO(gif_str), mimetype='image/gif')
+
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
     axis.bar(table_agg['year'][:-1], table_agg['ic'][:-1])
-    '''
+
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     output = io.BytesIO()
@@ -2261,7 +2272,7 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-    '''
+
 
 
 if __name__ == "__main__":
