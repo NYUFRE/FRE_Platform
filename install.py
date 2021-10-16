@@ -83,6 +83,16 @@ def install(packages):
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', p])
 
 if __name__ == '__main__':
+    python_version = platform.python_version()
+
+    if sys.version_info.major != 3:
+        sys.stderr.write("Installing packages requires python3 (currently running %s).\n" % python_version)
+        sys.exit(1)
+
+    if sys.version_info.minor == 9:
+        sys.stderr.write("python3.9 is incompatible with certain packages. Please switch to a lower python3 version.\n")
+        sys.exit(1)
+
     install(common)
     host_platform = platform.system()
 
