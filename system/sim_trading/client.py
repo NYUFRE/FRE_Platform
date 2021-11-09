@@ -306,7 +306,9 @@ def join_trading_network(q, e):
 
             filled_order_book = [fill_orders for fill_orders in order_book if fill_orders['Status'] in ['Filled']]
             # print(filled_order_book)
-            filled_orderid = [order['OrderIndex'] for order in filled_order_book]
+            filled_orderid = {}
+            for stk in StockInfoDict:
+                 filled_orderid[stk] = [order['OrderIndex'] for order in filled_order_book if order["Symbol"] == stk]
             # print(filled_orderid)
             standing_order_book = [standing_orders for standing_orders in order_book if
                                    standing_orders['Status'] in ['New', 'Partial Filled']]
@@ -331,12 +333,12 @@ def join_trading_network(q, e):
                 # current price is based on filled_order_book
                 if len(base_filled_orderid) == 0:
                     current_price = (stkInfo_object.current_price_buy + stkInfo_object.current_price_sell) / 2
-                    base_filled_orderid = filled_orderid
+                    base_filled_orderid = [order['OrderIndex'] for order in filled_order_book]
                 else:
                     try:
-                        newly_filled_orderid = [orderid for orderid in filled_orderid if
-                                                orderid not in base_filled_orderid]
-                        base_filled_orderid = filled_orderid
+                        newly_filled_orderid = [orderid for orderid in filled_orderid[stk] if
+                                                 orderid not in base_filled_orderid]
+                        base_filled_orderid = filled_orderid[stk]
                         newly_filled_order = [order for order in filled_order_book if
                                               order['OrderIndex'] in newly_filled_orderid]
                         filled_price_list = [order['Price'] for order in newly_filled_order]
@@ -347,17 +349,17 @@ def join_trading_network(q, e):
                     except:  # when no newly filled
                         # print('test')
                         current_price = (stkInfo_object.current_price_buy + stkInfo_object.current_price_sell) / 2
-                #            print("current price for", stk, "P= " current_price)
+                                        #            print("current price for", stk, "P= " current_price)
                 if not stkInfo_object.price_queue.full():
                     stkInfo_object.price_queue.put(current_price)
                     if stkInfo_object.price_queue.full():
                         stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
-                        stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                        stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std()
                 else:  # already full
                     popout = stkInfo_object.price_queue.get()
                     stkInfo_object.price_queue.put(current_price)
                     stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
-                    stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                    stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std()
 
             for stk in StockInfoDict:
                 stkInfo_object = StockInfoDict[stk]
@@ -374,7 +376,7 @@ def join_trading_network(q, e):
                 #            print("MA: ",MA)
                 #            print("Std: ",Std)
                 #            print("sell p:",current_sell)
-                #            print("buy p:",current_buy)
+                #            print("buy p:",current_buy)    
                 if stkInfo_object.position == 0:  # not yet open position, could open
                     if current_sell <= MA - K1 * Std:  # below lower band, go long
                         stkInfo_object.position = 1
@@ -395,9 +397,10 @@ def join_trading_network(q, e):
                             response_data = get_response(q)
                             response_list.append(response_data)
                             client_config.orders.append(response_data)
-                    #                    Trade_object = Trade(stk, response_list)
-                    #                    stkInfo_object.Tradelist.append(Trade_object)
+                            #                    Trade_object = Trade(stk, response_list)
+                            #                    stkInfo_object.trade_list.append(Trade_object)
 
+          
                     elif current_buy >= MA + K1 * Std:  # above upper band, go short
                         stkInfo_object.position = -1
                         client_packet = Packet()
@@ -420,6 +423,7 @@ def join_trading_network(q, e):
                 #                    Trade_object = Trade(stk, response_list)
                 #                    stkInfo_object.Tradelist.append(Trade_object)
 
+                #Closing the current pos
                 elif stkInfo_object.position == 1:  # longing now
                     if current_buy >= MA - 0.75 * K1 * Std:  # above lower bound, sell to close postion
                         client_packet = Packet()
@@ -438,13 +442,13 @@ def join_trading_network(q, e):
                             response_data = get_response(q)
                             response_list.append(response_data)
                             client_config.orders.append(response_data)
-                        #                    Trade_object = stkInfo_object.Tradelist[-1]
-                        #                    Trade_object.CloseTrade(response_list)
-                        #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
+                            # Trade_object = stkInfo_object.trade_list[-1]
+                            # Trade_object.CloseTrade(response_list)
+                            # stkInfo_object.pnl_list.append(Trade_object.pnl)
                         stkInfo_object.qty = 0
                         stkInfo_object.position = 0
-
-                # shorting now
+                    
+                   # shorting now
                 else:
                     if current_sell <= MA + 0.75 * K1 * Std:  # below upper bound, buy to close postion
                         client_packet = Packet()
@@ -463,9 +467,9 @@ def join_trading_network(q, e):
                             response_data = get_response(q)
                             response_list.append(response_data)
                             client_config.orders.append(response_data)
-                        #                    Trade_object = stkInfo_object.Tradelist[-1]
-                        #                    Trade_object.CloseTrade(response_list)
-                        #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
+                            #Trade_object = stkInfo_object.trade_list[-1]
+                            # Trade_object.CloseTrade(response_list)
+                            # stkInfo_object.pnl_list.append(Trade_object.pnl)
                         stkInfo_object.qty = 0
                         stkInfo_object.position = 0
 
