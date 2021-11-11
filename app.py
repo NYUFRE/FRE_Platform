@@ -1313,10 +1313,11 @@ def update_market_data():
         # Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
         database.create_table(['stocks'])
         tickers = database.get_sp500_symbols()
+
         if database.check_table_empty('stocks'):
             # TODO! Use non-multi-threading version for now as EDO data feed has strange behavior after its upgrade
             # eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
-            eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
+            eod_market_data.populate_stock_data(tickers, "stocks", '2010-01-01', today, 'US')
         else:
             select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
             last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
@@ -1966,7 +1967,6 @@ def optimize_build():
                                min_const=min_const, length=length, tickers=tickers)
     except ValueError:
         flash('Error! Portfolio has poor data quality, unable to optimize, please change the portfolio and try again!')
-        #may be can do improvement：present which ticker had the poor data, guide on which ticker to replace
         return render_template("optimize_introduction.html")
 
 
@@ -2037,9 +2037,7 @@ def opt_back_test_plot2():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
-
- # Shan add 2
+    # Shan add 2
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2073,7 +2071,6 @@ def opt_back_test_plot3():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
     # Shan add 3
     axis.grid(True)
     fig.autofmt_xdate()
@@ -2297,3 +2294,54 @@ if __name__ == "__main__":
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
+
+
+@app.route('/stockselect_introduction')
+@login_required
+def stockselect_introduction():
+    return render_template("stockselect_introduction.html")
+
+
+
+# @app.route("/stockselect_build")
+# @login_required
+# def stockselect_build():
+#     try:
+#         stocks = extract_database_stock(database)
+#         print(stocks)
+#         rf = extract_database_rf(database)
+#         max_sharpe = find_optimal_sharpe(stocks, rf)
+#
+#         return render_template('stockselect_build.html')
+#     except ValueError:
+#         flash('Error! There is soething wrong about the database, unable to select, please try again later!')
+#         return render_template("stockselect_introduction.html")
+#
+#
+#
+# @app.route("/stockselect_backtest")
+# @login_required
+# def stockselect_back_test():
+#     xxxxxcum_return = opt_back_testing(database)
+#     return render_template('stockselect_backtest.html')
+#
+# @app.route('/plot/stockselect_back_test_plot')
+# def stockselect_back_test_plot():
+#     #plot overall
+#     fig = go.Figure([go.Scatter(name="Top Stocks Cumulative Return", x=list(date_sym.keys()), y=stock_cumu_return)])
+#     fig.add_trace(go.Scatter(name="Market Cumulative Return", x=list(date_sym.keys()), y=mkt_cumu_return))
+#     fig.show()
+#     # plot individual
+#     for stock in every_stock_cumu.keys():
+#         fig = go.Figure([go.Scatter(name=stock, x=list(final_stock_df[final_stock_df['sym'] == stock]['date'].tolist()),
+#                                     y=every_stock_cumu[stock])])
+#         fig.add_trace(go.Scatter(name="Market Data", x=list(date_sym.keys()), y=return_mkt_arr))
+#         fig.show()
+#
+#     fig.autofmt_xdate()
+#     canvas = FigureCanvas(fig)
+#     output = io.BytesIO()
+#     canvas.print_png(output)
+#     response = make_response(output.getvalue())
+#     response.mimetype = 'image/png'
+#     return response
