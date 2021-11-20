@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block content %}
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        // inlineMath: [ ['$','$'], ["\(","\)"] ],
+        inlineMath: [ ['$','$'], ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
+<script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu+Mono">
+
+<style>
+    th {
+        padding: 30px 0px 20px;
+    }
+    strong {
+        font-size: 18pt;
+    }
+</style>
+
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/technical_indicator_strategy">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/technical_indicator_backtest">Backtest</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/technical_indicator_probtest">Probation Test</a>
+        </li>
+    </ul>
+</nav>
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3 style="margin-bottom: 3em; font-family: Georgia, Serif;"><strong style="font-size: 32pt;;">MEP Trading Strategy</strong></h3>
+    <div align="center" style="margin-bottom: 5em;">
+        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+            <tbody>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            MEP Trading Strategy is a technical indicator based trading strategy that utilizes MACD, 200EMA,
+                            and PSAR to determine the right trading signal whenever this is an opportunity.
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Formulas for Each Indicator</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <b>Exponential Moving Average (EMA):</b> A type of moving average calculation that creates
+                            a series of average values of a rolling window on the full data set and places greater
+                            weight and significance on the most recent data points. The formula for EMA is as follows:
+                        </p>
+                        <p>
+                            $$\mbox{EMA}_{T} = \mbox{Price}_{T} \cdot \frac{\mbox{Smoothing}}{1 + \mbox{Days}} + \mbox{EMA}_{T-1} \cdot \Bigg(1 - \frac{\mbox{Smoothing}}{1 + \mbox{Days}}\Bigg)$$
+                        </p>
+                        <p>
+                            , where Smoothing represents the smoothing factor (typically, we choose 2 for the factor)
+                            and Days represents the window size.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <b>MACD-Signal Line:</b> A trend-following momentum indicator that shows the relationship
+                            between two moving averages of a security's price. MACD stands for Moving Average Convergence
+                            Divergence. The formula is as follows:
+                        </p>
+                        <p>
+                            $$\mbox{MACD} = 12 \mbox{ period EMA} - 26 \mbox{ period EMA}$$
+                        </p>
+                        <p>
+                            Signal line, on the other hand, applies the moving average concept on MACD:
+                        </p>
+                        <p>
+                            $$\mbox{Signal} = 9 \mbox{ period MACD}$$
+                        </p>
+                        <p>
+                            MACD crossing above the Signal line is a <i>BUY</i> signal; MACD crossing below the Signal
+                            line is a <i>SELL</i> signal.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <b>Parabolic SAR:</b> An indicator utilizing a trailing Stop-And-Reverse method named "SAR"
+                            to determine trend direction and potential reversals in price. It appears on a chart as a
+                            series of dots, either above or below the security’s price. When the dot is above the price,
+                            there is a downward trend; when the dot is below the price, there is an upward trend. The
+                            formula for Parabolic SAR is as follows:
+                        </p>
+                        <p>
+                            $$\mbox{RPSAR = Prior PSAR + [Prior AF (Prior EP-Prior PSAR)]}$$
+                        </p>
+                        <p>
+                            $$\mbox{FPSAR = Prior PSAR − [Prior AF (Prior PSAR-Prior EP)]}$$
+                        </p>
+                        <p>
+                            , where RPSAR represents Rising PSAR and FPSAR represents Falling PSAR.
+                        </p>
+                        <p>
+                            AF stands for Acceleration Factor which starts at 0.02 and increases by 0.02, up to a maximum of 0.2, each
+                            time the extreme point makes a new low (FSAR) or high (RSAR).
+                        </p>
+                        <p>
+                            EP stands for Extreme Point, which is the lowest low in the current downtrend (FSAR) or the highest high in
+                            the current uptrend (RSAR).
+                        </p>
+                        <p>
+                            <pre style="font-family: Ubuntu Mono, monospace; color: rgb(235, 59, 130);">
+AF_INIT=0.02
+AF_STRIDE=0.02
+AF_MAX=0.2
+
+PSAR_0=L, EP_0=H, EMP_0=EP-PSAR, AF_0=AF_INIT, DTA_0=(EP-PSAR)*AF, trend_0=up
+
+for t = 1 to N:
+# Update PSAR
+if trend_(t-1) is BULL and PSAR_(t-1) + DTA_(t-1) > Low_t:
+    PSAR_t = EP_(t-1)
+elif trend_(t-1) is BEAR and PSAR_(t-1) + DTA_(t-1) < High_t:
+    PSAR_t = EP_(t-1)
+else:
+    PSAR_t = PSAR_(t-1) + DTA_(t-1)
+# Update Trend
+if PSAR_t < High_t:
+    trend_t = BULL
+else:  # PSAR_t > Low_t
+    trend_t = BEAR
+# Update EP
+if trend_t is BULL and High_t > EP_(t-1):
+    EP_t = High_t
+elif trend_t is BEAR and Low_t < EP_(t-1):
+    EP_t = Low_t
+else:
+    EP_t = EP_(t-1)
+# Update AF
+if trend_t == trend_(t-1):
+    if (trend_t is BULL and EP_t > EP_(t-1)) or (trend_t is BEAR and EP_t < EP_(t-1)):
+        AF_t = min(AF_MAX, AF_(t-1)+AF_STRIDE)
+    else:
+        AF_t = AF_(t-1)
+else:
+    AF_t = AF_INIT
+# Update EMP
+EMP_t = EP_t - PSAR_t
+# Update DTA
+DTA_t = EMP_t * AF_t
+                            </pre>
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Trading Algorithm</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <pre style="font-family: Ubuntu Mono, monospace; color: rgb(235, 59, 130);">
+alpha := a percentage value of total balance
+delta := a multiplier for limit order price
+gamma := a multiplier for stop-loss order price
+
+# The interceptions only appear on both ends, not in the middle
+intervals V := the collection of time intervals bounded by the interceptions of MACD line and Signal line
+
+for each time interval Vi in V:
+    # Scenario 1
+    if MACD line is above Signal line:
+        find the time ti where Parabolic SAR shows uptrend
+        if price_t > 200 EMA line:
+            initiate a long position with alpha * total balance
+            calculate the difference d := price_t – PSAR_t
+            # Note: Once a limit is reached, the position will be closed.
+            set upper limit to be delta * (price_t + d) and lower limit to be gamma * (price_t – d)
+    # Scenario 2
+    if MACD line is below Signal line:
+        find the time ti where Parabolic SAR shows downtrend
+        if price_t < 200 EMA line:
+            initiate a short position with alpha * total balance
+            calculate the difference d := PSAR_t – price_t
+            set upper limit to be gamma * (price_t + d) and lower limit to be delta * (price_t – d)
+
+# Note: For scenario 1, (price_t + d) is the price for limit order and (price_t – d) is the price for stop-loss order;
+        for scenario 2, (price_t + d) is the price for stop-loss order and (price_t – d) is the price for limit order.
+                            </pre>
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Resource Links</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://www.investopedia.com/terms/e/ema.asp">Exponential Moving Average</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://www.investopedia.com/terms/m/macd.asp">Moving Average Convergence Divergence</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://www.investopedia.com/trading/introduction-to-parabolic-sar/">Parabolic SAR</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3204667">A Review of Fundamental and Technical Stock Analysis Techniques</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://www.researchgate.net/publication/319545394_ENTREPRENEURSHIP_ON_THE_FINANCIAL_MARKETS_BASED_ON_THE_SELECTED_INDICATOR_TECHNICAL_ANALYSIS">Entrepreneurship of the Financial Markets Based on the Selected Indicator Technical Analysis</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://www.academia.edu/8463475/CAN_TECHNICAL_ANALYSIS_BEAT_FUNDAMENTAL">Can Technical Analysis Beat Fundamental?</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <a href="https://jrmi.au.edu/index.php/jrmi/article/view/156">The Effectiveness of Confirming Indicators: A Case Study of Stocks in Thailand</a>
+                        </p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+<br></br>
+<br></br>
+{% endblock %}

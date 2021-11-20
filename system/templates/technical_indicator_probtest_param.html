@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    main, div {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    main {
+        margin-bottom: 3em;
+    }
+    main > div {
+        width: 75%;
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+    h2, h3, h3, h4, h5 {
+        text-align: left;
+    }
+    h1 {
+        font-size: 32pt;
+        margin-top: 32px;
+        margin-bottom: 32px;
+    }
+    h2 {
+        font-size: 24pt;
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+    h3 {
+        font-size: 16pt;
+        margin-top: 16px;
+        margin-bottom: 16px;
+    }
+    p {
+        text-align: left;
+    }
+</style>
+
+<body>
+    <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_strategy">Introduction</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_backtest">Backtest</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_probtest">Probation Test</a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+        <h1>MEP Strategy Probation Test</h1>
+        <div class="form-group">
+            <form action="/technical_indicator_probtest" id="mep_strategy_probtest_form" method="POST">
+                <table>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Probation period start date:</p></td>
+                        <td><input type="date" name="probtest_period_start_date" value="2019-01-01" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Probation period end date:</p></td>
+                        <td><input type="date" name="probtest_period_end_date" value="2021-11-05" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">STOCK Symbol:</p></td>
+                        <td><input type="text" name="probtest_stock" value="SPY" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">ALPHA Value:</p></td>
+                        <td><input type="number" step="0.01" name="probtest_alpha" value="0.3" style="width: 200px;" required="required" min="0.05" max="0.35"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">DELTA Value:</p></td>
+                        <td><input type="number" step="0.01" name="probtest_delta" value="0.1" style="width: 200px;" required="required" min="0.1" max="1.9"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">GAMMA Value:</p></td>
+                        <td><input type="number" step="0.01" name="probtest_gamma" value="0.1" style="width: 200px;" required="required" min="0.1" max="1.9"></td>
+                    </tr>
+                </table>
+                <div style="height:100px; justify-content: center; margin-top: 5em;"><input style="margin-left: auto; margin-right: auto;" type="submit" value="submit"/></div>
+            </form>
+        </div>
+    </main>
+</body>
+{% endblock %}
