@@ -43,10 +43,10 @@ stockselect_introduction
             </tr>
             <tr>
                 <td width="881" valign="top">
-                    <p> Use data from 2010-01-01 to 2020-12-31 as input data to predict stock price, then calculate predicted sharpe ratio.</p>
-                    <p> Generate four different optimal portfolio using PyPortfolioOpt package.
                     </p>
-                    <p>Demonstrate 4 portfolios' Return, Volatility, and Sharpe Ratio.</p>
+                    <p> A simple LSTM Model is used in this section to predict stock price.</p>
+                    <p> Historical price data are from 2010-01-01 to 2020-12-31, which are used as inputs to predict stock price, then calculate predicted sharpe ratio.</p>
+                    <p> Get the top stock from each sector based on the rank of the predicted Sharpe ratio to generate an equal-weighted sector-neutral portfolio.
                 </td>
             </tr>
             <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
@@ -58,8 +58,12 @@ stockselect_introduction
             </tr>
             <tr>
                 <td width="881" valign="top">
-                    <p> Use data from 2021-01-01 to the latest trading day to back test the model.
-                        Compare and plot graphs of cumulative daily returns for the portfolio and SPY 500</p>
+                    <p> Use data from 2021-01-01 to the latest trading day to back test the model to check if the portfolio beat the market.
+                    </p>
+                    <p> Three sets of graphs provided
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Portfolio Daily Return vs S&P 500.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Portfolio Cumulative Daily Return vs S&P 500.
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Individual Top Stock Cumulative Daily Return vs S&P 500.</p>
                 </td>
             </tr>
             </tbody>

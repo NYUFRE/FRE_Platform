@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
 {% block title %}
-stockselect_introduction
+stockselect_build_model
 {% endblock %}
 
 {% block content %}
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
-            <a class="nav-link active" href="/stockselect_introduction">Introduction</a>
+            <a class="nav-link " href="/stockselect_introduction">Introduction</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/stockselect_build">Build Portfolio</a>
+            <a class="nav-link active" href="/stockselect_build">Stock Select</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/stockselect_back_test">Back Testing</a>
+            <a class="nav-link" href="/stockselect_back_test">Back Test</a>
         </li>
     </ul>
 </nav>
@@ -22,40 +22,22 @@ stockselect_introduction
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
 	<h3>Top stocks selected</h3>
 	<div class="table-responsive">
-		<p></p>
-        <h3>Maximize Sharpe Ratio</h3>
 		<table class="table table-striped">
 			<thead>
 				<tr>
-					<th style="text-align:center">Symbol</th>
-					<th style="text-align:center">Weight %</th>
+					<th style="text-align:center">Sector</th>
+					<th style="text-align:center">Stock</th>
+					<th style="text-align:center">Predicted Sharpe Ratio</th>
 				</tr>
 			</thead>
 			<tbody>
-				{% for i in range(length) %}
-                <tr>
-                    <td>{{tickers[i]}}</td>
-					<td>{{max_sharpe[0][tickers[i]]}} %</td>
-                </tr>
-                <tr>
-                </tr>
-				{%endfor%}
-            </tbody>
-		</table>
-		<table class="table table-striped">
-			<thead>
+                {% for i in range(length) %}
 				<tr>
-					<th style="text-align:center">Return</th>
-					<th style="text-align:center">Volatility</th>
-					<th style="text-align:center">Sharpe Ratio</th>
+					<td>{{top_stocks[i][0]}}</td>
+					<td>{{top_stocks[i][1]}}</td>
+					<td>{{top_stocks[i][2]}}</td>
 				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>{{max_sharpe[1]}} %</td>
-					<td>{{max_sharpe[2]}} %</td>
-					<td>{{max_sharpe[3]}}</td>
-				</tr>
+                {%endfor%}
 			</tbody>
 		</table>
     </div>

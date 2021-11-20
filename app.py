@@ -53,6 +53,8 @@ from system.model_optimization.optimization import create_database_table, extrac
 from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
 from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
 from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
+from system.stock_select.stock_select import extract_database_sector, extract_database_rf_10yr, extract_database_stock_10yr, build_model_predict_select, get_top_stocks
+from system.stock_select.stock_select_back_test import extract_database_mkt, extract_database_rf_10yr, extract_database_stock_10yr, stock_select_back_test
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
@@ -60,7 +62,10 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 
 from talib import abstract
+import pdfkit
 import base64
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -2280,9 +2285,66 @@ def plot_at2():
     return response
 
 
+@app.route('/stockselect_introduction')
+@login_required
+def stockselect_introduction():
+    flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
+    return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_build")
+@login_required
+def stockselect_build():
+    try:
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        sector = extract_database_sector(database)
+        global top_stocks_list
+        top_stocks_list = build_model_predict_select(stocks_10yr, rf, sector)
+        # top_stocks = get_top_stocks() #重新跑model时候，恢复上面的，这行是要去掉的
+        length = len(top_stocks_list)
+
+        return render_template('stockselect_build.html', length=length, top_stocks=top_stocks_list)
+
+    except ValueError:
+        flash('Error! There is something wrong about the database, unable to select stocks, please contact IT!')
+        return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_back_test")
+@login_required
+def stockselect_back_test():
+
+    if  len(top_stocks_list) == 0:
+        flash('Please click on "select stock" before run the back test!')
+        return render_template("stockselect_introduction.html")
+    else:
+        top_stocks = []
+        res = top_stocks_list
+        for i in range(len(res)):
+            top_stocks.append(res[i][1])
+        mkt_test = extract_database_mkt(database)
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
+        return render_template('stockselect_backtest.html', images_back_test=images_back_test)
+
+# @app.route("/download_pdf")
+# @login_required
+# def download_pdf():
+#
+#     pdf = pdfkit.from_file('./system/templates/stockselect_backtest.html', 'out.pdf')
+#     return pdf
+
+
+
+
+
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
+    global top_stocks_list
+    top_stocks_list = []
     database.create_table(table_list)
     add_admin_user()
 
@@ -2296,52 +2358,9 @@ if __name__ == "__main__":
         sys.exit(0)
 
 
-@app.route('/stockselect_introduction')
-@login_required
-def stockselect_introduction():
-    return render_template("stockselect_introduction.html")
 
 
 
-# @app.route("/stockselect_build")
-# @login_required
-# def stockselect_build():
-#     try:
-#         stocks = extract_database_stock(database)
-#         print(stocks)
-#         rf = extract_database_rf(database)
-#         max_sharpe = find_optimal_sharpe(stocks, rf)
-#
-#         return render_template('stockselect_build.html')
-#     except ValueError:
-#         flash('Error! There is soething wrong about the database, unable to select, please try again later!')
-#         return render_template("stockselect_introduction.html")
-#
-#
-#
-# @app.route("/stockselect_backtest")
-# @login_required
-# def stockselect_back_test():
-#     xxxxxcum_return = opt_back_testing(database)
-#     return render_template('stockselect_backtest.html')
-#
-# @app.route('/plot/stockselect_back_test_plot')
-# def stockselect_back_test_plot():
-#     #plot overall
-#     fig = go.Figure([go.Scatter(name="Top Stocks Cumulative Return", x=list(date_sym.keys()), y=stock_cumu_return)])
-#     fig.add_trace(go.Scatter(name="Market Cumulative Return", x=list(date_sym.keys()), y=mkt_cumu_return))
-#     fig.show()
-#     # plot individual
-#     for stock in every_stock_cumu.keys():
-#         fig = go.Figure([go.Scatter(name=stock, x=list(final_stock_df[final_stock_df['sym'] == stock]['date'].tolist()),
-#                                     y=every_stock_cumu[stock])])
-#         fig.add_trace(go.Scatter(name="Market Data", x=list(date_sym.keys()), y=return_mkt_arr))
-#         fig.show()
-#
-#     fig.autofmt_xdate()
-#     canvas = FigureCanvas(fig)
-#     output = io.BytesIO()
-#     canvas.print_png(output)
-#     response = make_response(output.getvalue())
-#     response.mimetype = 'image/png'
-#     return response
+
+
+
