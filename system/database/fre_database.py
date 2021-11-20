@@ -378,6 +378,10 @@ class FREDatabase:
         portfolio['username'] = username
         portfolio['cash'] = cash
 
+        print(portfolio['symbol'])
+        print('---')
+        print(portfolio['shares'])
+
         return portfolio
 
     def get_transaction(self, uid: int) -> Dict[str, Union[List[str], List[float], List[int]]]:

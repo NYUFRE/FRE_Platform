@@ -58,6 +58,7 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database, local_earnings_calendar_exists
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
 import base64
@@ -241,6 +242,19 @@ def get_quote():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
+    # Warning if exceeded risk threshold
+    ### Get threshold
+    threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
+
+    if len(threshold_db):
+        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+        ### Calculate VaR
+        port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+        port_var_value, _ = port_var_obj.GARCH_method()
+        print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
+        if port_var_value < -float(threshold_db['var_threshold']):
+            flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
+
     if request.method == "POST":
         symbol = request.form.get('symbol').upper()
         if not symbol:
@@ -2282,7 +2296,79 @@ def plot_at2():
     response.mimetype = 'image/png'
     return response
 
+@app.route('/risk_management', methods=["GET", "POST"])
+@login_required
+def risk_management():
+    params = {'method': "", 'confidence_level': 99, 'period':1}
+    threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
+        if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
+        else database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+    result = {'var': 0, 'es': 0, 'var_hist': None}
 
+    if request.method == 'POST':
+        # Get parameters from form
+        form_input = request.form
+        ### VaR params
+        params['method'] = form_input.get('VaR_methods')
+        params['confidence_level'] = form_input.get('confidence_level')
+        params['period'] = form_input.get('period')
+        ### VaR thresholds
+        threshold['enable_threshold'] = form_input.get('enable_threshold')
+        threshold['confidence_threshold'] = form_input.get('confidence_threshold')
+        threshold['period_threshold'] = form_input.get('period_threshold')
+        threshold['var_threshold'] = form_input.get('var_threshold')
+
+        # Set threshold
+        set_risk_threshold(database, threshold)
+        threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
+        if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
+        else database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+
+        # Calculate VAR and return value
+        port_var = VaR(int(params['confidence_level']), int(params['period']))
+        if params['method'] == 'hist_sim':
+            result['var'], result['es'], result['var_hist'] = port_var.historical_simulation_method()
+        elif params['method'] == 'garch':
+            result['var'], result['es'], result['var_hist'] = port_var.GARCH_method()
+        elif params['method'] == 'EVT':
+            result['var'], result['es'] = port_var.extreme_value_method()
+        elif params['method'] == 'caviar_sav':
+            result['var'], result['es'], result['var_hist'] = port_var.caviar_SAV()
+        elif params['method'] == 'caviar_as':
+            result['var'], result['es'], result['var_hist'] = port_var.caviar_AS()
+        else:
+            flash("Invalid method selected")
+
+        # Populate VaR_data for plotting
+        if result['var_hist'] is not None:
+            var_data.date = result['var_hist'].index[-1000:]
+            var_data.port_returns = result['var_hist']['port_returns'][-1000:]
+            var_data.VaR = result['var_hist']['VaR'][-1000:]
+
+        # Rendering webpage
+        return render_template('risk_management.html', params=params, threshold=threshold, result=result)
+    else:
+        return render_template('risk_management.html', params=params, threshold=threshold, result=result)
+
+
+@app.route('/plot/var')
+def plot_var():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+    # line = np.zeros(len(port_var))
+    axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
+    axis.plot(var_data.date, var_data.VaR, label='VaR')
+
+    axis.legend(loc='best')
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
