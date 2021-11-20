@@ -5,9 +5,10 @@
 		<li class="nav-item">
             <a class="nav-link" href="/sim_server_up">Launch Server</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/sim_auto_trading">Auto Trading</a>
+		<li class="nav-item">
+            <a class="nav-link" href="/sim_choose_strat">Choose Strategy</a>
         </li>
+        
         <li class="nav-item">
             <a class="nav-link" href="/sim_server_down">Stop Server</a>
         </li>
@@ -115,6 +116,104 @@
 	
 		<p>
 			<i>Reference:</i> Zicheng He, Capstone Project Report, Fall 2020
+		</p>
+	</div>
+
+	<h3><strong>Relative Strength Index Momentum Trading Model</strong></h3>
+	<br>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Relative Strength Index (RSIs) are a type of momentum oscillator developed in 1978.
+							The RSI provides insight on the bullish or bearish price momentum by indicating whether an asset is overbought or oversold. 
+							RSI oscillate between 0 and 100, traditional interpretation is when RSI are above 70, the asset is becoming overbought or overvalued,
+							and when RSI is below 30, the asset is oversold or undervalued. 
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Stock Selection</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Within S&P500 component pool, select 4 stocks with highest 1-minute volatility over the last month of the historical data part.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Reason: 
+                            1.	S&P 500 components are with large size, high liquidity.
+                            2.	The volatility among minutes for one-month intraday price data are checked for generating trading signals)
+                            3.	Higher volatility may trigger signals more often, more signals can lead better test the efficacy of trading model (i.e. training params)
+
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Relative Strength Index Momentum Trading Logic</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) The H-period relative strength (RS). The relative strength is the average of H-period positive gain divide by H-period negative gain.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Relative strength index (RSI) : RSI can be calculated by 100 - 100/(1+RS). In this strategy, we denote RSI as current period relative strength index.
+							Prev_RSI as the previous period relative strength index.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Centerline, Upper and Lower Bound : The centerline for RSI is 50, and the default upper bound is 70, default lower bound is 30.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Open Trades:
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open long position if Current RSI > Centerline and Prev_RSI < Centerline, buy the stock
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Open short position if Current RSI < Centerline and Prev_RSI > Centerline Centerline, short the stock
+						</p>
+					</td>
+				</tr>
+				<td width="881" valign="top">
+						<p>
+							5) Close Trades:
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open long positions when Current RSI < Upper and Prev_RSI > Upper
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Or Close the open long positions when Current RSI < Centerline
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open short positions when Current RSI > Lower and Prev_RSI < Lower
+								<br>&nbsp;&nbsp;&nbsp;&nbsp;• Or Close the open short positions when Current RSI > Centerline
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<br>
+	
+		<p>
+			<i>Reference:</i> Kim Zhang, Capstone Project Report, Fall 2021
 		</p>
 	</div>
 
