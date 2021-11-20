@@ -250,7 +250,7 @@ def buy():
         threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
         ### Calculate VaR
         port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
-        port_var_value, _, _ = port_var_obj.GARCH_method()
+        port_var_value, _ = port_var_obj.GARCH_method()
         print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
         if port_var_value < -float(threshold_db['var_threshold']):
             flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
@@ -2331,7 +2331,7 @@ def risk_management():
         elif params['method'] == 'garch':
             result['var'], result['es'], result['var_hist'] = port_var.GARCH_method()
         elif params['method'] == 'EVT':
-            result['var'], result['es'], result['var_hist'] = port_var.extreme_value_method()
+            result['var'], result['es'] = port_var.extreme_value_method()
         elif params['method'] == 'caviar_sav':
             result['var'], result['es'], result['var_hist'] = port_var.caviar_SAV()
         elif params['method'] == 'caviar_as':

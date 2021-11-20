@@ -3,7 +3,7 @@ import pandas as pd
 from system import database
 import yfinance as yf
 from typing import *
-import datetime
+from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt
 from arch import arch_model
@@ -14,8 +14,7 @@ from flask import session
 from system import eod_market_data
 from scipy.optimize import minimize
 
-# Cache data for stock returns
-port_returns_data = None
+
 class VaR:
     def __init__(self, confidence_level: int, days: int = 1) -> None:
         self.confidence_level = confidence_level
@@ -32,15 +31,6 @@ class VaR:
         :param period:
         :return: dataframe of returns
         '''
-        # Get cached data if available
-        global port_returns_data
-        if port_returns_data is not None:
-            cached_date = port_returns_data.index[-1].to_pydatetime().strftime('%Y-%m-%d')
-            calculating_date = [(datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in [0, 1]]
-        cached = port_returns_data is not None and cached_date in calculating_date
-        if cached:
-            return port_returns_data
-
         data = pd.DataFrame(eod_market_data.get_daily_data(symbol=symbols[0], start='', end='', category='US'))\
                                 [['date', 'adjusted_close']]
         data['date'] = pd.to_datetime(data.date)
@@ -61,8 +51,6 @@ class VaR:
         data = data[symbols].pct_change(periods=interval).dropna()
         port_weight = [share / np.sum(shares) for share in shares]
         data['port_returns'] = data.dot(port_weight)
-        port_returns_data = data[['port_returns']] # save result into cache
-
         return data[['port_returns']]
 
 
@@ -73,21 +61,18 @@ class VaR:
         :return: VaR, expected loss
         '''
         # Calculate portfolio return
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
 
         # Calculate historical VaR (for plotting purpose)
         percentile_select = lambda x: np.percentile(x, 100 - self.confidence_level)
         port_returns['VaR'] = port_returns['port_returns'].rolling(window).apply(percentile_select)
 
         # Calculate VaR and Expected Shortfall
-        VaR_value = np.percentile(port_returns['port_returns'][-window:], 100 - self.confidence_level)
+        VaR_latest = np.percentile(port_returns['port_returns'][-window:], 100 - self.confidence_level)
         expected_shortfall = np.mean([port_return for port_return in port_returns['port_returns'][-window:]\
-                                      if port_return < VaR_value])
-        # Adjust for days
-        VaR_value = min(VaR_value * np.sqrt(self.days), 1)
-        expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
+                                      if port_return < VaR_latest])
 
-        return round(VaR_value*100, 4), round(expected_shortfall*100, 4), port_returns
+        return round(VaR_latest*100, 4), round(expected_shortfall*100, 4), port_returns
 
 
     def GARCH_method(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
@@ -98,7 +83,7 @@ class VaR:
         from arch.__future__ import reindexing
         # Calculate portfolio parameters( 1. returns; 2. mean return; 3. standard deviation)
         port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
-        port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
+        port_returns = port_returns[-window:] if window >= len(port_returns) else port_returns
         ## Rescale for optimization
         port_returns['port_returns_rescaled'] = port_returns['port_returns'] * 100
 
@@ -117,9 +102,6 @@ class VaR:
         # Calculate VaR, expected shortfall
         VaR_value = t.ppf(1-self.confidence_level*0.01, df=len(port_returns)-1, loc = mean_port_return, scale=forecast_std)
         expected_shortfall = t.expect(args=(len(port_returns)-1,), loc=mean_port_return, scale=forecast_std, ub=VaR_value, conditional=True)
-        # Adjust for days
-        VaR_value = min(VaR_value * np.sqrt(self.days), 1)
-        expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
 
         # Populate historical VaR_GARCH (current with forward looking bias else it takes too much time to fit every time)
         port_returns['sigma2'] = 0
@@ -131,9 +113,7 @@ class VaR:
         port_returns['sigma'] = port_returns['sigma2']**0.5
         port_returns['VaR'] = -port_returns['sigma'] * t(garch_model.params['nu']).ppf(1-self.confidence_level*0.01) * \
                               ((garch_model.params['nu'] - 2)/(garch_model.params['nu']))**0.5
-        port_returns['VaR'] = -port_returns['VaR']*np.sqrt(self.days)/100
-
-        #print(port_returns)
+        port_returns['VaR'] = -port_returns['VaR']/100
 
         return round(VaR_value,4), round(expected_shortfall,4), port_returns
 
@@ -145,8 +125,8 @@ class VaR:
         '''
 
         # Calculate portfolio return
-        port_returns = VaR.port_return(self.symbols, self.shares)
-        port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
+        port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
+        port_returns = port_returns[-window:] if window >= len(port_returns) else port_returns
 
         # Find the start of the tails <- Fit t-distribution to historical portfolio return
         fit_df, fit_loc, fit_scale = t.fit(port_returns['port_returns']) # (df, loc, scale)
@@ -159,7 +139,7 @@ class VaR:
         sim_port_returns = []
 
         for i in range(n_sim):
-            rand_return = random.choice(port_returns['port_returns']) # Random select past return
+            rand_return = random.choice(port_returns) # Random select past return
             if rand_return < return_lower_tail:
                 # Draw return from t-distribution lower tail
                 sim_tail_return = t.rvs(df=fit_df, loc=fit_loc, scale=fit_scale) # bug: not select point at wanted tail
@@ -178,9 +158,8 @@ class VaR:
         VaR_value = np.percentile(sim_port_returns, 100-self.confidence_level)
         expected_shortfall = np.mean([sim_return for sim_return in sim_port_returns if sim_return < VaR_value])
 
-        # Adjust for days
-        VaR_value = min(VaR_value * np.sqrt(self.days), 1)
-        expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
+        print(VaR_value)
+        print(expected_shortfall)
 
         # Populate historical VaR --
 
@@ -189,7 +168,7 @@ class VaR:
     def caviar_SAV(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
         port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
-        port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
+        port_returns = port_returns[-window:] if window >= len(port_returns) else port_returns
 
         # historical var -> use as first value
         emp_quantile = np.percentile(port_returns['port_returns'], 1 - self.confidence_level*0.01)
@@ -215,15 +194,10 @@ class VaR:
         beta = output.x
 
         for i in range(1, len(port_returns)):
-            port_returns['VaR'][i] = (beta[0] + beta[1]*port_returns['VaR'][i-1] + \
-                                      beta[2]*abs(port_returns['port_returns'][i-1])) * np.sqrt(self.days)
+            port_returns['VaR'][i] = beta[0] + beta[1]*port_returns['VaR'][i-1] + beta[2]*abs(port_returns['port_returns'][i-1])
 
         VaR_value = beta[0] + beta[1]*port_returns['VaR'][-1] + beta[2]*abs(port_returns['port_returns'][-1])
-        expected_shortfall = (1 + np.exp(min(beta))) * VaR_value # min here only try to get a small arbitrary number (not theoretical based)
-
-        # Adjust for days
-        VaR_value = min(VaR_value * np.sqrt(self.days), 1)
-        expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
+        expected_shortfall = (1 + np.exp(min(beta))) * VaR_value
 
         return round(VaR_value*100, 4), round(expected_shortfall*100, 4), port_returns
 
@@ -231,7 +205,7 @@ class VaR:
     def caviar_AS(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
         port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
-        port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
+        port_returns = port_returns[-window:] if window >= len(port_returns) else port_returns
 
         # historical var -> use as first value
         emp_quantile = np.percentile(port_returns['port_returns'], 1 - self.confidence_level*0.01)
@@ -263,18 +237,14 @@ class VaR:
         for i in range(1, len(port_returns)):
           return_plus = port_returns['port_returns'][i-1] if port_returns['port_returns'][i-1] >= 0 else 0
           return_minus = port_returns['port_returns'][i-1] if port_returns['port_returns'][i-1] <= 0 else 0
-          port_returns['VaR'][i] = (beta_as[0] + beta_as[1]*port_returns['VaR'][i-1] + \
-                                   beta_as[2]*return_plus + beta_as[3]*return_minus) * np.sqrt(self.days)
+          port_returns['VaR'][i] = beta_as[0] + beta_as[1]*port_returns['VaR'][i-1] + \
+                                   beta_as[2]*return_plus + beta_as[3]*return_minus
 
         return_plus = port_returns['port_returns'][-1] if port_returns['port_returns'][-1] >= 0 else 0
         return_minus = port_returns['port_returns'][-1] if port_returns['port_returns'][-1] <= 0 else 0
         VaR_value = beta_as[0] + beta_as[1]*port_returns['VaR'][-1] + \
                     beta_as[2]* return_plus + beta_as[3]* return_minus
-        expected_shortfall = (1 + np.exp(min(beta))) * VaR_value # min here only try to get a small arbitrary number (not theoretical based)
-
-        # Adjust for day
-        VaR_value = min(VaR_value * np.sqrt(self.days), 1)
-        expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
+        expected_shortfall = (1 + np.exp(min(beta))) * VaR_value
 
         return round(VaR_value * 100,4), round(expected_shortfall*100, 4), port_returns
 
