@@ -56,3 +56,4 @@ yfinance==0.1.63
 tqdm==4.62.1
 TA_Lib-0.4.21-cp38-cp38-win_amd64.whl
 pyportfolioopt==1.4.2
+scikit-learn == 1.0.1
