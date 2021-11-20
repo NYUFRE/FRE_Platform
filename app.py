@@ -2301,7 +2301,6 @@ def stockselect_build():
         sector = extract_database_sector(database)
         global top_stocks_list
         top_stocks_list = build_model_predict_select(stocks_10yr, rf, sector)
-        # top_stocks = get_top_stocks() #重新跑model时候，恢复上面的，这行是要去掉的
         length = len(top_stocks_list)
 
         return render_template('stockselect_build.html', length=length, top_stocks=top_stocks_list)

@@ -24,15 +24,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 
-top_stocks_res = [] #要恢复的， 下面注释掉
-# top_stocks_res = [["Technology", "CDAY", 0.5084448084148229], ["Consumer Cyclicals", "MHK", 0.2309246121838686],['Communication Services','GOOG',0.3595421289718121],
-#                       ['Financial Services','COF', 0.32354740302580615], ['Healthcare','OGN',0.4680826119800676], ['Consumer Defensive','COST', 0.24867235116256786],
-#                       ['Energy','OKE',0.30835734657071145], ['Basic Materials','NUE',0.2707254014392585], ['Utilities', 'DUK', 0.1984543789672999], ['Industrials', 'AVY',0.3897337106016211],
-#                       ['Real Estate', 'MAA', 0.3247365404443218]]
-# top_stocks_res = [["Technology", "FLT", 0.5084448084148229], ["Consumer Cyclicals", "GM", 0.2309246121838686],['Communication Services','FB',0.3595421289718121],
-#                       ['Financial Services','BRKB', 0.32354740302580615], ['Healthcare','HCA',0.4680826119800676], ['Consumer Defensive','TGT', 0.24867235116256786],
-#                       ['Energy','KMI',0.30835734657071145], ['Basic Materials','FCX',0.2707254014392585], ['Utilities', 'EXC', 0.1984543789672999], ['Industrials', 'NLSN',0.3897337106016211],
-#                       ['Real Estate', 'SPG', 0.3247365404443218]] #just change stock names, not the value--try do the backtest
+top_stocks_res = []
 
 # Select Data
 def extract_database_sector(database):
