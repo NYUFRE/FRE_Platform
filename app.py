@@ -2338,7 +2338,6 @@ def risk_management():
             result['var'], result['es'], result['var_hist'] = port_var.caviar_AS()
         else:
             flash("Invalid method selected")
-
         # Populate VaR_data for plotting
         if result['var_hist'] is not None:
             var_data.date = result['var_hist'].index[-1000:]
