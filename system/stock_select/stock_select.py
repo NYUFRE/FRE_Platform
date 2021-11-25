@@ -64,6 +64,7 @@ def extract_database_stock_10yr(database):
                     """
     df_stock_10yr = database.execute_sql_statement(stock_select)
     df_stock_10yr = df_stock_10yr.sort_values(by=['symbol', 'date'])
+    df_stock_10yr.index = pd.RangeIndex(1, len(df_stock_10yr.index)+1)
     return df_stock_10yr
 
 
@@ -86,6 +87,8 @@ def build_model_predict_select(df_stock_10yr, df_rf, df_sector):
     date_dict = {}  # key --> sym : value --> the start date of the test data
     for sym in df_stock_10yr['symbol'].unique():
         sym_df = df_stock_10yr.loc[df_stock_10yr['symbol'] == sym]
+        if "2021" in str(sym_df.at[sym_df.index[0], "date"]):
+            continue
         dataset = sym_df['adjusted_close'].values.reshape(-1, 1)
 
         # normalize the dataset
@@ -186,7 +189,9 @@ def build_model_predict_select(df_stock_10yr, df_rf, df_sector):
     for sym in sector_dict.keys():
         if not sector_dict[sym] in sector_sym_r.keys():
             sector_sym_r[sector_dict[sym]] = {}
-        sector_sym_r[sector_dict[sym]][sym] = SR[sym]
+        else:
+            if sym in SR.keys():
+                sector_sym_r[sector_dict[sym]][sym] = SR[sym]
 
     # Sort the stock results in each sector based on the ratio
     for key in sector_sym_r.keys():
