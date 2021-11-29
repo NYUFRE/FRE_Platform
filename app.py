@@ -13,6 +13,7 @@ import time
 import warnings
 from datetime import datetime, timedelta
 from sys import platform
+import flask_sqlalchemy
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -951,6 +952,7 @@ def sim_server_up():
         client_config.server_tombstone = False
         server_thread = threading.Thread(target=(start_server_process))
         server_thread.start()
+        print("Launching Server")
 
         while not client_config.server_ready:
             pass
@@ -1011,10 +1013,21 @@ def sim_server_down():
 
     return render_template("sim_server_down.html")
 
+@app.route('/sim_choose_strat', methods= ["GET","POST"])
+@login_required
+def sim_choose_strat():
+    if request.method == "POST":
+        strategy = request.form.get('strategy')
+        return sim_auto_trading(strategy)
+        # return redirect(url_for("sim_auto_trading"),strategy)
+
+        # TODO warning takes 30 minutes , also warning server not up
+    else:
+        return render_template("sim_choose_strat.html")
 
 @app.route('/sim_auto_trading')
 @login_required
-def sim_auto_trading():
+def sim_auto_trading(strategy = None):
     if client_config.server_ready:
         if not client_config.client_thread_started:
             client_config.client_thread_started = True
@@ -1035,7 +1048,7 @@ def sim_auto_trading():
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_thread = threading.Thread(target=join_trading_network,
-                                                           args=(trading_queue, trading_event))
+                                                           args=(trading_queue, trading_event, strategy))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
