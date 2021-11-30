@@ -64,6 +64,11 @@ common =  [
     "tqdm==4.62.1",
     "pyportfolioopt==1.4.2",
     "beautifulsoup4==4.10.0",  # BeautifulSoup for web crawling
+    "tensorflow",
+    "keras",
+    "sklearn",
+    "chart_studio",
+    "pdfkit"
 ]
 
 windows = [
