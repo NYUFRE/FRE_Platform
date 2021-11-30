@@ -59,6 +59,7 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database, local_earnings_calendar_exists
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 
 from talib import abstract
 import base64
@@ -2295,6 +2296,163 @@ def plot_at2():
     response.mimetype = 'image/png'
     return response
 
+
+## BEGIN{Technical Indicator Strategy}
+
+@app.route('/technical_indicator_strategy')
+@login_required
+def technical_indicator_strategy():
+    return render_template("technical_indicator_strategy.html")
+
+
+@app.route('/technical_indicator_backtest', methods=["GET", "POST"])
+def technical_indicator_backtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_backtest_param.html")
+
+    if request.method == 'POST':
+        training_period_start_date = request.form['training_period_start_date']
+        training_period_end_date = request.form['training_period_end_date']
+        backtest_period_start_date = request.form['backtest_period_start_date']
+        backtest_period_end_date = request.form['backtest_period_end_date']
+
+        try:
+            tpsd = datetime.strptime(training_period_start_date, '%Y-%m-%d')
+            tped = datetime.strptime(training_period_end_date, '%Y-%m-%d')
+            bpsd = datetime.strptime(backtest_period_start_date, '%Y-%m-%d')
+            bped = datetime.strptime(backtest_period_end_date, '%Y-%m-%d')
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 1. Make sure that there are at least 8 years in the training period
+        if (tped - tpsd).days < 8 * 365:
+            flash("Error: There must be at least 8 years for the training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 2. Make sure that there are at least 1 year in the backtest period
+        if (bped - bpsd).days < 365:
+            flash("Error: There must be at least 1 year for the backtest period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 3. Make sure that the start date of backtest period is later than the end date of training period
+        if bpsd < tped:
+            flash("Error: The start date of backtest period must be no earlier than the end date of training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 4. Make sure that the end date of backtest period is earlier than today
+        if bped >= datetime.today():
+            flash("Error: The end date of backtest period must be earlier than today.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        for industry, stocks in stock_collection.items():
+            print(f"@@@@@ INDUSTRY={industry.title()} Sector")
+
+            for stock in stocks:
+                print(f"  ### STOCK={stock}")
+                se = generate_optimized_executor(stock, training_period_start_date, training_period_end_date, \
+                    backtest_period_start_date, backtest_period_end_date)
+                stock_backtest_executors[stock] = se
+
+        return render_template("technical_indicator_backtest.html", \
+            start_date_train=training_period_start_date, end_date_train=training_period_end_date, \
+            start_date_test=backtest_period_start_date, end_date_test=backtest_period_end_date, \
+            stock_collection=stock_collection, industry_description=industry_description, \
+            stock_backtest_executors=stock_backtest_executors)
+
+
+@app.route('/technical_indicator_probtest', methods=["GET", "POST"])
+def technical_indicator_probtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_probtest_param.html")
+
+    if request.method == 'POST':
+        probtest_period_start_date = request.form['probtest_period_start_date']
+        probtest_period_end_date = request.form['probtest_period_end_date']
+        probtest_stock = request.form['probtest_stock']
+        probtest_alpha = request.form['probtest_alpha']
+        probtest_delta = request.form['probtest_delta']
+        probtest_gamma = request.form['probtest_gamma']
+
+        try:
+            ppsd = datetime.strptime(probtest_period_start_date, '%Y-%m-%d')
+            pped = datetime.strptime(probtest_period_end_date, '%Y-%m-%d')
+            probtest_alpha = float(probtest_alpha)
+            probtest_delta = float(probtest_delta)
+            probtest_gamma = float(probtest_gamma)
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 1. Make sure that the probation test end date is at least 1 year from the start date
+        if (pped - ppsd).days < 365:
+            flash("Error: There must be at least 1 year for the probation test period.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 2. Make sure that the end date of probation test is earlier than today
+        if pped >= datetime.today():
+            flash("Error: The end date of probation test must be earlier than today.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 3. Make sure that the range of alpha is 0.05 <= alpha <= 0.35
+        if probtest_alpha < 0.05 or probtest_alpha > 0.35:
+            flash("Error: Alpha must be within range [0.05, 0.35].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 4. Make sure that the range of delta is 0.10 <= delta <= 1.90
+        if probtest_delta < 0.10 or probtest_delta > 1.90:
+            flash("Error: Delta must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 5. Make sure that the range of gamma is 0.10 <= gamma <= 1.90
+        if probtest_gamma < 0.10 or probtest_gamma > 1.90:
+            flash("Error: Gamma must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 6. Make sure that the stock exists
+        if not stock_available(probtest_stock, probtest_period_start_date, probtest_period_end_date):
+            flash("Error: Request failed. Please check if the stock symbol and probation test period are correct.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        se = generate_executor(probtest_stock, probtest_period_start_date, probtest_period_end_date, \
+                    probtest_alpha, probtest_delta, probtest_gamma)
+        stock_probtest_executors[probtest_stock] = se
+
+        return render_template("technical_indicator_probtest.html", \
+            stock=probtest_stock, alpha=probtest_alpha, delta=probtest_delta, gamma=probtest_gamma, \
+            start_date_test=probtest_period_start_date, end_date_test=probtest_period_end_date, \
+            stock_probtest_executors=stock_probtest_executors)
+
+
+@app.route('/technical_indicator_plot/<test>/<ticker_strings>')
+def technical_indicator_plot(test, ticker_strings):
+    plt.rcParams['figure.figsize'] = (16, 8)
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+    if test == 'backtest':
+        tickers = ticker_strings.split('+')
+        for ticker in tickers:
+            axis.plot(stock_backtest_executors[ticker].df.index, stock_backtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker_strings} E history")
+        axis.legend(tickers)
+    elif test == 'probtest':
+        ticker = ticker_strings
+        axis.plot(stock_probtest_executors[ticker].df.index, stock_probtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker} E history")
+    else:
+        return None
+
+    fig.autofmt_xdate()
+
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+## END{Technical Indicator Strategy}
 
 
 if __name__ == "__main__":
