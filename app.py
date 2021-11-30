@@ -54,6 +54,8 @@ from system.model_optimization.optimization import create_database_table, extrac
 from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
 from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
 from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
+from system.stock_select.stock_select import extract_database_sector, extract_database_rf_10yr, extract_database_stock_10yr, build_model_predict_select, get_top_stocks
+from system.stock_select.stock_select_back_test import extract_database_mkt, extract_database_rf_10yr, extract_database_stock_10yr, stock_select_back_test
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
@@ -62,7 +64,10 @@ from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 
 from talib import abstract
+import pdfkit
 import base64
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -1327,10 +1332,11 @@ def update_market_data():
         # Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
         database.create_table(['stocks'])
         tickers = database.get_sp500_symbols()
+
         if database.check_table_empty('stocks'):
             # TODO! Use non-multi-threading version for now as EDO data feed has strange behavior after its upgrade
             # eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
-            eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
+            eod_market_data.populate_stock_data(tickers, "stocks", '2010-01-01', today, 'US')
         else:
             select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
             last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
@@ -1980,7 +1986,6 @@ def optimize_build():
                                min_const=min_const, length=length, tickers=tickers)
     except ValueError:
         flash('Error! Portfolio has poor data quality, unable to optimize, please change the portfolio and try again!')
-        #may be can do improvement：present which ticker had the poor data, guide on which ticker to replace
         return render_template("optimize_introduction.html")
 
 
@@ -2051,9 +2056,7 @@ def opt_back_test_plot2():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
-
- # Shan add 2
+    # Shan add 2
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2087,7 +2090,6 @@ def opt_back_test_plot3():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
     # Shan add 3
     axis.grid(True)
     fig.autofmt_xdate()
@@ -2296,6 +2298,56 @@ def plot_at2():
     response.mimetype = 'image/png'
     return response
 
+@app.route('/stockselect_introduction')
+@login_required
+def stockselect_introduction():
+    flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
+    return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_build")
+@login_required
+def stockselect_build():
+    try:
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        sector = extract_database_sector(database)
+        global top_stocks_list
+        top_stocks_list = build_model_predict_select(stocks_10yr, rf, sector)
+        length = len(top_stocks_list)
+
+        return render_template('stockselect_build.html', length=length, top_stocks=top_stocks_list)
+
+    except ValueError:
+        flash('Error! There is something wrong about the database, unable to select stocks, please contact IT!')
+        return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_back_test")
+@login_required
+def stockselect_back_test():
+
+    if  len(top_stocks_list) == 0:
+        flash('Please click on "select stock" before run the back test!')
+        return render_template("stockselect_introduction.html")
+    else:
+        top_stocks = []
+        res = top_stocks_list
+        for i in range(len(res)):
+            top_stocks.append(res[i][1])
+        mkt_test = extract_database_mkt(database)
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
+        return render_template('stockselect_backtest.html', images_back_test=images_back_test)
+
+# @app.route("/download_pdf")
+# @login_required
+# def download_pdf():
+#
+#     pdf = pdfkit.from_file('./system/templates/stockselect_backtest.html', 'out.pdf')
+#     return pdf
+
 
 ## BEGIN{Technical Indicator Strategy}
 
@@ -2457,6 +2509,8 @@ def technical_indicator_plot(test, ticker_strings):
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
+    global top_stocks_list
+    top_stocks_list = []
     database.create_table(table_list)
     add_admin_user()
 
@@ -2468,3 +2522,11 @@ if __name__ == "__main__":
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
+
+
+
+
+
+
+
+

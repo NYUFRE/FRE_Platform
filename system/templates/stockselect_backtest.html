@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+stockselect_back_test
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/stockselect_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/stockselect_build">Stock Select</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/stockselect_back_test">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+{#    <a href="/download_pdf" download> Download the pdf of the result</a>#}
+    <h3><strong>Equal-weighted Portfolio Back Test</strong></h3>
+        <h5 style="text-align:center"> Portfolio daily Return vs S&P 500:</h5>
+        <hr>
+		<img align="center" src="{{ images_back_test["portfolio_daily"]  }}" alt="Image Placeholder" width="70%">
+		<hr>
+        <p></p>
+        <h5 style="text-align:center"> Portfolio cumulative daily Return vs S&P 500:</h5>
+        <hr>
+		<img align="center" src="{{ images_back_test["portfolio_cumdaily"] }}" alt="Image Placeholder" width="70%">
+		<hr>
+        <p></p>
+        <h5 style="text-align:center"> Top stock cumulative daily Return vs S&P 500:</h5>
+        {% for img in images_back_test["stocks_individual"] %}
+            <hr>
+		    <img align="center" src="{{ img }}" alt="Image Placeholder" width="70%">
+		    <hr>
+        {%endfor%}
+        <p></p>
+
+
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
