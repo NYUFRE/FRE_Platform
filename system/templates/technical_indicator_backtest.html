@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    main, div {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    main {
+        margin-bottom: 3em;
+    }
+    main > div {
+        width: 75%;
+    }
+    h1, h2, h3, h4, h5 {
+        font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+    h2, h3, h3, h4, h5 {
+        text-align: left;
+    }
+    h1 {
+        font-size: 32pt;
+        margin-top: 32px;
+        margin-bottom: 32px;
+    }
+    h2 {
+        font-size: 24pt;
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+    h3 {
+        font-size: 16pt;
+        margin-top: 16px;
+        margin-bottom: 16px;
+    }
+    p {
+        text-align: left;
+    }
+</style>
+
+<body>
+    <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_strategy">Introduction</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_backtest">Backtest</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/technical_indicator_probtest">Probation Test</a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+        <h1>MEP Strategy Backtest</h1>
+        <div style="margin-bottom: 3em;">
+            <p>
+                <b>NOTE:</b> Backtest takes about 10 minutes to finish.
+            </p>
+        </div>
+        <div class="form-group">
+            <form action="/technical_indicator_backtest" id="mep_strategy_backtest_form" method="POST">
+                <table>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Training period start date:</p></td>
+                        <td><input type="date" name="training_period_start_date" value="2010-01-01" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Training period end date:</p></td>
+                        <td><input type="date" name="training_period_end_date" value="2019-01-01" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Backtest period start date:</p></td>
+                        <td><input type="date" name="backtest_period_start_date" value="2019-01-01" style="width: 200px;" required="required"></td>
+                    </tr>
+                    <tr>
+                        <td><p style="width: 500px; text-align: center;">Backtest period end date:</p></td>
+                        <td><input type="date" name="backtest_period_end_date" value="2021-11-05" style="width: 200px;" required="required"></td>
+                    </tr>
+                </table>
+                <div style="height:100px; justify-content: center; margin-top: 5em;"><input style="margin-left: auto; margin-right: auto;" type="submit" value="submit"/></div>
+            </form>
+        </div>
+
+        <div>
+            <p>Training period start date: {{ start_date_train }}</p>
+            <p>Training period end date: {{ end_date_train }}</p>
+            <p>Backtest period start date: {{ start_date_test }}</p>
+            <p>Backtest period end date: {{ end_date_test }}</p>
+        </div>
+
+        {% for industry, description in industry_description.items() %}
+        <div>
+            <h2>{{ industry.title() }} Sector</h2>
+            <p>
+                {{ description }}
+            </p>
+            {% if industry in stock_collection %}
+
+            {% for stock in stock_collection[industry] %}
+            <div>
+                <h3>{{ stock }}</h3>
+                <p>
+                    alpha_opt={{ "{:.2f}".format(stock_backtest_executors[stock].alpha) }},
+                    delta_opt={{ "{:.2f}".format(stock_backtest_executors[stock].delta) }},
+                    gamma_opt={{ "{:.2f}".format(stock_backtest_executors[stock].gamma) }}
+                </p>
+                <p>
+                    Annualized Return: {{ "{:.8f}".format(stock_backtest_executors[stock].annualized_return()) }} <br>
+                    Sharpe Ratio: {{ "{:.8f}".format(stock_backtest_executors[stock].sharpe_ratio()) }}
+                </p>
+            </div>
+            {% endfor %}
+
+            {% if stock_collection[industry] |length > 0 %}
+            <div>
+                <img src="/technical_indicator_plot/backtest/{{ '+'.join(stock_collection[industry]) }}" alt="{{ '+'.join(stock_collection[industry]) }} E history plot">
+            </div>
+            {% endif %}
+
+            {% endif %}
+        </div>
+        {% endfor %}
+    </main>
+</body>
+
+{%endblock%}
