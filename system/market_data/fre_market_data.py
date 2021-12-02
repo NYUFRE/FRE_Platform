@@ -119,8 +119,8 @@ class EODMarketData:
 
     def get_daily_data(self, symbol: str, start: str, end: str, category: str):
         symbolURL = f"{symbol}.{category}?"
-        startURL = f'from={start}'
-        endURL = f'to={end}'
+        startURL = f'from={start}' if start != '' else ''
+        endURL = f'to={end}' if end != '' else ''
         apiKeyURL = f'api_token={self.api_token}'
         completeURL = f"{self.url_common}eod/{symbolURL}{startURL}&{endURL}&{apiKeyURL}&period=d&fmt=json"
         print(completeURL)

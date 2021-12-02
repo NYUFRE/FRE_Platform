@@ -13,6 +13,7 @@ from system.database.fre_database import FREDatabase
 from queue import Queue
 from system.utility.helpers import usd
 from system.sim_trading import sim_demo_model as sdm
+from system.sim_trading import rsi_momentum_strat as strat
 
 sys.path.append('../')
 
@@ -49,6 +50,8 @@ def client_receive(q=None, e=None):
                 e.clear()
         except (OSError, Exception):
             print("Client Receiver exited\n")
+            print(OSError.strerror)
+            print(Exception)
             sys.exit(0)
 
 
@@ -107,13 +110,13 @@ def server_down(client_packet):
 def send_msg(client_packet):
     client_config.client_socket.send(client_packet.serialize())
     data = json.loads(client_packet.m_data)
-    print(data)
+    #print(data)
     return data
 
 
 def get_response(q):
     msg_type, msg_data = q.get()
-    print(msg_data)
+    #print(msg_data)
     if msg_data is not None:
         if msg_type == PacketTypes.END_RSP.value or msg_type == PacketTypes.SERVER_DOWN_RSP.value or \
                 (msg_type == PacketTypes.CONNECTION_RSP.value and msg_data["Status"] == "Rejected"):
@@ -131,7 +134,7 @@ def wait_for_an_event(e):
         continue
 
 
-def join_trading_network(q, e):
+def join_trading_network(q, e, strategy = None):
     try:
         client_packet = Packet()
         set_event(e)
@@ -202,14 +205,14 @@ def join_trading_network(q, e):
                     pnl_dict = {}
                     for stk in StockInfoDict:
                         stkbuy_order = [order for order in client_config.orders if
-                                        (order['Symbol'] == stk) & (order['Side'] == 'Buy')]
+                                        (order['Symbol'] == stk) & (order['Side'] == 'Buy') & (order['Status'] != 'Order Reject')]
                         # print(stkbuy_order)
                         stkbuy_price = [order['Price'] for order in stkbuy_order]
                         # print(stkbuy_price)
                         stkbuy_qty = [int(order['Qty']) for order in stkbuy_order]
                         # print(stkbuy_qty)
                         stksell_order = [order for order in client_config.orders if
-                                         (order['Symbol'] == stk) & (order['Side'] == 'Sell')]
+                                         (order['Symbol'] == stk) & (order['Side'] == 'Sell') & (order['Status'] != 'Order Reject')]
                         # print(stksell_order)
                         stksell_price = [order['Price'] for order in stksell_order]
                         # print(stksell_price)
@@ -241,7 +244,8 @@ def join_trading_network(q, e):
                     stkInfo_object = StockInfoDict[stk]
                     stkInfo_object.ma = 'null'
                     stkInfo_object.std = 'null'
-                    stkInfo_object.price_queue = Queue(int(stkInfo_object.h / 5))  # reset the members
+                    stkInfo_object.rsi = 'null'
+                    stkInfo_object.price_queue = Queue(int(4))  # reset the members
                     if stkInfo_object.position != 0:
                         client_packet = Packet()
                         OrderIndex += 1
@@ -253,6 +257,7 @@ def join_trading_network(q, e):
                             print("Because: Close at Pending Close.")
                             set_event(e)
                             send_msg(client_packet)
+                            print("send",client_packet)
                             wait_for_an_event(e)
                             # close trade logic
                             response_list = []
@@ -260,6 +265,7 @@ def join_trading_network(q, e):
                                 response_data = get_response(q)
                                 response_list.append(response_data)
                                 client_config.orders.append(response_data)
+                                print("received", repr(client_config.orders[-1]))
                             stkInfo_object.qty = 0
                             stkInfo_object.position = 0
 
@@ -270,6 +276,7 @@ def join_trading_network(q, e):
                             print("Because: Close at Pending Close.")
                             set_event(e)
                             send_msg(client_packet)
+                            print("send",client_packet)
                             wait_for_an_event(e)
                             # close trade logic
                             response_list = []
@@ -277,11 +284,12 @@ def join_trading_network(q, e):
                                 response_data = get_response(q)
                                 response_list.append(response_data)
                                 client_config.orders.append(response_data)
+                                print("received", repr(client_config.orders[-1]))
                             stkInfo_object.qty = 0
                             stkInfo_object.position = 0
                 # re-enter into checking "Open" while-loop
                 continue
-
+            
             # BBD Trading Logic
             client_packet = Packet()
             set_event(e)
@@ -306,7 +314,9 @@ def join_trading_network(q, e):
 
             filled_order_book = [fill_orders for fill_orders in order_book if fill_orders['Status'] in ['Filled']]
             # print(filled_order_book)
-            filled_orderid = [order['OrderIndex'] for order in filled_order_book]
+            filled_orderid = {}
+            for stk in StockInfoDict:
+                 filled_orderid[stk] = [order['OrderIndex'] for order in filled_order_book if order["Symbol"] == stk]
             # print(filled_orderid)
             standing_order_book = [standing_orders for standing_orders in order_book if
                                    standing_orders['Status'] in ['New', 'Partial Filled']]
@@ -331,12 +341,12 @@ def join_trading_network(q, e):
                 # current price is based on filled_order_book
                 if len(base_filled_orderid) == 0:
                     current_price = (stkInfo_object.current_price_buy + stkInfo_object.current_price_sell) / 2
-                    base_filled_orderid = filled_orderid
+                    base_filled_orderid = [order['OrderIndex'] for order in filled_order_book]
                 else:
                     try:
-                        newly_filled_orderid = [orderid for orderid in filled_orderid if
-                                                orderid not in base_filled_orderid]
-                        base_filled_orderid = filled_orderid
+                        newly_filled_orderid = [orderid for orderid in filled_orderid[stk] if
+                                                 orderid not in base_filled_orderid]
+                        base_filled_orderid = filled_orderid[stk]
                         newly_filled_order = [order for order in filled_order_book if
                                               order['OrderIndex'] in newly_filled_orderid]
                         filled_price_list = [order['Price'] for order in newly_filled_order]
@@ -347,17 +357,55 @@ def join_trading_network(q, e):
                     except:  # when no newly filled
                         # print('test')
                         current_price = (stkInfo_object.current_price_buy + stkInfo_object.current_price_sell) / 2
-                #            print("current price for", stk, "P= " current_price)
+                                        #            print("current price for", stk, "P= " current_price)
                 if not stkInfo_object.price_queue.full():
                     stkInfo_object.price_queue.put(current_price)
+                    #Move the RSI calculation here
+                    diff = np.diff(np.array(stkInfo_object.price_queue.queue))
+                        # //todo fix when empty
+                    list_pos_ret = diff[diff.clip(min=0) != 0]
+                    if len(list_pos_ret) ==0:
+                        pos_ret = 0
+                    else:
+                        pos_ret = np.average(list_pos_ret)
+
+                    list_neg_ret = -1 * diff[ diff.clip(max=0) != 0]
+                    if len(list_neg_ret) == 0:
+                        neg_ret = 0.000000001
+                    else:
+                        neg_ret = np.average(list_neg_ret)
+                        
+                    rs = pos_ret / neg_ret
+                    stkInfo_object.rsi = 100 - (100/(1+rs))
+                    if stkInfo_object.rsi < 99.99 and stkInfo_object.rsi > 0.0:
+                        stkInfo_object.rsi_queue.append(stkInfo_object.rsi)
+
                     if stkInfo_object.price_queue.full():
                         stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
-                        stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                        stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std()
                 else:  # already full
                     popout = stkInfo_object.price_queue.get()
                     stkInfo_object.price_queue.put(current_price)
+                    diff = np.diff(np.array(stkInfo_object.price_queue.queue))
+                    
+                    list_pos_ret = diff[diff.clip(min=0) != 0]
+                    if len(list_pos_ret) ==0:
+                        pos_ret = 0
+                    else:
+                        pos_ret = np.average(list_pos_ret)
+
+                    list_neg_ret = -1 * diff[ diff.clip(max=0) != 0]
+                    if len(list_neg_ret) == 0:
+                            neg_ret = 0.000000001
+                    else:
+                        neg_ret = np.average(list_neg_ret)
+                    
+                    rs = pos_ret / neg_ret
+                    stkInfo_object.rsi = 100 - (100/(1+rs))
+                    if stkInfo_object.rsi < 99.99 and stkInfo_object.rsi > 0.0:
+                        stkInfo_object.rsi_queue.append(stkInfo_object.rsi)
                     stkInfo_object.ma = np.array(stkInfo_object.price_queue.queue).mean()
-                    stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std() / np.sqrt(5)
+                    stkInfo_object.std = np.array(stkInfo_object.price_queue.queue).std()
 
             for stk in StockInfoDict:
                 stkInfo_object = StockInfoDict[stk]
@@ -367,6 +415,8 @@ def join_trading_network(q, e):
                 Notional = stkInfo_object.notional
                 if MA == 'null':
                     continue
+                if len(stkInfo_object.rsi_queue) < 5:
+                    continue
                 current_buy = stkInfo_object.current_price_buy
                 current_sell = stkInfo_object.current_price_sell
                 #            current_p = (current_buy + current_sell) / 2
@@ -375,99 +425,12 @@ def join_trading_network(q, e):
                 #            print("Std: ",Std)
                 #            print("sell p:",current_sell)
                 #            print("buy p:",current_buy)
-                if stkInfo_object.position == 0:  # not yet open position, could open
-                    if current_sell <= MA - K1 * Std:  # below lower band, go long
-                        stkInfo_object.position = 1
-                        client_packet = Packet()
-                        OrderIndex += 1
-                        client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        stkInfo_object.qty = int(Notional / current_sell)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Buy', 100, stkInfo_object.qty)
-                        print("Open Trade in: ", stk, "With postion: Buy", "at Price:", current_sell, "With Qty:",
-                              stkInfo_object.qty)
-                        print("Because: Price below lower band:", usd(MA - K1 * Std))
-                        set_event(e)
-                        send_msg(client_packet)
-                        wait_for_an_event(e)
-                        # open logic
-                        response_list = []
-                        while not q.empty():
-                            response_data = get_response(q)
-                            response_list.append(response_data)
-                            client_config.orders.append(response_data)
-                    #                    Trade_object = Trade(stk, response_list)
-                    #                    stkInfo_object.Tradelist.append(Trade_object)
-
-                    elif current_buy >= MA + K1 * Std:  # above upper band, go short
-                        stkInfo_object.position = -1
-                        client_packet = Packet()
-                        OrderIndex += 1
-                        client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        stkInfo_object.qty = int(Notional / current_buy)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Mkt', 'Sell', 100, stkInfo_object.qty)
-                        print("Open Trade in: ", stk, "With postion: Sell", "at Price:", current_buy, "With Qty: ",
-                              stkInfo_object.qty)
-                        print("Because: Price above upper band:", usd(MA + K1 * Std))
-                        set_event(e)
-                        send_msg(client_packet)
-                        wait_for_an_event(e)
-                        # open logic
-                        response_list = []
-                        while not q.empty():
-                            response_data = get_response(q)
-                            response_list.append(response_data)
-                            client_config.orders.append(response_data)
-                #                    Trade_object = Trade(stk, response_list)
-                #                    stkInfo_object.Tradelist.append(Trade_object)
-
-                elif stkInfo_object.position == 1:  # longing now
-                    if current_buy >= MA - 0.75 * K1 * Std:  # above lower bound, sell to close postion
-                        client_packet = Packet()
-                        OrderIndex += 1
-                        client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Lmt', 'Sell', MA, stkInfo_object.qty)
-                        print("Close Trade in: ", stk, "With postion: Sell", "at Price:", current_buy, "With Qty: ",
-                              stkInfo_object.qty)
-                        print("Because: Price above lower band:", usd(MA))
-                        set_event(e)
-                        send_msg(client_packet)
-                        wait_for_an_event(e)
-                        # close trade logic
-                        response_list = []
-                        while not q.empty():
-                            response_data = get_response(q)
-                            response_list.append(response_data)
-                            client_config.orders.append(response_data)
-                        #                    Trade_object = stkInfo_object.Tradelist[-1]
-                        #                    Trade_object.CloseTrade(response_list)
-                        #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
-                        stkInfo_object.qty = 0
-                        stkInfo_object.position = 0
-
-                # shorting now
+                #TODO Replace with Functions
+                if strategy == "Bollinger Band":
+                    OrderIndex = strat.BollingerBandStrategy(stkInfo_object,client_config,OrderIndex,q ,e)
                 else:
-                    if current_sell <= MA + 0.75 * K1 * Std:  # below upper bound, buy to close postion
-                        client_packet = Packet()
-                        OrderIndex += 1
-                        client_order_id = client_config.client_id + '_' + str(OrderIndex)
-                        enter_a_new_order(client_packet, client_order_id, stk, 'Lmt', 'Buy', MA, stkInfo_object.qty)
-                        print("Close Trade in: ", stk, "With postion: Buy", "at Price:", current_sell, "With Qty: ",
-                              stkInfo_object.qty)
-                        print("Because: Price below upper band:", usd(MA))
-                        set_event(e)
-                        send_msg(client_packet)
-                        wait_for_an_event(e)
-                        # close trade logic
-                        response_list = []
-                        while not q.empty():
-                            response_data = get_response(q)
-                            response_list.append(response_data)
-                            client_config.orders.append(response_data)
-                        #                    Trade_object = stkInfo_object.Tradelist[-1]
-                        #                    Trade_object.CloseTrade(response_list)
-                        #                    stkInfo_object.PnLlist.append(Trade_object.PnL)
-                        stkInfo_object.qty = 0
-                        stkInfo_object.position = 0
+                    OrderIndex = strat.RSIMomentumStrategy(stkInfo_object,client_config,50,70,30,OrderIndex,q ,e)
+                
 
             time.sleep(1)  # request order book every sec
 
