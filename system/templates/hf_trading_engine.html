@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/hf_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/hf_cleaning_data">Data Cleaning</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/hf_trading_engine">Trading Engine</a>
+        </li>
+    </ul>
+</nav>
+
+
+
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>HFT Engine</h3>
+
+    <h3>Statistics for Linear Regression</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Parameter</th>
+                <th style="text-align:center">Average coefficient</th>
+                <th style="text-align:center">Percent_positive</th>
+                <th style="text-align:center">Percent positive and signiﬁcant</th>
+                <th style="text-align:center">Percent negative and signiﬁcant</th>
+
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>OI</td>
+                <td>{{table_year_data["Average coefficient"][0]}}</td>
+                <td>{{table_year_data["Percent_positive"][0]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][0]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][0]}}</td>
+            </tr>
+            <tr>
+                <td>OI_lag1</td>
+                <td>{{table_year_data["Average coefficient"][0]}}</td>
+                <td>{{table_year_data["Percent_positive"][0]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][0]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][0]}}</td>
+            </tr>
+            <tr>
+                <td>OI_lag2</td>
+                <td>{{table_year_data["Average coefficient"][1]}}</td>
+                <td>{{table_year_data["Percent_positive"][1]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][1]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][1]}}</td>
+            </tr>
+
+             <tr>
+                <td>OI_lag3</td>
+                <td>{{table_year_data["Average coefficient"][2]}}</td>
+                <td>{{table_year_data["Percent_positive"][2]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][2]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][2]}}</td>
+            </tr>
+            <tr>
+                <td>OI_lag4</td>
+                <td>{{table_year_data["Average coefficient"][4]}}</td>
+                <td>{{table_year_data["Percent_positive"][4]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][4]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][4]}}</td>
+            </tr>
+            <tr>
+                <td>OI_lag5</td>
+                <td>{{table_year_data["Average coefficient"][5]}}</td>
+                <td>{{table_year_data["Percent_positive"][5]}}</td>
+                <td>{{table_year_data["Percent positive and signiﬁcant"][5]}}</td>
+                <td>{{table_year_data["Percent negative and signiﬁcant"][5]}}</td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="form-group">
+        <form action="/hf_trading_engine" id="hf_trading_engine" method="post">
+            <p style = "width:500px;" align="right">Threshold:
+                <input id="Threshold" name="Threshold" value = {{input["Threshold"]}} type="text"/></p>
+            <input type="submit" value="Calculate"/>
+        </form>
+    </div>
+
+    {%  if backtest == True%}
+
+
+        <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:center">Date</th>
+                <th style="text-align:center">return</th>
+                <th style="text-align:center">volatility</th>
+                <th style="text-align:center">Sharp_ratio</th>
+                <th style="text-align:center">Max drawdown</th>
+
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <tr>
+                <td>Day1</td>
+                <td>{{table_result["return"][0]}}</td>
+                <td>{{table_result["volatility"][0]}}</td>
+                <td>{{table_result["Sharp_ratio"][0]}}</td>
+                <td>{{table_result["Max drawdown"][0]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day2</td>
+                <td>{{table_result["return"][1]}}</td>
+                <td>{{table_result["volatility"][1]}}</td>
+                <td>{{table_result["Sharp_ratio"][1]}}</td>
+                <td>{{table_result["Max drawdown"][1]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day3</td>
+                <td>{{table_result["return"][2]}}</td>
+                <td>{{table_result["volatility"][2]}}</td>
+                <td>{{table_result["Sharp_ratio"][2]}}</td>
+                <td>{{table_result["Max drawdown"][2]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day4</td>
+                <td>{{table_result["return"][3]}}</td>
+                <td>{{table_result["volatility"][3]}}</td>
+                <td>{{table_result["Sharp_ratio"][3]}}</td>
+                <td>{{table_result["Max drawdown"][3]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day5</td>
+                <td>{{table_result["return"][4]}}</td>
+                <td>{{table_result["volatility"][4]}}</td>
+                <td>{{table_result["Sharp_ratio"][4]}}</td>
+                <td>{{table_result["Max drawdown"][4]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day6</td>
+                <td>{{table_result["return"][5]}}</td>
+                <td>{{table_result["volatility"][5]}}</td>
+                <td>{{table_result["Sharp_ratio"][5]}}</td>
+                <td>{{table_result["Max drawdown"][5]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day7</td>
+                <td>{{table_result["return"][6]}}</td>
+                <td>{{table_result["volatility"][6]}}</td>
+                <td>{{table_result["Sharp_ratio"][6]}}</td>
+                <td>{{table_result["Max drawdown"][6]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day8</td>
+                <td>{{table_result["return"][7]}}</td>
+                <td>{{table_result["volatility"][7]}}</td>
+                <td>{{table_result["Sharp_ratio"][7]}}</td>
+                <td>{{table_result["Max drawdown"][7]}}</td>
+
+            </tr>
+
+
+              <tr>
+                <td>Day9</td>
+                <td>{{table_result["return"][8]}}</td>
+                <td>{{table_result["volatility"][8]}}</td>
+                <td>{{table_result["Sharp_ratio"][8]}}</td>
+                <td>{{table_result["Max drawdown"][8]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day10</td>
+                <td>{{table_result["return"][9]}}</td>
+                <td>{{table_result["volatility"][9]}}</td>
+                <td>{{table_result["Sharp_ratio"][9]}}</td>
+                <td>{{table_result["Max drawdown"][9]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day11</td>
+                <td>{{table_result["return"][10]}}</td>
+                <td>{{table_result["volatility"][10]}}</td>
+                <td>{{table_result["Sharp_ratio"][10]}}</td>
+                <td>{{table_result["Max drawdown"][10]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day12</td>
+                <td>{{table_result["return"][11]}}</td>
+                <td>{{table_result["volatility"][11]}}</td>
+                <td>{{table_result["Sharp_ratio"][11]}}</td>
+                <td>{{table_result["Max drawdown"][11]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day13</td>
+                <td>{{table_result["return"][12]}}</td>
+                <td>{{table_result["volatility"][12]}}</td>
+                <td>{{table_result["Sharp_ratio"][12]}}</td>
+                <td>{{table_result["Max drawdown"][12]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day14</td>
+                <td>{{table_result["return"][13]}}</td>
+                <td>{{table_result["volatility"][13]}}</td>
+                <td>{{table_result["Sharp_ratio"][13]}}</td>
+                <td>{{table_result["Max drawdown"][13]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day15</td>
+                <td>{{table_result["return"][14]}}</td>
+                <td>{{table_result["volatility"][14]}}</td>
+                <td>{{table_result["Sharp_ratio"][14]}}</td>
+                <td>{{table_result["Max drawdown"][14]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day16</td>
+                <td>{{table_result["return"][15]}}</td>
+                <td>{{table_result["volatility"][15]}}</td>
+                <td>{{table_result["Sharp_ratio"][15]}}</td>
+                <td>{{table_result["Max drawdown"][15]}}</td>
+
+            </tr>
+
+              <tr>
+                <td>Day17</td>
+                <td>{{table_result["return"][16]}}</td>
+                <td>{{table_result["volatility"][16]}}</td>
+                <td>{{table_result["Sharp_ratio"][16]}}</td>
+                <td>{{table_result["Max drawdown"][16]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day18</td>
+                <td>{{table_result["return"][17]}}</td>
+                <td>{{table_result["volatility"][17]}}</td>
+                <td>{{table_result["Sharp_ratio"][17]}}</td>
+                <td>{{table_result["Max drawdown"][17]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day19</td>
+                <td>{{table_result["return"][18]}}</td>
+                <td>{{table_result["volatility"][18]}}</td>
+                <td>{{table_result["Sharp_ratio"][18]}}</td>
+                <td>{{table_result["Max drawdown"][18]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day20</td>
+                <td>{{table_result["return"][19]}}</td>
+                <td>{{table_result["volatility"][19]}}</td>
+                <td>{{table_result["Sharp_ratio"][19]}}</td>
+                <td>{{table_result["Max drawdown"][19]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day21</td>
+                <td>{{table_result["return"][20]}}</td>
+                <td>{{table_result["volatility"][20]}}</td>
+                <td>{{table_result["Sharp_ratio"][20]}}</td>
+                <td>{{table_result["Max drawdown"][20]}}</td>
+
+            </tr>
+
+            <tr>
+                <td>Day22</td>
+                <td>{{table_result["return"][21]}}</td>
+                <td>{{table_result["volatility"][21]}}</td>
+                <td>{{table_result["Sharp_ratio"][21]}}</td>
+                <td>{{table_result["Max drawdown"][21]}}</td>
+
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+
+    {% endif %}
+
+
+    {% for plot_id in plot_ids %}
+        <h3>Cumulative Return in Day {{ plot_id }} </h3>
+            <img src="/hf_plot/{{ plot_id }}" alt="Image Placeholder" width="50%">
+    {% endfor %}
+
+
+</main>
+
+</body>
+
+{%endblock%}
