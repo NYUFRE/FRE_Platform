@@ -6,11 +6,11 @@
             <a class="nav-link" href="/sim_server_up">Launch Server</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/sim_choose_strat">Choose Strategy</a>
+            <a class="nav-link active" href="/sim_choose_strat">Choose Strategy</a>
         </li>
         
         <li class="nav-item">
-            <a class="nav-link active" href="/sim_server_down">Stop Server</a>
+            <a class="nav-link" href="/sim_server_down">Stop Server</a>
         </li>
         <li class="nav-item">
             <a class="nav-link"></a>
@@ -24,8 +24,17 @@
     </ul>
 </nav>
 
+
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3><strong>Server is down!</strong></h3>
+    <h3><strong>Choose a Trading Strategy</strong></h3>
+        
+    <form action="/sim_choose_strat" id="strategy" method="post">
+        <select id="strategy" name ="strategy">
+            <option value = "Bollinger Band">Bollinger Band</option>
+            <option value = "RSI Momentum">RSI Momentum</option>
+        </select>
+        <input type="submit" value="Execute"/>
+    </form>
 	<hr>
 </main>
 {% endblock %}

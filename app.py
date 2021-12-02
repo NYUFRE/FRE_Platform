@@ -13,6 +13,7 @@ import time
 import warnings
 from datetime import datetime, timedelta
 from sys import platform
+import flask_sqlalchemy
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -53,15 +54,21 @@ from system.model_optimization.optimization import create_database_table, extrac
 from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
 from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
 from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
+from system.stock_select.stock_select import extract_database_sector, extract_database_rf_10yr, extract_database_stock_10yr, build_model_predict_select, get_top_stocks
+from system.stock_select.stock_select_back_test import extract_database_mkt, extract_database_rf_10yr, extract_database_stock_10yr, stock_select_back_test
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database, local_earnings_calendar_exists
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
+import pdfkit
 import base64
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -965,6 +972,7 @@ def sim_server_up():
         client_config.server_tombstone = False
         server_thread = threading.Thread(target=(start_server_process))
         server_thread.start()
+        print("Launching Server")
 
         while not client_config.server_ready:
             pass
@@ -1025,10 +1033,21 @@ def sim_server_down():
 
     return render_template("sim_server_down.html")
 
+@app.route('/sim_choose_strat', methods= ["GET","POST"])
+@login_required
+def sim_choose_strat():
+    if request.method == "POST":
+        strategy = request.form.get('strategy')
+        return sim_auto_trading(strategy)
+        # return redirect(url_for("sim_auto_trading"),strategy)
+
+        # TODO warning takes 30 minutes , also warning server not up
+    else:
+        return render_template("sim_choose_strat.html")
 
 @app.route('/sim_auto_trading')
 @login_required
-def sim_auto_trading():
+def sim_auto_trading(strategy = None):
     if client_config.server_ready:
         if not client_config.client_thread_started:
             client_config.client_thread_started = True
@@ -1049,7 +1068,7 @@ def sim_auto_trading():
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_thread = threading.Thread(target=join_trading_network,
-                                                           args=(trading_queue, trading_event))
+                                                           args=(trading_queue, trading_event, strategy))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
@@ -1327,10 +1346,11 @@ def update_market_data():
         # Get IEX subscription first. https://iexcloud.io/docs/api/#batch-requests
         database.create_table(['stocks'])
         tickers = database.get_sp500_symbols()
+
         if database.check_table_empty('stocks'):
             # TODO! Use non-multi-threading version for now as EDO data feed has strange behavior after its upgrade
             # eod_market_data.populate_stocks_data_multi(tickers, "stocks", start_date, today, 'US')
-            eod_market_data.populate_stock_data(tickers, "stocks", start_date, today, 'US')
+            eod_market_data.populate_stock_data(tickers, "stocks", '2010-01-01', today, 'US')
         else:
             select_stmt = 'SELECT date FROM stocks ORDER BY date DESC limit 1'
             last_date_stocks = database.execute_sql_statement(select_stmt)['date'][0]
@@ -1980,7 +2000,6 @@ def optimize_build():
                                min_const=min_const, length=length, tickers=tickers)
     except ValueError:
         flash('Error! Portfolio has poor data quality, unable to optimize, please change the portfolio and try again!')
-        #may be can do improvement：present which ticker had the poor data, guide on which ticker to replace
         return render_template("optimize_introduction.html")
 
 
@@ -2051,9 +2070,7 @@ def opt_back_test_plot2():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
-
- # Shan add 2
+    # Shan add 2
     axis.grid(True)
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
@@ -2087,7 +2104,6 @@ def opt_back_test_plot3():
               transform=axis.transAxes,
               color='black', fontsize=10)
 
-    axis.grid(True)
     # Shan add 3
     axis.grid(True)
     fig.autofmt_xdate()
@@ -2355,6 +2371,214 @@ def plot_var():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
+@app.route('/stockselect_introduction')
+@login_required
+def stockselect_introduction():
+    flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
+    return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_build")
+@login_required
+def stockselect_build():
+    try:
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        sector = extract_database_sector(database)
+        global top_stocks_list
+        top_stocks_list = build_model_predict_select(stocks_10yr, rf, sector)
+        length = len(top_stocks_list)
+
+        return render_template('stockselect_build.html', length=length, top_stocks=top_stocks_list)
+
+    except ValueError:
+        flash('Error! There is something wrong about the database, unable to select stocks, please contact IT!')
+        return render_template("stockselect_introduction.html")
+
+
+@app.route("/stockselect_back_test")
+@login_required
+def stockselect_back_test():
+
+    if  len(top_stocks_list) == 0:
+        flash('Please click on "select stock" before run the back test!')
+        return render_template("stockselect_introduction.html")
+    else:
+        top_stocks = []
+        res = top_stocks_list
+        for i in range(len(res)):
+            top_stocks.append(res[i][1])
+        mkt_test = extract_database_mkt(database)
+        stocks_10yr = extract_database_stock_10yr(database)
+        rf = extract_database_rf_10yr(database)
+        images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
+        return render_template('stockselect_backtest.html', images_back_test=images_back_test)
+
+# @app.route("/download_pdf")
+# @login_required
+# def download_pdf():
+#
+#     pdf = pdfkit.from_file('./system/templates/stockselect_backtest.html', 'out.pdf')
+#     return pdf
+
+
+## BEGIN{Technical Indicator Strategy}
+
+@app.route('/technical_indicator_strategy')
+@login_required
+def technical_indicator_strategy():
+    return render_template("technical_indicator_strategy.html")
+
+
+@app.route('/technical_indicator_backtest', methods=["GET", "POST"])
+def technical_indicator_backtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_backtest_param.html")
+
+    if request.method == 'POST':
+        training_period_start_date = request.form['training_period_start_date']
+        training_period_end_date = request.form['training_period_end_date']
+        backtest_period_start_date = request.form['backtest_period_start_date']
+        backtest_period_end_date = request.form['backtest_period_end_date']
+
+        try:
+            tpsd = datetime.strptime(training_period_start_date, '%Y-%m-%d')
+            tped = datetime.strptime(training_period_end_date, '%Y-%m-%d')
+            bpsd = datetime.strptime(backtest_period_start_date, '%Y-%m-%d')
+            bped = datetime.strptime(backtest_period_end_date, '%Y-%m-%d')
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 1. Make sure that there are at least 8 years in the training period
+        if (tped - tpsd).days < 8 * 365:
+            flash("Error: There must be at least 8 years for the training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 2. Make sure that there are at least 1 year in the backtest period
+        if (bped - bpsd).days < 365:
+            flash("Error: There must be at least 1 year for the backtest period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 3. Make sure that the start date of backtest period is later than the end date of training period
+        if bpsd < tped:
+            flash("Error: The start date of backtest period must be no earlier than the end date of training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 4. Make sure that the end date of backtest period is earlier than today
+        if bped >= datetime.today():
+            flash("Error: The end date of backtest period must be earlier than today.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        for industry, stocks in stock_collection.items():
+            print(f"@@@@@ INDUSTRY={industry.title()} Sector")
+
+            for stock in stocks:
+                print(f"  ### STOCK={stock}")
+                se = generate_optimized_executor(stock, training_period_start_date, training_period_end_date, \
+                    backtest_period_start_date, backtest_period_end_date)
+                stock_backtest_executors[stock] = se
+
+        return render_template("technical_indicator_backtest.html", \
+            start_date_train=training_period_start_date, end_date_train=training_period_end_date, \
+            start_date_test=backtest_period_start_date, end_date_test=backtest_period_end_date, \
+            stock_collection=stock_collection, industry_description=industry_description, \
+            stock_backtest_executors=stock_backtest_executors)
+
+
+@app.route('/technical_indicator_probtest', methods=["GET", "POST"])
+def technical_indicator_probtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_probtest_param.html")
+
+    if request.method == 'POST':
+        probtest_period_start_date = request.form['probtest_period_start_date']
+        probtest_period_end_date = request.form['probtest_period_end_date']
+        probtest_stock = request.form['probtest_stock']
+        probtest_alpha = request.form['probtest_alpha']
+        probtest_delta = request.form['probtest_delta']
+        probtest_gamma = request.form['probtest_gamma']
+
+        try:
+            ppsd = datetime.strptime(probtest_period_start_date, '%Y-%m-%d')
+            pped = datetime.strptime(probtest_period_end_date, '%Y-%m-%d')
+            probtest_alpha = float(probtest_alpha)
+            probtest_delta = float(probtest_delta)
+            probtest_gamma = float(probtest_gamma)
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 1. Make sure that the probation test end date is at least 1 year from the start date
+        if (pped - ppsd).days < 365:
+            flash("Error: There must be at least 1 year for the probation test period.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 2. Make sure that the end date of probation test is earlier than today
+        if pped >= datetime.today():
+            flash("Error: The end date of probation test must be earlier than today.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 3. Make sure that the range of alpha is 0.05 <= alpha <= 0.35
+        if probtest_alpha < 0.05 or probtest_alpha > 0.35:
+            flash("Error: Alpha must be within range [0.05, 0.35].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 4. Make sure that the range of delta is 0.10 <= delta <= 1.90
+        if probtest_delta < 0.10 or probtest_delta > 1.90:
+            flash("Error: Delta must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 5. Make sure that the range of gamma is 0.10 <= gamma <= 1.90
+        if probtest_gamma < 0.10 or probtest_gamma > 1.90:
+            flash("Error: Gamma must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 6. Make sure that the stock exists
+        if not stock_available(probtest_stock, probtest_period_start_date, probtest_period_end_date):
+            flash("Error: Request failed. Please check if the stock symbol and probation test period are correct.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        se = generate_executor(probtest_stock, probtest_period_start_date, probtest_period_end_date, \
+                    probtest_alpha, probtest_delta, probtest_gamma)
+        stock_probtest_executors[probtest_stock] = se
+
+        return render_template("technical_indicator_probtest.html", \
+            stock=probtest_stock, alpha=probtest_alpha, delta=probtest_delta, gamma=probtest_gamma, \
+            start_date_test=probtest_period_start_date, end_date_test=probtest_period_end_date, \
+            stock_probtest_executors=stock_probtest_executors)
+
+
+@app.route('/technical_indicator_plot/<test>/<ticker_strings>')
+def technical_indicator_plot(test, ticker_strings):
+    plt.rcParams['figure.figsize'] = (16, 8)
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+    if test == 'backtest':
+        tickers = ticker_strings.split('+')
+        for ticker in tickers:
+            axis.plot(stock_backtest_executors[ticker].df.index, stock_backtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker_strings} E history")
+        axis.legend(tickers)
+    elif test == 'probtest':
+        ticker = ticker_strings
+        axis.plot(stock_probtest_executors[ticker].df.index, stock_probtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker} E history")
+    else:
+        return None
+
+    fig.autofmt_xdate()
+
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+## END{Technical Indicator Strategy}
+
     # line = np.zeros(len(port_var))
     axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
     axis.plot(var_data.date, var_data.VaR, label='VaR')
@@ -2371,6 +2595,8 @@ def plot_var():
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
+    global top_stocks_list
+    top_stocks_list = []
     database.create_table(table_list)
     add_admin_user()
 
@@ -2382,3 +2608,11 @@ if __name__ == "__main__":
     except (KeyError, KeyboardInterrupt, SystemExit, RuntimeError, Exception):
         client_config.client_socket.close()
         sys.exit(0)
+
+
+
+
+
+
+
+
