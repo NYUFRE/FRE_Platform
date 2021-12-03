@@ -2415,6 +2415,7 @@ def hf_trading_engine():
     t_stats6 = []
 
     project_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "system")
+    project_root = os.path.join(project_root,"hf_trading")
     label_path = os.path.join(os.path.join(project_root, "csv"), "label.csv")
     price_path = os.path.join(os.path.join(project_root, "csv"), "price.csv")
 
