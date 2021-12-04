@@ -220,6 +220,10 @@ class FREDatabase:
                           Column('surprise', Numeric, nullable=False),
                           extend_existing=True)
 
+        elif table_name == "risk_threshold":
+            table = Table(table_name, self.metadata,
+                          Column('Placeholder', String(20)))
+
         else:
             raise ValueError("Table name not known")
         return table
