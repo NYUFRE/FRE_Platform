@@ -2318,6 +2318,7 @@ def plot_at2():
 @app.route('/risk_management', methods=["GET", "POST"])
 @login_required
 def risk_management():
+    database.create_table(['risk_threshold'])
     params = {'method': "", 'confidence_level': 99, 'period':1}
     threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
         if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
@@ -2373,6 +2374,19 @@ def risk_management():
 def plot_var():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
+
+    axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
+    axis.plot(var_data.date, var_data.VaR, label='VaR')
+
+    axis.legend(loc='best')
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 @app.route('/stockselect_introduction')
 @login_required
