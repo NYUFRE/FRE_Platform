@@ -59,6 +59,7 @@ tqdm==4.62.1
 TA_Lib==0.4.21
 pyportfolioopt==1.4.2
 scikit-learn == 1.0.1
+arch=5.0.1
 # BeautifulSoup for web crawling
 beautifulsoup4==4.10.0
 
