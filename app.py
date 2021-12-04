@@ -2318,6 +2318,7 @@ def plot_at2():
 @app.route('/risk_management', methods=["GET", "POST"])
 @login_required
 def risk_management():
+    database.create_table(['risk_threshold'])
     params = {'method': "", 'confidence_level': 99, 'period':1}
     threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
         if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
