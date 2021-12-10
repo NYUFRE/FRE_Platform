@@ -13,6 +13,7 @@ import time
 import warnings
 from datetime import datetime, timedelta
 from sys import platform
+import flask_sqlalchemy
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -60,11 +61,16 @@ from system.earnings_impact.earnings_impact import load_earnings_impact, slice_p
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database, local_earnings_calendar_exists
 from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+from system.hf_trading.hf_trading import hf_trading_data
+from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
+from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
 import pdfkit
 import base64
-
+import statsmodels.api as sm
+from sklearn import preprocessing
+from sklearn.linear_model import LinearRegression
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -246,6 +252,19 @@ def get_quote():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
+    # Warning if exceeded risk threshold
+    ### Get threshold
+    threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
+
+    if len(threshold_db):
+        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+        ### Calculate VaR
+        port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+        port_var_value, _, _ = port_var_obj.GARCH_method()
+        print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
+        if port_var_value < -float(threshold_db['var_threshold']):
+            flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
+
     if request.method == "POST":
         symbol = request.form.get('symbol').upper()
         if not symbol:
@@ -956,6 +975,7 @@ def sim_server_up():
         client_config.server_tombstone = False
         server_thread = threading.Thread(target=(start_server_process))
         server_thread.start()
+        print("Launching Server")
 
         while not client_config.server_ready:
             pass
@@ -1016,10 +1036,21 @@ def sim_server_down():
 
     return render_template("sim_server_down.html")
 
+@app.route('/sim_choose_strat', methods= ["GET","POST"])
+@login_required
+def sim_choose_strat():
+    if request.method == "POST":
+        strategy = request.form.get('strategy')
+        return sim_auto_trading(strategy)
+        # return redirect(url_for("sim_auto_trading"),strategy)
+
+        # TODO warning takes 30 minutes , also warning server not up
+    else:
+        return render_template("sim_choose_strat.html")
 
 @app.route('/sim_auto_trading')
 @login_required
-def sim_auto_trading():
+def sim_auto_trading(strategy = None):
     if client_config.server_ready:
         if not client_config.client_thread_started:
             client_config.client_thread_started = True
@@ -1040,7 +1071,7 @@ def sim_auto_trading():
 
             client_config.client_receiver = threading.Thread(target=client_receive, args=(trading_queue, trading_event))
             client_config.client_thread = threading.Thread(target=join_trading_network,
-                                                           args=(trading_queue, trading_event))
+                                                           args=(trading_queue, trading_event, strategy))
 
             client_config.client_receiver.start()
             client_config.client_thread.start()
@@ -2284,13 +2315,298 @@ def plot_at2():
     response.mimetype = 'image/png'
     return response
 
+@app.route('/risk_management', methods=["GET", "POST"])
+@login_required
+def risk_management():
+    params = {'method': "", 'confidence_level': 99, 'period':1}
+    threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
+        if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
+        else database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+    result = {'var': 0, 'es': 0, 'var_hist': None}
 
+    if request.method == 'POST':
+        # Get parameters from form
+        form_input = request.form
+        ### VaR params
+        params['method'] = form_input.get('VaR_methods')
+        params['confidence_level'] = form_input.get('confidence_level')
+        params['period'] = form_input.get('period')
+        ### VaR thresholds
+        threshold['enable_threshold'] = form_input.get('enable_threshold')
+        threshold['confidence_threshold'] = form_input.get('confidence_threshold')
+        threshold['period_threshold'] = form_input.get('period_threshold')
+        threshold['var_threshold'] = form_input.get('var_threshold')
+
+        # Set threshold
+        set_risk_threshold(database, threshold)
+        threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
+        if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
+        else database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+
+        # Calculate VAR and return value
+        port_var = VaR(int(params['confidence_level']), int(params['period']))
+        if params['method'] == 'hist_sim':
+            result['var'], result['es'], result['var_hist'] = port_var.historical_simulation_method()
+        elif params['method'] == 'garch':
+            result['var'], result['es'], result['var_hist'] = port_var.GARCH_method()
+        elif params['method'] == 'EVT':
+            result['var'], result['es'], result['var_hist'] = port_var.extreme_value_method()
+        elif params['method'] == 'caviar_sav':
+            result['var'], result['es'], result['var_hist'] = port_var.caviar_SAV()
+        elif params['method'] == 'caviar_as':
+            result['var'], result['es'], result['var_hist'] = port_var.caviar_AS()
+        else:
+            flash("Invalid method selected")
+        # Populate VaR_data for plotting
+        if result['var_hist'] is not None:
+            var_data.date = result['var_hist'].index[-1000:]
+            var_data.port_returns = result['var_hist']['port_returns'][-1000:]
+            var_data.VaR = result['var_hist']['VaR'][-1000:]
+
+        # Rendering webpage
+        return render_template('risk_management.html', params=params, threshold=threshold, result=result)
+    else:
+        return render_template('risk_management.html', params=params, threshold=threshold, result=result)
+
+
+@app.route('/plot/var')
+def plot_var():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+
+
+@app.route('/hf_trading')
+def hf_trading():
+    return render_template("hf_trading.html")
+
+
+@app.route('/hf_cleaning_data')
+def hf_cleaning_data():
+    import subprocess
+    project_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "system")
+    cleaning_process_path = os.path.join(os.path.join(project_root, "hf_trading"), "Capstone_Project")
+    os.chdir(os.path.join(project_root, "hf_trading"))
+    subprocess.run(cleaning_process_path, shell=True, check=True)
+    # subprocess.call("/Users/yirenwu/Desktop/nyu_class/Fall_2021/research/Capstone_Project/cmake-build-debug/Capstone_Project")
+
+    return render_template("hf_cleaning_data.html")
+
+
+@app.route("/hf_trading_engine", methods=["GET", "POST"])
+def hf_trading_engine():
+    input = { "Threshold": -0.00001}
+    table_year_data = []
+    x1 = []
+    x2 = []
+    x3 = []
+    x4 = []
+    x5 = []
+    x6 = []
+    t_stats1 = []
+    t_stats2 = []
+    t_stats3 = []
+    t_stats4 = []
+    t_stats5 = []
+    t_stats6 = []
+
+    project_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "system")
+    label_path = os.path.join(os.path.join(project_root, "csv"), "label.csv")
+    price_path = os.path.join(os.path.join(project_root, "csv"), "price.csv")
+
+    df = pd.read_csv(label_path)
+    price = pd.read_csv(price_path)
+    price["Date"] = pd.to_datetime(price["Date"])
+    price.index = price["Time"]
+    df['Date'] = pd.to_datetime(df['Date'])
+
+
+    column_names = ['OI', 'OI1', 'OI2', 'OI3', 'OI4', 'OI5', 't_stats1', 't_stats2', 't_stats3', 't_stats4',
+                    't_stats5', 't_stats6']
+    stats = pd.DataFrame(columns=column_names)
+    for data in df.groupby('Date'):
+        if len(data[1]) > 1000:
+            X = data[1][['x1', 'x2', 'x3', 'x4', 'x5', 'x6']]
+            y = data[1]['y']
+            scaler = preprocessing.StandardScaler().fit(X)
+            X = scaler.transform(X)
+            X = sm.add_constant(X)
+            model = sm.OLS(y, X)
+            results = model.fit()
+            x1.append(results.params[1])
+            x2.append(results.params[2])
+            x3.append(results.params[3])
+            x4.append(results.params[4])
+            x5.append(results.params[5])
+            x6.append(results.params[6])
+
+            t_stats1.append(results.tvalues[1])
+            t_stats2.append(results.tvalues[2])
+            t_stats3.append(results.tvalues[3])
+            t_stats4.append(results.tvalues[4])
+            t_stats5.append(results.tvalues[5])
+            t_stats6.append(results.tvalues[6])
+
+    stats['OI'] = x1
+    stats['OI1'] = x2
+    stats['OI2'] = x3
+    stats['OI3'] = x4
+    stats['OI4'] = x5
+    stats['OI5'] = x6
+    stats['t_stats1'] = t_stats1
+    stats['t_stats2'] = t_stats2
+    stats['t_stats3'] = t_stats3
+    stats['t_stats4'] = t_stats4
+    stats['t_stats5'] = t_stats5
+    stats['t_stats6'] = t_stats6
+
+    column_names = ["Average coefficient", "Percent_positive", 'Percent positive and signiﬁcant',
+                    "Percent negative and signiﬁcant"]
+    stats_final = pd.DataFrame(columns=column_names)
+    stats_final["Average coefficient"] = [stats['OI'].mean(), stats['OI1'].mean(), stats['OI2'].mean(),
+                                          stats['OI3'].mean(), stats['OI4'].mean(), stats['OI5'].mean()]
+    stats_final["Percent_positive"] = [len(stats['OI'] > 0) / len(stats), len(stats['OI1'] > 0) / len(stats),
+                                       len(stats['OI2'] > 0) / len(stats)
+        , len(stats['OI3'] > 0) / len(stats), len(stats['OI4'] > 0) / len(stats),
+                                       len(stats['OI5'] > 0) / len(stats)]
+
+    stats_final["Percent positive and signiﬁcant"] = [
+        len(stats[(stats['OI'] > 0) & (stats["t_stats1"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI1'] > 0) & (stats["t_stats2"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI2'] > 0) & (stats["t_stats3"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI3'] > 0) & (stats["t_stats4"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI4'] > 0) & (stats["t_stats5"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI5'] > 0) & (stats["t_stats6"] >= 1.96)]) / len(stats)]
+
+    stats_final["Percent negative and signiﬁcant"] = [
+        len(stats[(stats['OI'] < 0) & (stats["t_stats1"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI1'] < 0) & (stats["t_stats2"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI2'] < 0) & (stats["t_stats3"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI3'] < 0) & (stats["t_stats4"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI4'] < 0) & (stats["t_stats5"] >= 1.96)]) / len(stats),
+        len(stats[(stats['OI5'] < 0) & (stats["t_stats6"] >= 1.96)]) / len(stats)]
+
+    class Backtest:
+        def __init__(self, data):
+            self.data = data
+            self.cost = 0
+            self.cash = 10000
+            self.position = 0
+            self.total = 10000
+            self.trace = []
+
+        def test(self):
+            for index, row in self.data.iterrows():
+                if row["y_pred"] > 0 and self.position == 0:
+                    # print("buy at", row["mid_price"], index)
+                    self.cost = row["mid_price"]
+                    self.position = int(self.cash / self.cost)
+                    self.cash = self.cash - int(self.cash / self.cost) * self.cost
+                    self.total = self.cash + self.position * row["mid_price"]
+
+                if self.position != 0:
+                    if row["mid_price"] > self.cost or (row["mid_price"] / self.cost) - 1 < -0.00001:
+                        # print("sell at ",row["mid_price"], "cost ", self.cost, index)
+                        self.total = self.cash + self.position * row["mid_price"]
+                        self.position = 0
+                        self.cash = self.total
+                self.trace.append(self.total)
+            return self.trace
+
+    if request.method == "POST":
+        Rt = []
+        Maxd = []
+        Sr = []
+        Rsk = []
+        hf_trading_data.data_list = []
+        Result = pd.DataFrame()
+        count = 0
+
+        for data in df.groupby('Date'):
+            if len(data[1]) > 1000:
+                count = count + 1
+                print(count/22)
+
+
+                backtest_data = pd.DataFrame()
+
+                X = data[1][['x1', 'x2', 'x3', 'x4', 'x5', 'x6']]
+                y = data[1]['y']
+                pos = int(0.6 * len(data[1]))
+                X_train = X.iloc[:pos, :]
+                y_train = y[:pos]
+                X_test = X.iloc[pos:, :]
+                y_test = y[pos:]
+
+                test_date = data[1]['Date'][pos:]
+                test_time = data[1]['Time'][pos:]
+
+                regressor = LinearRegression()
+                scaler = preprocessing.StandardScaler().fit(X_train)
+                X_train = scaler.transform(X_train)
+                X_test = scaler.transform(X_test)
+                regressor.fit(X_train, y_train)  # training the algorithm
+                backtest_data['Date'] = test_date
+                backtest_data.index = test_time
+                backtest_data['y_pred'] = regressor.predict(X_test)
+                backtest_data['mid_price'] = (price[price["Date"] == test_date.values[0]].loc[test_time]["4352356"] +
+                                              price[price["Date"] == test_date.values[0]].loc[test_time]["Ask"]) / 2
+                #         backtest_data['Open'] = backtest_data['mid_price']
+                #         backtest_data['High'] = backtest_data['mid_price']
+                #         backtest_data['Low'] = backtest_data['mid_price']
+                #         backtest_data['Close'] = backtest_data['mid_price']
+                backtest_data = backtest_data.reset_index()
+
+                bt = Backtest(backtest_data)
+                result = pd.DataFrame(bt.test())
+                hf_trading_data.data_list.append(result)
+
+
+                Returni = (result.iloc[-1] / result.iloc[0] - 1).values[0]
+                Maxdrop = (-((result.cummax() - result) /
+                             result.cummax()).max()).values[0]
+                sr = ((result.pct_change()).mean() / (result.pct_change()).std()).values[0]
+                risk = ((result.pct_change()).std()).values[0]
+                Rt.append(Returni)
+                Maxd.append(Maxdrop)
+                Sr.append(sr)
+                Rsk.append(risk)
+
+        Result["return"] = Rt
+        Result["volatility"] = Rsk
+        Result["Sharp_ratio"] = Sr
+        Result["Max drawdown"] = Maxd
+        return render_template("hf_trading_engine.html", input=input, table_year_data=stats_final, table_result=Result,
+                               backtest=True, plot_ids=list(range(len(hf_trading_data.data_list))))
+
+    return render_template("hf_trading_engine.html", input=input, table_year_data=stats_final, backtest=False,
+                           plot_ids=[])
+
+@app.route('/hf_plot/<plot_id>')
+def plot_hf(plot_id):
+    plot_df = hf_trading_data.data_list[int(plot_id)]
+
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    axis.grid(linestyle='-.')
+    axis.plot(plot_df)
+    axis.set_xlabel("seconds")
+    axis.set_ylabel("cumulative return")
+
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+##BEGIN{Stock Select}
 @app.route('/stockselect_introduction')
 @login_required
 def stockselect_introduction():
     flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
     return render_template("stockselect_introduction.html")
-
 
 @app.route("/stockselect_build")
 @login_required
@@ -2327,18 +2643,179 @@ def stockselect_back_test():
         rf = extract_database_rf_10yr(database)
         images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
         return render_template('stockselect_backtest.html', images_back_test=images_back_test)
-
-# @app.route("/download_pdf")
-# @login_required
-# def download_pdf():
-#
-#     pdf = pdfkit.from_file('./system/templates/stockselect_backtest.html', 'out.pdf')
-#     return pdf
+## END{Stock Select}
 
 
+## BEGIN{Technical Indicator Strategy}
+
+@app.route('/technical_indicator_strategy')
+@login_required
+def technical_indicator_strategy():
+    return render_template("technical_indicator_strategy.html")
 
 
+@app.route('/technical_indicator_backtest', methods=["GET", "POST"])
+def technical_indicator_backtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_backtest_param.html")
 
+    if request.method == 'POST':
+        training_period_start_date = request.form['training_period_start_date']
+        training_period_end_date = request.form['training_period_end_date']
+        backtest_period_start_date = request.form['backtest_period_start_date']
+        backtest_period_end_date = request.form['backtest_period_end_date']
+
+        try:
+            tpsd = datetime.strptime(training_period_start_date, '%Y-%m-%d')
+            tped = datetime.strptime(training_period_end_date, '%Y-%m-%d')
+            bpsd = datetime.strptime(backtest_period_start_date, '%Y-%m-%d')
+            bped = datetime.strptime(backtest_period_end_date, '%Y-%m-%d')
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 1. Make sure that there are at least 8 years in the training period
+        if (tped - tpsd).days < 8 * 365:
+            flash("Error: There must be at least 8 years for the training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 2. Make sure that there are at least 1 year in the backtest period
+        if (bped - bpsd).days < 365:
+            flash("Error: There must be at least 1 year for the backtest period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 3. Make sure that the start date of backtest period is later than the end date of training period
+        if bpsd < tped:
+            flash("Error: The start date of backtest period must be no earlier than the end date of training period.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        # 4. Make sure that the end date of backtest period is earlier than today
+        if bped >= datetime.today():
+            flash("Error: The end date of backtest period must be earlier than today.", 'error')
+            return render_template("technical_indicator_backtest_param.html")
+
+        for industry, stocks in stock_collection.items():
+            print(f"@@@@@ INDUSTRY={industry.title()} Sector")
+
+            for stock in stocks:
+                print(f"  ### STOCK={stock}")
+                se = generate_optimized_executor(stock, training_period_start_date, training_period_end_date, \
+                    backtest_period_start_date, backtest_period_end_date)
+                stock_backtest_executors[stock] = se
+
+        return render_template("technical_indicator_backtest.html", \
+            start_date_train=training_period_start_date, end_date_train=training_period_end_date, \
+            start_date_test=backtest_period_start_date, end_date_test=backtest_period_end_date, \
+            stock_collection=stock_collection, industry_description=industry_description, \
+            stock_backtest_executors=stock_backtest_executors)
+
+
+@app.route('/technical_indicator_probtest', methods=["GET", "POST"])
+def technical_indicator_probtest():
+    if request.method == 'GET':
+        return render_template("technical_indicator_probtest_param.html")
+
+    if request.method == 'POST':
+        probtest_period_start_date = request.form['probtest_period_start_date']
+        probtest_period_end_date = request.form['probtest_period_end_date']
+        probtest_stock = request.form['probtest_stock']
+        probtest_alpha = request.form['probtest_alpha']
+        probtest_delta = request.form['probtest_delta']
+        probtest_gamma = request.form['probtest_gamma']
+
+        try:
+            ppsd = datetime.strptime(probtest_period_start_date, '%Y-%m-%d')
+            pped = datetime.strptime(probtest_period_end_date, '%Y-%m-%d')
+            probtest_alpha = float(probtest_alpha)
+            probtest_delta = float(probtest_delta)
+            probtest_gamma = float(probtest_gamma)
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 1. Make sure that the probation test end date is at least 1 year from the start date
+        if (pped - ppsd).days < 365:
+            flash("Error: There must be at least 1 year for the probation test period.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 2. Make sure that the end date of probation test is earlier than today
+        if pped >= datetime.today():
+            flash("Error: The end date of probation test must be earlier than today.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 3. Make sure that the range of alpha is 0.05 <= alpha <= 0.35
+        if probtest_alpha < 0.05 or probtest_alpha > 0.35:
+            flash("Error: Alpha must be within range [0.05, 0.35].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 4. Make sure that the range of delta is 0.10 <= delta <= 1.90
+        if probtest_delta < 0.10 or probtest_delta > 1.90:
+            flash("Error: Delta must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 5. Make sure that the range of gamma is 0.10 <= gamma <= 1.90
+        if probtest_gamma < 0.10 or probtest_gamma > 1.90:
+            flash("Error: Gamma must be within range [0.10, 1.90].", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        # 6. Make sure that the stock exists
+        if not stock_available(probtest_stock, probtest_period_start_date, probtest_period_end_date):
+            flash("Error: Request failed. Please check if the stock symbol and probation test period are correct.", 'error')
+            return render_template("technical_indicator_probtest_param.html")
+
+        se = generate_executor(probtest_stock, probtest_period_start_date, probtest_period_end_date, \
+                    probtest_alpha, probtest_delta, probtest_gamma)
+        stock_probtest_executors[probtest_stock] = se
+
+        return render_template("technical_indicator_probtest.html", \
+            stock=probtest_stock, alpha=probtest_alpha, delta=probtest_delta, gamma=probtest_gamma, \
+            start_date_test=probtest_period_start_date, end_date_test=probtest_period_end_date, \
+            stock_probtest_executors=stock_probtest_executors)
+
+
+@app.route('/technical_indicator_plot/<test>/<ticker_strings>')
+def technical_indicator_plot(test, ticker_strings):
+    plt.rcParams['figure.figsize'] = (16, 8)
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+    if test == 'backtest':
+        tickers = ticker_strings.split('+')
+        for ticker in tickers:
+            axis.plot(stock_backtest_executors[ticker].df.index, stock_backtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker_strings} E history")
+        axis.legend(tickers)
+    elif test == 'probtest':
+        ticker = ticker_strings
+        axis.plot(stock_probtest_executors[ticker].df.index, stock_probtest_executors[ticker].E_hist)
+        axis.set_title(f"{ticker} E history")
+    else:
+        return None
+
+    fig.autofmt_xdate()
+
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+## END{Technical Indicator Strategy}
+
+    # line = np.zeros(len(port_var))
+    axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
+    axis.plot(var_data.date, var_data.VaR, label='VaR')
+
+    axis.legend(loc='best')
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
