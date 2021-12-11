@@ -1,28 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from pandas import read_csv
 import math
 from keras.models import Sequential
-from keras.layers import Bidirectional
-from keras.layers import Dense
 from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from keras.layers.core import Dense, Activation, Dropout
 import pandas as pd
-import time  # helper libraries
-from datetime import datetime
-from datetime import timedelta
-import os
-import sys
-import subprocess
-import matplotlib.pyplot as plt
-import datetime as dt
-import matplotlib.dates as mdates
-import plotly.graph_objects as go
-import plotly.express as px
-
 
 top_stocks_res = []
 
@@ -148,11 +131,6 @@ def build_model_predict_select(df_stock_10yr, df_rf, df_sector):
         index += 1
         print("Current progress", str(index / 503))
 
-    # # change from string to float
-    # for key in data_dict.keys():
-    #     for i in range(len(data_dict[key][1])):
-    #         data_dict[key][1][i] = float(data_dict[key][1][i])
-
     # calculate Sharpe ratio for each stock using predicted price data
     SR = {}  # key -> stock/symbol, values ->ratio = (Rs - Rf)/std(Rs_i - Rf_i)
     for sym in data_dict.keys():
@@ -197,6 +175,9 @@ def build_model_predict_select(df_stock_10yr, df_rf, df_sector):
     for key in sector_sym_r.keys():
         sector_sym_r[key] = dict(sorted(sector_sym_r[key].items(), key=lambda item: item[1], reverse=True))
 
+    # remove JEC which is from 'other' sector
+    if 'Other' in sector_sym_r.keys():
+        del sector_sym_r['Other']
     # Print out the top stock selected in the webpage
     top_stocks = []
     for sec in sector_sym_r.keys():
@@ -206,15 +187,8 @@ def build_model_predict_select(df_stock_10yr, df_rf, df_sector):
             top_stocks.append([sec, stock, value])
             break;
         print()
-    # remove JEC which is from 'other' sector
-    top_stocks_res = top_stocks[:-1]
+    top_stocks_res = top_stocks
     return top_stocks_res
 
 def get_top_stocks():
     return top_stocks_res
-
-# def get_rf():
-#     return df_rf_g
-#
-# def get_stock_10yr():
-#     return df_stock_10yr_g

@@ -1,29 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-from pandas import read_csv
-import math
-from keras.models import Sequential
-from keras.layers import Bidirectional
-from keras.layers import Dense
-from keras.layers import LSTM
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error
-from keras.layers.core import Dense, Activation, Dropout
-import time #helper libraries
 from datetime import datetime
 from datetime import timedelta
-import os
-import sys
-import subprocess
-import matplotlib.pyplot as plt
-import datetime as dt
-import matplotlib.dates as mdates
 import plotly.graph_objects as go
-import plotly.express as px
 from base64 import b64encode
-
-
 
 def extract_database_mkt(database):
     """
@@ -87,7 +66,7 @@ def stock_select_back_test(top_stock, df_mkt, df_stock_10yr, df_rf):
         for i in df.index.tolist():
             if float(top_stock_df.at[i, 'price']) == 0:
                 top_stock_df.at[i, 'price'] = top_stock_df.at[i - 1, 'price']
-    print("xixixixixixi")
+    print("checkpoint 1")
 
     final_stock_df = pd.DataFrame(columns=['sym', 'date', 'return'])
     # calculate return
@@ -99,7 +78,7 @@ def stock_select_back_test(top_stock, df_mkt, df_stock_10yr, df_rf):
                 top_stock_df.at[i - 1, 'price'])
             final_stock_df.loc[idx] = [stock, df.at[i, 'date'], newVal]
             idx += 1
-    print("hahahhahaha")
+    print("checkpoint 2")
     date_sym = {}  # key --> date, value--> average return of stocks on that day
     end = date_end + timedelta(days=1)
     every_stock_return = {}  # key --> stock, value --> return of each date
@@ -119,15 +98,12 @@ def stock_select_back_test(top_stock, df_mkt, df_stock_10yr, df_rf):
                 every_stock_return[stock].append(float(ret[0]))
                 sum += float(ret[0])
                 count += 1
-            # else:
-            #   if date_str in final_stock_df['date'].unique():
-            #     every_stock_return[stock].append(0)
         if sum != 0:
             date_sym[date_str] = sum / count  # assign equal weight to each stock
         date_start += timedelta(days=1)
 
     print("Process mkt data")
-### Process mkt data
+    ### Process mkt data
     date_start = datetime.strptime('2020-12-31', "%Y-%m-%d")
     return_mkt = \
     df_mkt.loc[(df_mkt['date'] >= date_start.strftime("%Y-%m-%d")) & (df_mkt['date'] <= date_end.strftime("%Y-%m-%d"))]['adjusted_close'].values

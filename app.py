@@ -2375,25 +2375,6 @@ def plot_var():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
-    axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
-    axis.plot(var_data.date, var_data.VaR, label='VaR')
-
-    axis.legend(loc='best')
-    axis.grid(True)
-    fig.autofmt_xdate()
-    canvas = FigureCanvas(fig)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    response = make_response(output.getvalue())
-    response.mimetype = 'image/png'
-    return response
-
-@app.route('/stockselect_introduction')
-@login_required
-def stockselect_introduction():
-    flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
-    return render_template("stockselect_introduction.html")
-
 @app.route('/hf_trading')
 def hf_trading():
     return render_template("hf_trading.html")
@@ -2620,6 +2601,12 @@ def plot_hf(plot_id):
     response.mimetype = 'image/png'
     return response
 
+##BEGIN{Stock Select}
+@app.route('/stockselect_introduction')
+@login_required
+def stockselect_introduction():
+    flash("When you click 'select stock', the model will run to select stocks, which will take over 2 hours, please wait...")
+    return render_template("stockselect_introduction.html")
 
 @app.route("/stockselect_build")
 @login_required
@@ -2656,13 +2643,7 @@ def stockselect_back_test():
         rf = extract_database_rf_10yr(database)
         images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
         return render_template('stockselect_backtest.html', images_back_test=images_back_test)
-
-# @app.route("/download_pdf")
-# @login_required
-# def download_pdf():
-#
-#     pdf = pdfkit.from_file('./system/templates/stockselect_backtest.html', 'out.pdf')
-#     return pdf
+## END{Stock Select}
 
 
 ## BEGIN{Technical Indicator Strategy}
