@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import matplotlib.dates as mdates
 import plotly.graph_objects as go
-from chart_studio import plotly
 import plotly.express as px
 from base64 import b64encode
 

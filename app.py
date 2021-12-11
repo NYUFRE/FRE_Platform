@@ -66,7 +66,7 @@ from system.mep_strategy.mep import stock_collection, industry_description, gene
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
-import pdfkit
+#import pdfkit
 import base64
 import statsmodels.api as sm
 from sklearn import preprocessing
