@@ -97,7 +97,7 @@ class VaR:
         '''
         from arch.__future__ import reindexing
         # Calculate portfolio parameters( 1. returns; 2. mean return; 3. standard deviation)
-        port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
+        port_returns = VaR.port_return(self.symbols, self.shares)
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
         ## Rescale for optimization
         port_returns['port_returns_rescaled'] = port_returns['port_returns'] * 100
@@ -132,8 +132,6 @@ class VaR:
         port_returns['VaR'] = -port_returns['sigma'] * t(garch_model.params['nu']).ppf(1-self.confidence_level*0.01) * \
                               ((garch_model.params['nu'] - 2)/(garch_model.params['nu']))**0.5
         port_returns['VaR'] = -port_returns['VaR']*np.sqrt(self.days)/100
-
-        #print(port_returns)
 
         return round(VaR_value,4), round(expected_shortfall,4), port_returns
 
@@ -188,7 +186,7 @@ class VaR:
 
     def caviar_SAV(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
-        port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
+        port_returns = VaR.port_return(self.symbols, self.shares)
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
 
         # historical var -> use as first value
@@ -215,13 +213,15 @@ class VaR:
         beta = output.x
 
         for i in range(1, len(port_returns)):
-            port_returns['VaR'][i] = (beta[0] + beta[1]*port_returns['VaR'][i-1] + \
-                                      beta[2]*abs(port_returns['port_returns'][i-1])) * np.sqrt(self.days)
+            port_returns['VaR'][i] = beta[0] + beta[1]*port_returns['VaR'][i-1] + \
+                                      beta[2]*abs(port_returns['port_returns'][i-1])
 
         VaR_value = beta[0] + beta[1]*port_returns['VaR'][-1] + beta[2]*abs(port_returns['port_returns'][-1])
         expected_shortfall = (1 + np.exp(min(beta))) * VaR_value # min here only try to get a small arbitrary number (not theoretical based)
 
         # Adjust for days
+        for i in range(len(port_returns)):
+            port_returns['VaR'][i] = port_returns['VaR'][i] * np.sqrt(self.days)
         VaR_value = min(VaR_value * np.sqrt(self.days), 1)
         expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
 
@@ -230,7 +230,7 @@ class VaR:
 
     def caviar_AS(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
-        port_returns = VaR.port_return(self.symbols, self.shares, interval=self.days)
+        port_returns = VaR.port_return(self.symbols, self.shares)
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
 
         # historical var -> use as first value
@@ -264,7 +264,7 @@ class VaR:
           return_plus = port_returns['port_returns'][i-1] if port_returns['port_returns'][i-1] >= 0 else 0
           return_minus = port_returns['port_returns'][i-1] if port_returns['port_returns'][i-1] <= 0 else 0
           port_returns['VaR'][i] = (beta_as[0] + beta_as[1]*port_returns['VaR'][i-1] + \
-                                   beta_as[2]*return_plus + beta_as[3]*return_minus) * np.sqrt(self.days)
+                                   beta_as[2]*return_plus + beta_as[3]*return_minus) # self.days
 
         return_plus = port_returns['port_returns'][-1] if port_returns['port_returns'][-1] >= 0 else 0
         return_minus = port_returns['port_returns'][-1] if port_returns['port_returns'][-1] <= 0 else 0
@@ -273,6 +273,8 @@ class VaR:
         expected_shortfall = (1 + np.exp(min(beta))) * VaR_value # min here only try to get a small arbitrary number (not theoretical based)
 
         # Adjust for day
+        for i in range(len(port_returns)):
+            port_returns['VaR'][i] = port_returns['VaR'][i] * np.sqrt(self.days)
         VaR_value = min(VaR_value * np.sqrt(self.days), 1)
         expected_shortfall = min(expected_shortfall * np.sqrt(self.days), 1)
 

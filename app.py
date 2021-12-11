@@ -66,7 +66,7 @@ from system.mep_strategy.mep import stock_collection, industry_description, gene
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
-import pdfkit
+#import pdfkit
 import base64
 import statsmodels.api as sm
 from sklearn import preprocessing
@@ -2318,6 +2318,7 @@ def plot_at2():
 @app.route('/risk_management', methods=["GET", "POST"])
 @login_required
 def risk_management():
+    database.create_table(['risk_threshold'])
     params = {'method': "", 'confidence_level': 99, 'period':1}
     threshold = {'enable_threshold': None, 'confidence_threshold':99, 'period_threshold':1, 'var_threshold':10}\
         if len(database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')) == 0 \
@@ -2374,8 +2375,6 @@ def plot_var():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
-
-
 @app.route('/hf_trading')
 def hf_trading():
     return render_template("hf_trading.html")
@@ -2411,6 +2410,7 @@ def hf_trading_engine():
     t_stats6 = []
 
     project_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "system")
+    project_root = os.path.join(project_root,"hf_trading")
     label_path = os.path.join(os.path.join(project_root, "csv"), "label.csv")
     price_path = os.path.join(os.path.join(project_root, "csv"), "price.csv")
 
