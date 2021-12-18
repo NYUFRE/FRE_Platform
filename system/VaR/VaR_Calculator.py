@@ -14,8 +14,9 @@ from flask import session
 from system import eod_market_data
 from scipy.optimize import minimize
 
+pd.options.mode.chained_assignment = None  # default='warn'
 # Cache data for stock returns
-port_returns_data = None
+port_returns_data = dict()
 class VaR:
     def __init__(self, confidence_level: int, days: int = 1) -> None:
         self.confidence_level = confidence_level
@@ -34,12 +35,15 @@ class VaR:
         '''
         # Get cached data if available
         global port_returns_data
-        if port_returns_data is not None:
-            cached_date = port_returns_data.index[-1].to_pydatetime().strftime('%Y-%m-%d')
+        if port_returns_data.get(tuple(symbols + shares), None) is not None:
+            cached_date = port_returns_data[tuple(symbols + shares)].index[-1].to_pydatetime().strftime('%Y-%m-%d')
             calculating_date = [(datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in [0, 1]]
-        cached = port_returns_data is not None and cached_date in calculating_date
+        cached = port_returns_data.get(tuple(symbols + shares), None) is not None and cached_date in calculating_date
         if cached:
-            return port_returns_data
+            return port_returns_data[tuple(symbols + shares)]
+
+        if len(symbols) == 0:
+            return None
 
         data = pd.DataFrame(eod_market_data.get_daily_data(symbol=symbols[0], start='', end='', category='US'))\
                                 [['date', 'adjusted_close']]
@@ -61,7 +65,7 @@ class VaR:
         data = data[symbols].pct_change(periods=interval).dropna()
         port_weight = [share / np.sum(shares) for share in shares]
         data['port_returns'] = data.dot(port_weight)
-        port_returns_data = data[['port_returns']] # save result into cache
+        port_returns_data[tuple(symbols + shares)] = data[['port_returns']] # save result into cache
 
         return data[['port_returns']]
 
@@ -74,6 +78,7 @@ class VaR:
         '''
         # Calculate portfolio return
         port_returns = VaR.port_return(self.symbols, self.shares)
+        if port_returns is None: return 0, 0, None
 
         # Calculate historical VaR (for plotting purpose)
         percentile_select = lambda x: np.percentile(x, 100 - self.confidence_level)
@@ -98,6 +103,8 @@ class VaR:
         from arch.__future__ import reindexing
         # Calculate portfolio parameters( 1. returns; 2. mean return; 3. standard deviation)
         port_returns = VaR.port_return(self.symbols, self.shares)
+        if port_returns is None: return 0, 0, None
+
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
         ## Rescale for optimization
         port_returns['port_returns_rescaled'] = port_returns['port_returns'] * 100
@@ -144,6 +151,8 @@ class VaR:
 
         # Calculate portfolio return
         port_returns = VaR.port_return(self.symbols, self.shares)
+        if port_returns is None: return 0, 0, None
+
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
 
         # Find the start of the tails <- Fit t-distribution to historical portfolio return
@@ -187,6 +196,8 @@ class VaR:
     def caviar_SAV(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
         port_returns = VaR.port_return(self.symbols, self.shares)
+        if port_returns is None: return 0, 0, None
+
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
 
         # historical var -> use as first value
@@ -231,6 +242,8 @@ class VaR:
     def caviar_AS(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
         port_returns = VaR.port_return(self.symbols, self.shares)
+        if port_returns is None: return 0, 0, None
+
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
 
         # historical var -> use as first value
