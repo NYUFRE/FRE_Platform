@@ -2375,6 +2375,19 @@ def plot_var():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
+    axis.plot(var_data.date, var_data.port_returns, label='Portfolio Return')
+    axis.plot(var_data.date, var_data.VaR, label='VaR')
+
+    axis.legend(loc='best')
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
 @app.route('/hf_trading')
 def hf_trading():
     return render_template("hf_trading.html")
