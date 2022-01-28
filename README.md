@@ -10,7 +10,7 @@ After clone the FRE_Platform repo from Github, create the virtualenv directory i
 ```
 python -m venv venv
 
-You may need to use to python3 instead of python, please run python -V to verify your version.
+You may need to use to python3 instead of python, please run python -V to verify your version before doing this.
 ```
 Activate the virtual env
 ```
