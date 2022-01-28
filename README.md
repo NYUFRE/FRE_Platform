@@ -9,10 +9,17 @@
 After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
 ```
 python -m venv venv
+
+You may need to use to python3 instead of python, please run python -V to verify your version.
 ```
 Activate the virtual env
 ```
 .\venv\Scripts\activate
+
+If you are using MAC computer, using
+
+source venv/bin/activate
+
 ```
 Install the required packages (Do not use Python 3.9 as a few packages are not compatiable)
 ```
@@ -30,7 +37,7 @@ python app.py
 ```
 Stop the platform by Ctrl-C and deactivate the virtualenv
 ```
-.\venv\Script\deactivate.bat
+.\venv\Script\deactivate.bat 
 ```
 
 ### With Docker
