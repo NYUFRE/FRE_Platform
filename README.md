@@ -16,7 +16,7 @@ Activate the virtual env
 ```
 Install the required packages (Do not use Python 3.9 as a few packages are not compatiable)
 ```
-pip install -r requirements.txt
+python install.py
 ```
 Create the instance directory in FRE_Platform and load flask.cfg into the instance directory
 
