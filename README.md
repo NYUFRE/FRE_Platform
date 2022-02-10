@@ -105,7 +105,7 @@ Fork a repo to your own account
 
 Create a directory called NYUFRE and Clone FRE_Platform Remote Repo
 ```
-git clone https://github.com/<your username>/FRE_Platform
+git clone https://github.com/NYUFRE/FRE_Platform
 ```
 Add upstream repo
 ```
