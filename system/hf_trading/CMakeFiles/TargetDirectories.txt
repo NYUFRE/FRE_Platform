@@ -1,3 +1,0 @@
-/Users/yirenwu/Desktop/nyu_class/Fall_2021/research/Capstone_Project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/yirenwu/Desktop/nyu_class/Fall_2021/research/Capstone_Project/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/yirenwu/Desktop/nyu_class/Fall_2021/research/Capstone_Project/cmake-build-debug/CMakeFiles/Capstone_Project.dir
