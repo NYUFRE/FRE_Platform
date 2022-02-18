@@ -21,7 +21,7 @@ If you are using MAC computer, using
 source venv/bin/activate
 
 ```
-Install the required packages (Do not use Python 3.9 as a few packages are not compatiable)
+Install the required packages (Run Python -V to check the Python version in your virtual env, version 3.8 or 3.9 is preferred)
 ```
 python install.py
 ```
