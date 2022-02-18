@@ -3,9 +3,6 @@
 * *Authors* Song Tang <st290@nyu.edu>, Qijia Lou <qijia.lou@nyu.edu>, Zicheng He <zh1345@nyu.edu>, Albert Lee <al3406@nyu.edu>, Xiao Liu <xl2951@nyu.edu>, Koda Song <ks5416@nyu.edu>, Jiaxin Zhang <jz3796@nyu.edu> 
 * *Details:* FRE Platform has Flask web interface, historical and realtime market data feeds, integrated databases, messaging framework, and stock market simulation. It supports trading model plugin and machine learning logic development.
 
-
-## Launch FRE Platform
-
 ## Git Instructions
 Fork a repo to your own account
 
@@ -55,6 +52,7 @@ git push -u origin feature/feature-name
 ```
 Create a Pull Request on Github
 
+## Launch FRE Platform
 ### With Virtual Env
 After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
 ```
@@ -89,7 +87,6 @@ Stop the platform by Ctrl-C and deactivate the virtualenv
 ```
 .\venv\Script\deactivate.bat 
 ```
-
 ### With Docker
 Either build from source or pull from docker cloud repository.
 
@@ -152,5 +149,6 @@ A further improvement could be decoupling server from client code and make serve
 
 ## Issue report
 From upstream repo's [GitHub Issue](https://github.com/NYUFRE/FRE_Platform/issues)
+
 ## Documentation
 [FRE Platform Documentation](https://nyufre.github.io/FRE_Platform/)
