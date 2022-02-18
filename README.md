@@ -5,6 +5,56 @@
 
 
 ## Launch FRE Platform
+
+## Git Instructions
+Fork a repo to your own account
+
+Create a directory called NYUFRE and Clone FRE_Platform Remote Repo
+```
+git clone https://github.com/NYUFRE/FRE_Platform
+```
+Add upstream repo
+```
+git remote add upstream https://github.com/NYUFRE/FRE_Platform
+```
+Sync with upstream(recommend doing it every time before checking out a new branch) 
+```
+git fetch upstream
+```
+
+Check status of your current branch, should be master
+```
+cd FRE_Platform
+git status
+```
+Sync your local repo with the remote repo
+```
+git pull
+```
+Create a working branch for your changes 
+```
+git checkout -b feature/feature-name
+```
+Diff between your changes and the original
+```
+git diff
+```
+Add your changes to the staging area
+```
+git add some_file.py
+# or simply 
+git add .
+```
+Commit your changes
+```
+git commit -m "Add feature-xyz"
+```
+Push your change to the remote repo
+```
+git push -u origin feature/feature-name
+```
+Create a Pull Request on Github
+
 ### With Virtual Env
 After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
 ```
@@ -100,54 +150,6 @@ documentation](https://docs.docker.com/config/containers/multi-service_container
 
 A further improvement could be decoupling server from client code and make server a long running daemon process.
 
-## Git Instructions
-Fork a repo to your own account
-
-Create a directory called NYUFRE and Clone FRE_Platform Remote Repo
-```
-git clone https://github.com/NYUFRE/FRE_Platform
-```
-Add upstream repo
-```
-git remote add upstream https://github.com/NYUFRE/FRE_Platform
-```
-Sync with upstream(recommend doing it every time before checking out a new branch) 
-```
-git fetch upstream
-```
-
-Check status of your current branch, should be master
-```
-cd FRE_Platform
-git status
-```
-Sync your local repo with the remote repo
-```
-git pull
-```
-Create a working branch for your changes 
-```
-git checkout -b feature/feature-name
-```
-Diff between your changes and the original
-```
-git diff
-```
-Add your changes to the staging area
-```
-git add some_file.py
-# or simply 
-git add .
-```
-Commit your changes
-```
-git commit -m "Add feature-xyz"
-```
-Push your change to the remote repo
-```
-git push -u origin feature/feature-name
-```
-Create a Pull Request on Github
 ## Issue report
 From upstream repo's [GitHub Issue](https://github.com/NYUFRE/FRE_Platform/issues)
 ## Documentation
