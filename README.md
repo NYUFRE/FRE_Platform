@@ -24,7 +24,7 @@ Check status of your current branch, should be master
 cd FRE_Platform
 git status
 ```
-Sync your local repo with the remote repo (Once pull is completed, follow the instructions in **Launch FRE Platform** section to launch the env)
+Sync your local repo with the remote repo (Once pull is completed, follow the instructions in **Launch FRE Platform** section to launch the platform)
 ```
 git pull
 ```
