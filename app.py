@@ -28,7 +28,7 @@ from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from sqlalchemy.exc import IntegrityError, SAWarning
-from talib import abstract
+# from talib import abstract
 
 warnings.simplefilter(action='ignore', category=SAWarning)
 
@@ -54,18 +54,18 @@ from system.model_optimization.optimization import create_database_table, extrac
 from system.model_optimization.optimization import find_optimal_sharpe, get_ticker, find_optimal_vol, find_optimal_cla
 from system.model_optimization.optimization import find_optimal_hrp, find_optimal_max_constraint, find_optimal_min_constraint
 from system.model_optimization.opt_back_test import opt_back_testing, get_results, get_dates
-from system.stock_select.stock_select import extract_database_sector, extract_database_rf_10yr, extract_database_stock_10yr, build_model_predict_select, get_top_stocks
+# from system.stock_select.stock_select import extract_database_sector, extract_database_rf_10yr, extract_database_stock_10yr, build_model_predict_select, get_top_stocks
 from system.stock_select.stock_select_back_test import extract_database_mkt, extract_database_rf_10yr, extract_database_stock_10yr, stock_select_back_test
 
 from system.earnings_impact.earnings_impact import load_earnings_impact, slice_period_group, \
     group_to_array, OneSample, BootStrap, earnings_impact_data, load_returns, load_local_earnings_impact, \
     load_calendar_from_database, local_earnings_calendar_exists
-from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
+# from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 from system.hf_trading.hf_trading import hf_trading_data
 from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
-from talib import abstract
+# from talib import abstract
 #import pdfkit
 import base64
 import statsmodels.api as sm
@@ -252,18 +252,19 @@ def get_quote():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    # Warning if exceeded risk threshold
-    ### Get threshold
-    threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
+    if database.check_table_exists('risk_threshold'):
+        # Warning if exceeded risk threshold
+        ### Get threshold
+        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
 
-    if len(threshold_db):
-        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
-        ### Calculate VaR
-        port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
-        port_var_value, _, _ = port_var_obj.caviar_AS()
-        print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
-        if port_var_value < -float(threshold_db['var_threshold']):
-            flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
+        if len(threshold_db):
+            threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+            ### Calculate VaR
+            port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+            port_var_value, _, _ = port_var_obj.caviar_AS()
+            print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
+            if port_var_value < -float(threshold_db['var_threshold']):
+                flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
 
     if request.method == "POST":
         symbol = request.form.get('symbol').upper()
@@ -2230,7 +2231,7 @@ def plot_ei():
 def at_introduction():
     return render_template("at_introduction.html")
 
-
+"""
 @app.route("/at_analysis", methods=["GET", "POST"])
 def at_analysis():
     input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
@@ -2314,7 +2315,7 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
-
+"""
 @app.route('/risk_management', methods=["GET", "POST"])
 @login_required
 def risk_management():
@@ -2615,6 +2616,7 @@ def plot_hf(plot_id):
     return response
 
 ##BEGIN{Stock Select}
+"""
 @app.route('/stockselect_introduction')
 @login_required
 def stockselect_introduction():
@@ -2657,7 +2659,7 @@ def stockselect_back_test():
         images_back_test = stock_select_back_test(top_stocks, mkt_test, stocks_10yr, rf)
         return render_template('stockselect_backtest.html', images_back_test=images_back_test)
 ## END{Stock Select}
-
+"""
 
 ## BEGIN{Technical Indicator Strategy}
 
