@@ -252,18 +252,19 @@ def get_quote():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    # Warning if exceeded risk threshold
-    ### Get threshold
-    threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
+    if database.check_table_exists('risk_threshold'):
+        # Warning if exceeded risk threshold
+        ### Get threshold
+        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
 
-    if len(threshold_db):
-        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
-        ### Calculate VaR
-        port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
-        port_var_value, _, _ = port_var_obj.caviar_AS()
-        print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
-        if port_var_value < -float(threshold_db['var_threshold']):
-            flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
+        if len(threshold_db):
+            threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+            ### Calculate VaR
+            port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+            port_var_value, _, _ = port_var_obj.caviar_AS()
+            print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
+            if port_var_value < -float(threshold_db['var_threshold']):
+                flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
 
     if request.method == "POST":
         symbol = request.form.get('symbol').upper()

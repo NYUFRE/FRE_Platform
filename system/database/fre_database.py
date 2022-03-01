@@ -255,6 +255,12 @@ class FREDatabase:
         sql_stmt = 'Drop Table if exists ' + table_name + ';'
         self.engine.execute(sql_stmt)
 
+    def check_table_exists(self, table_name: str) -> bool:
+        if self.engine.has_table(table_name):
+            return True
+        else:
+            return False
+    
     def check_table_empty(self, table_name: str) -> bool:
         """
         Returns True if the table is empty, returns false if the table is not empty
