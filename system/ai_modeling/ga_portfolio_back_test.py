@@ -27,7 +27,7 @@ class GABackTestResult:
 ga_back_test_result = GABackTestResult()
 
 
-def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
+def ga_back_test(database, start, end) -> Tuple[GAPortfolio, Stock]:
     """
     Do backtest; Calculate cumulative return of best_portfolio and spy
 
@@ -36,8 +36,8 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     :return: best_portfolio, spy
     :rtype: Tuple[GAPortfolio, Stock]
     """    
-    back_testing_start_date = dt.date(2020, 7, 1).strftime('%Y-%m-%d')
-    back_testing_end_date = dt.date(2020, 12, 31).strftime('%Y-%m-%d')
+    back_testing_start_date = start
+    back_testing_end_date = end
 
     # Extract best portfolio's data from table best_portfolio
     best_portfolio_select = "SELECT symbol, sector, category_pct from best_portfolio;"
@@ -71,8 +71,8 @@ def ga_back_test(database) -> Tuple[GAPortfolio, Stock]:
     return best_portfolio, spy
 
 
-def ga_back_test_plot(database) -> None:
-    best_portfolio, spy = ga_back_test(database)
+def ga_back_test_plot(database, start, end) -> None:
+    best_portfolio, spy = ga_back_test(database, start, end)
     portfolio_ys = list(best_portfolio.portfolio_daily_cumulative_returns)
     spy_ys = list(spy.price_df['spy_daily_cumulative_return'])
     n = len(portfolio_ys)
@@ -87,7 +87,7 @@ def ga_back_test_plot(database) -> None:
     plt.xlim(1, n)
     ax.set(xlabel="Date",
            ylabel="Cumulative Returns",
-           title="Portfolio Back Test (2020-01-01 to 2020-06-30)",
+           title="Portfolio Back Test (" + start + " to " + end + ")",
            xlim=[0, n])
 
     ax.grid(True)

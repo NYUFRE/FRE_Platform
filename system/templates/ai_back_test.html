@@ -16,6 +16,27 @@
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
     <h3><strong>Best GA Portfolio Back Test</strong></h3>
+    <div class="form-group">
+        <form action="/ai_back_test" id="ai_backtest" method="POST">
+            <table>
+                <tr>
+                    <td><p style="width: 500px; text-align: center;">Backtest period start date:</p></td>
+                    <td><input type="date" name="backtest_period_start_date" value={{ start_date_test }} style="width: 200px;" required="required"></td>
+                </tr>
+                <tr>
+                    <td><p style="width: 500px; text-align: center;">Backtest period end date:</p></td>
+                    <td><input type="date" name="backtest_period_end_date" value={{ end_date_test }} style="width: 200px;" required="required"></td>
+                </tr>
+            </table>
+            <div style="height:100px; justify-content: center; margin-top: 5em;"><input style="margin-left: auto; margin-right: auto;" type="submit" value="submit"/></div>
+        </form>
+    </div>
+    <div>
+        <p>Backtest period start date: {{ start_date_test }}</p>
+        <p>Backtest period end date: {{ end_date_test }}</p>
+    </div>
+    
+    
 		<h5 style="text-align:center"> Best Portfolio Cumulative Return:   ==>  {{ portfolio_return }} %</h5>
 		<h5 style="text-align:center"> Market Cumulative Return:   ==>  {{ spy_return }} %</h5>
 		<hr>	

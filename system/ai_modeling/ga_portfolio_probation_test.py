@@ -25,11 +25,11 @@ def previous_working_day(check_day_, holidays=holidays.US()):
     else:
         return previous_working_day(most_recent, holidays)
 
-probation_testing_start_date = (dt.date(2020, 12, 31) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+#probation_testing_start_date = (dt.date(2020, 12, 31) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
 # probation_testing_end_date = (dt.date(2021, 2, 19)).strftime('%Y-%m-%d')
-probation_testing_end_date = previous_working_day(dt.date.today()).strftime('%Y-%m-%d')
+#probation_testing_end_date = previous_working_day(dt.date.today()).strftime('%Y-%m-%d')
 
-def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
+def ga_probation_test(database, start, end) -> Tuple[GAPortfolio, float, int]:
     """
     Do probation test from 2020-07-01 till today
 
@@ -51,7 +51,7 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
                     ON stocks.symbol = sp500.symbol
             JOIN sp500_sectors
                     ON sp500.sector = sp500_sectors.sector
-    WHERE DATE(date) BETWEEN Date('{probation_testing_start_date}') AND Date('{probation_testing_end_date}')
+    WHERE DATE(date) BETWEEN Date('{start}') AND Date('{end}')
         AND open  > 0
         AND close  > 0;
     """
@@ -65,8 +65,8 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
         symbol, name, sector, weight = best_portfolio_df.iloc[i]
         best_portfolio.stocks.append((sector, symbol, weight, name))
     
-    best_portfolio.start_date = probation_testing_start_date
-    best_portfolio.end_date = probation_testing_end_date
+    best_portfolio.start_date = start
+    best_portfolio.end_date = end
     # Update table best_portfolio
     conn = database.engine.connect()
     for symbol in best_portfolio_symbols:
@@ -98,7 +98,7 @@ def ga_probation_test(database) -> Tuple[GAPortfolio, float, int]:
     spy_select = f"""
         SELECT date, open, close
         FROM spy
-        WHERE Date(date) BETWEEN Date('{probation_testing_start_date}') AND Date('{probation_testing_end_date}');
+        WHERE Date(date) BETWEEN Date('{start}') AND Date('{end}');
     """
     spy_df = database.execute_sql_statement(spy_select)
 
