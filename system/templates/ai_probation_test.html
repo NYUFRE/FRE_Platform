@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+
 <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
     <ul class="nav nav-pills flex-column">
         <li class="nav-item">
@@ -16,6 +17,27 @@
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
     <h3><strong>Best GA Portfolio Probation Test</strong></h3>
+    <div class="form-group">
+        <form action="/ai_probation_test" id="ai_probationtest" method="POST">
+            <table>
+                <tr>
+                    <td><p style="width: 500px; text-align: center;">Probtest period start date:</p></td>
+                    <td><input type="date" name="probation_start_date" value={{ probation_start_date }} style="width: 200px;" required="required"></td>
+                </tr>
+                <tr>
+                    <td><p style="width: 500px; text-align: center;">Probtest period end date:</p></td>
+                    <td><input type="date" name="probation_end_date" value={{ probation_end_date }} style="width: 200px;" required="required"></td>
+                </tr>
+                
+            </table>
+            <div style="height:100px; justify-content: center; margin-top: 5em;"><input style="margin-left: auto; margin-right: auto;" type="submit" value="submit"/></div>
+        </form>
+    </div>
+        <p>Probtest period start date: {{ probation_start_date }}</p>
+        <p>Probtest period end date: {{ probation_end_date }}</p>
+    </div>
+
+    
 		<h5 style="text-align:center"> Best Portfolio Profit/Loss:   ==>  {{ portfolio_profit }} %</h5>
 		<h5 style="text-align:center"> Market Profit/Loss:   ==>  {{ spy_profit }} %</h5>
 		<div class="table-responsive">
