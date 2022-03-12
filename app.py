@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from sys import platform
 import flask_sqlalchemy
 import matplotlib.pyplot as plt
+import urllib.request
 import datetime as dt
 
 import numpy as np
@@ -1480,7 +1481,13 @@ def ap_introduction():
 
 @app.route("/ap_european_pricing", methods=["GET", "POST"])
 def cal_european():
-    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0, "yparameter": "Value",
+    url_common = "https://cloud.iexapis.com/stable/stock/"
+    url = url_common + "AAPL" + "/quote?token=" + "pk_17024c6e00f34b60815e3128a59c85d7"
+    with urllib.request.urlopen(url) as req:
+        data = json.load(req)
+        a = float(data["latestPrice"])
+ 
+    input = {"spot": a, "strike": a-30, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3, "yparameter": "Value",
              "xparameter": "Strike"}
     call = {}
     put = {}
@@ -1633,7 +1640,12 @@ def plot_european():
 
 @app.route("/ap_american_pricing", methods=["GET", "POST"])
 def cal_american():
-    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0}
+    url_common = "https://cloud.iexapis.com/stable/stock/"
+    url = url_common + "AAPL" + "/quote?token=" + "pk_17024c6e00f34b60815e3128a59c85d7"
+    with urllib.request.urlopen(url) as req:
+        data = json.load(req)
+        a = float(data["latestPrice"])
+    input = {"spot": a, "strike": a-25, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3}
     call = {}
     put = {}
     yparameter_lst = ["Value", "Delta", "Gamma", "Theta"]
@@ -1786,7 +1798,7 @@ def plot_american():
 @login_required
 def prcing_fixedratebond():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"face_value": 0, "coupon_rate": 0, "discount_rate": 0,
+    input = {"face_value": 1000, "coupon_rate": 0.06, "discount_rate": 0.04,
              "valuation_date": str(np.datetime64('today')), "issue_date": str(np.datetime64('today')),
              "maturity_date": str(np.datetime64('today')), "frequency": ""}
     bond = {}
@@ -1841,7 +1853,7 @@ def prcing_fixedratebond():
 @login_required
 def prcing_cds():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"notional": 0, "spread": 0, "recovery_rate": 0, "hazard_rate": 0, "discount_rate": 0,
+    input = {"notional": 1000, "spread": 0.02, "recovery_rate": 0.6, "hazard_rate": 0, "discount_rate": 0.04,
              "issue_date": str(np.datetime64('today')), "maturity_date": str(np.datetime64('today')), "frequency": ""}
     buyer = {}
     seller = {}
@@ -1912,7 +1924,7 @@ def prcing_cds():
 @app.route('/ap_fra', methods=['POST', 'GET'])
 @login_required
 def prcing_fra():
-    input = {"notional_value":0, "month_to_start":0, "month_to_termination":0, "fra_quote":0,
+    input = {"notional_value":1000, "month_to_start":3, "month_to_termination":6, "fra_quote":0,
              "valuation_date":str(np.datetime64('today'))}
     buyer = {}
     if request.method == 'POST':
@@ -1957,7 +1969,7 @@ def prcing_fra():
 @app.route('/ap_swap', methods=['POST', 'GET'])
 @login_required
 def prcing_swap():
-    input = {"notional_value":0, "frequency":0, "contract_period":0, "fixed_rate":0,
+    input = {"notional_value":1000, "frequency":3, "contract_period":2, "fixed_rate":0.05,
              "start_date":str(np.datetime64('today'))}
     payer = {}
     if request.method == 'POST':
