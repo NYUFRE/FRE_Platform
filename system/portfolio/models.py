@@ -14,7 +14,7 @@ class User(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
-    _password = db.Column(db.Binary(60), nullable=False)
+    _password = db.Column(db.LargeBinary(60), nullable=False)
     authenticated = db.Column(db.Boolean, default=False)
     email_confirmed = db.Column(db.Boolean, nullable=True, default=False)
     email_confirmed_on = db.Column(db.DateTime, nullable=True)
