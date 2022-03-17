@@ -68,7 +68,7 @@ from system.mep_strategy.mep import stock_collection, industry_description, gene
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
 
 from talib import abstract
-import pdfkit
+#import pdfkit
 import base64
 import statsmodels.api as sm
 from sklearn import preprocessing
@@ -1482,12 +1482,13 @@ def ap_introduction():
 @app.route("/ap_european_pricing", methods=["GET", "POST"])
 def cal_european():
     url_common = "https://cloud.iexapis.com/stable/stock/"
-    url = url_common + "AAPL" + "/quote?token=" + "pk_17024c6e00f34b60815e3128a59c85d7"
+    url = url_common + "AAPL" + "/quote?token=" + os.environ.get("IEX_API_KEY")
     with urllib.request.urlopen(url) as req:
         data = json.load(req)
-        a = float(data["latestPrice"])
+    a = float(data["latestPrice"])
+    strk = round(float(a-30),2)
  
-    input = {"spot": a, "strike": a-30, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3, "yparameter": "Value",
+    input = {"spot": a, "strike": strk, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3, "yparameter": "Value",
              "xparameter": "Strike"}
     call = {}
     put = {}
@@ -1641,11 +1642,12 @@ def plot_european():
 @app.route("/ap_american_pricing", methods=["GET", "POST"])
 def cal_american():
     url_common = "https://cloud.iexapis.com/stable/stock/"
-    url = url_common + "AAPL" + "/quote?token=" + "pk_17024c6e00f34b60815e3128a59c85d7"
+    url = url_common + "AAPL" + "/quote?token=" + os.environ.get("IEX_API_KEY")
     with urllib.request.urlopen(url) as req:
         data = json.load(req)
-        a = float(data["latestPrice"])
-    input = {"spot": a, "strike": a-25, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3}
+    a = float(data["latestPrice"])
+    strk = round(float(a-25),2)
+    input = {"spot": a, "strike": strk, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3}
     call = {}
     put = {}
     yparameter_lst = ["Value", "Delta", "Gamma", "Theta"]
