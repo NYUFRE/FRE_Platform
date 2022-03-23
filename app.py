@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from sys import platform
 import flask_sqlalchemy
 import matplotlib.pyplot as plt
+import urllib.request
+import datetime as dt
 
 import numpy as np
 import pandas as pd
@@ -28,7 +30,7 @@ from itsdangerous import URLSafeTimedSerializer
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from sqlalchemy.exc import IntegrityError, SAWarning
-from talib import abstract
+
 
 warnings.simplefilter(action='ignore', category=SAWarning)
 
@@ -252,18 +254,19 @@ def get_quote():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    # Warning if exceeded risk threshold
-    ### Get threshold
-    threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
+    if database.check_table_exists('risk_threshold'):
+        # Warning if exceeded risk threshold
+        ### Get threshold
+        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold")
 
-    if len(threshold_db):
-        threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
-        ### Calculate VaR
-        port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
-        port_var_value, _, _ = port_var_obj.caviar_AS()
-        print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
-        if port_var_value < -float(threshold_db['var_threshold']):
-            flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
+        if len(threshold_db):
+            threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
+            ### Calculate VaR
+            port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+            port_var_value, _, _ = port_var_obj.caviar_AS()
+            print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
+            if port_var_value < -float(threshold_db['var_threshold']):
+                flash(f"VaR={-port_var_value}% is currently exceeding threshold={float(threshold_db['var_threshold'])}%. Please reduce your position!")
 
     if request.method == "POST":
         symbol = request.form.get('symbol').upper()
@@ -865,21 +868,58 @@ def ai_build_model():
                            sharpe_ratio=sharpe_ratio, score=score, length=length)
 
 
-@app.route('/ai_back_test')
+@app.route('/ai_back_test', methods=["GET", "POST"])
 @login_required
 def ai_back_test():
-    best_portfolio, spy = ga_back_test(database)
+    import datetime as dt
+    if request.method == 'GET':
+        bpsd = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
+        bped = dt.date(2020, 12, 31).strftime('%Y-%m-%d')
+        best_portfolio, spy = ga_back_test(database, bpsd, bped)
 
-    # Used for function "ai_back_test_plot"
-    ga_back_test_result.bt_start_date = str(spy.price_df.index[0])[:10]
-    ga_back_test_result.bt_end_date = str(spy.price_df.index[-1])[:10]
-    ga_back_test_result.portfolio_cum_rtn = best_portfolio.portfolio_daily_cumulative_returns.copy()
-    ga_back_test_result.spy_cum_rtn = spy.price_df['spy_daily_cumulative_return'].copy()
+        # Used for function "ai_back_test_plot"
+        ga_back_test_result.bt_start_date = str(spy.price_df.index[0])[:10]
+        ga_back_test_result.bt_end_date = str(spy.price_df.index[-1])[:10]
+        ga_back_test_result.portfolio_cum_rtn = best_portfolio.portfolio_daily_cumulative_returns.copy()
+        ga_back_test_result.spy_cum_rtn = spy.price_df['spy_daily_cumulative_return'].copy()
+        
+        portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
+        spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)   
+        return render_template('ai_back_test.html', portfolio_return=portfolio_return, 
+                               spy_return=spy_return, start_date_test=bpsd, end_date_test=bped)
+    
+    if request.method == 'POST':
+        backtest_period_start_date = request.form['backtest_period_start_date']
+        backtest_period_end_date = request.form['backtest_period_end_date']
+        try:
+            bpsd = datetime.strptime(backtest_period_start_date, '%Y-%m-%d')
+            bped = datetime.strptime(backtest_period_end_date, '%Y-%m-%d')
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template('ai_back_test.html')
+        # Make sure that the ending date would be earlier than starting date
+        if bped < bpsd:
+            flash("Error: The ending date of backtest period must be no earlier than the start date of backtest period.", 'error')
+            return render_template('ai_back_test.html')
 
-    portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
-    spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)
-    return render_template('ai_back_test.html', portfolio_return=portfolio_return, spy_return=spy_return)
-
+        # Make sure that the end date of backtest period is earlier than today
+        if bped >= datetime.today():
+            flash("Error: The end date of backtest period must be earlier than today.", 'error')
+            return render_template('ai_back_test.html')
+        
+        best_portfolio, spy = ga_back_test(database, bpsd, bped)
+    
+        # Used for function "ai_back_test_plot"
+        ga_back_test_result.bt_start_date = str(spy.price_df.index[0])[:10]
+        ga_back_test_result.bt_end_date = str(spy.price_df.index[-1])[:10]
+        ga_back_test_result.portfolio_cum_rtn = best_portfolio.portfolio_daily_cumulative_returns.copy()
+        ga_back_test_result.spy_cum_rtn = spy.price_df['spy_daily_cumulative_return'].copy()
+    
+        portfolio_return = "{:.2f}".format(best_portfolio.cumulative_return * 100, 2)
+        spy_return = "{:.2f}".format(spy.cumulative_return * 100, 2)   
+        return render_template('ai_back_test.html', portfolio_return=portfolio_return, 
+                               spy_return=spy_return, start_date_test=bpsd, end_date_test=bped)
+            
 
 @app.route('/plot/ai_back_test_plot')
 def ai_back_test_plot():
@@ -911,39 +951,91 @@ def ai_back_test_plot():
     return response
 
 
-@app.route('/ai_probation_test')
+@app.route('/ai_probation_test', methods=["GET", "POST"])
 @login_required
 def ai_probation_test():
-    best_portfolio, spy_profit_loss, cash = ga_probation_test(database)
-    portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
-    spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
-    profit = best_portfolio.profit_loss
+    if request.method == 'GET':
+        probation_start_date = (dt.date(2020, 12, 31) + dt.timedelta(days=1)).strftime('%Y-%m-%d')
+        probation_end_date = dt.date.today().strftime('%Y-%m-%d')
+        best_portfolio, spy_profit_loss, cash = ga_probation_test(database,probation_start_date,probation_end_date)
+        portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
+        spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
+        profit = best_portfolio.profit_loss
+    
+        # stock_list = [val[0] for val in best_portfolio.stocks]
+        stock_list = []
+        for i, stock in enumerate(best_portfolio.stocks):
+            stock_obj = Stock()
+            stock_obj.symbol = stock[1]
+            stock_obj.name = stock[3]
+            stock_obj.category_pct = stock[2]
+            stock_obj.sector = stock[0]
+    
+            probation_obj = ProbationTestTrade()
+            probation_obj.open_date = best_portfolio.start_date
+            probation_obj.close_date = best_portfolio.end_date
+            probation_obj.open_price = best_portfolio.open_prices[i]
+            probation_obj.close_price = best_portfolio.close_prices[i]
+            probation_obj.shares = best_portfolio.shares[i]
+            probation_obj.profit_loss = best_portfolio.pnl[i]
+    
+            stock_obj.probation_test_trade = probation_obj
+            stock_list.append(stock_obj)
+    
+        length = len(stock_list)
+        return render_template('ai_probation_test.html', stock_list=stock_list,
+                               portfolio_profit=portfolio_profit, spy_profit=spy_profit,
+                               profit=usd(profit), length=length, probation_start_date = probation_start_date, 
+                               probation_end_date = probation_end_date)
+    
+    if request.method == 'POST':
+        probation_start_date = request.form['probation_start_date']
+        probation_end_date = request.form['probation_end_date']
+        try:
+            psd = datetime.strptime(probation_start_date, '%Y-%m-%d')
+            ped = datetime.strptime(probation_end_date, '%Y-%m-%d')
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template('ai_probation_test.html')
+        # Make sure that the ending date would be earlier than starting date
+        if ped < psd:
+            flash("Error: The ending date of backtest period must be no earlier than the start date of backtest period.", 'error')
+            return render_template('ai_probation_test.html')
 
-    # stock_list = [val[0] for val in best_portfolio.stocks]
-    stock_list = []
-    for i, stock in enumerate(best_portfolio.stocks):
-        stock_obj = Stock()
-        stock_obj.symbol = stock[1]
-        stock_obj.name = stock[3]
-        stock_obj.category_pct = stock[2]
-        stock_obj.sector = stock[0]
-
-        probation_obj = ProbationTestTrade()
-        probation_obj.open_date = best_portfolio.start_date
-        probation_obj.close_date = best_portfolio.end_date
-        probation_obj.open_price = best_portfolio.open_prices[i]
-        probation_obj.close_price = best_portfolio.close_prices[i]
-        probation_obj.shares = best_portfolio.shares[i]
-        probation_obj.profit_loss = best_portfolio.pnl[i]
-
-        stock_obj.probation_test_trade = probation_obj
-        stock_list.append(stock_obj)
-
-    length = len(stock_list)
-    return render_template('ai_probation_test.html', stock_list=stock_list,
-                           portfolio_profit=portfolio_profit, spy_profit=spy_profit,
-                           profit=usd(profit), length=length)
-
+        # Make sure that the end date of backtest period is earlier than today
+        if ped >= datetime.today():
+            flash("Error: The end date of backtest period must be earlier than today.", 'error')
+            return render_template('ai_probation_test.html')
+        
+        best_portfolio, spy_profit_loss, cash = ga_probation_test(database,psd,ped)
+        portfolio_profit = "{:.2f}".format((float(best_portfolio.profit_loss / cash) * 100))
+        spy_profit = "{:.2f}".format((float(spy_profit_loss / cash) * 100))
+        profit = best_portfolio.profit_loss
+    
+        # stock_list = [val[0] for val in best_portfolio.stocks]
+        stock_list = []
+        for i, stock in enumerate(best_portfolio.stocks):
+            stock_obj = Stock()
+            stock_obj.symbol = stock[1]
+            stock_obj.name = stock[3]
+            stock_obj.category_pct = stock[2]
+            stock_obj.sector = stock[0]
+    
+            probation_obj = ProbationTestTrade()
+            probation_obj.open_date = best_portfolio.start_date
+            probation_obj.close_date = best_portfolio.end_date
+            probation_obj.open_price = best_portfolio.open_prices[i]
+            probation_obj.close_price = best_portfolio.close_prices[i]
+            probation_obj.shares = best_portfolio.shares[i]
+            probation_obj.profit_loss = best_portfolio.pnl[i]
+    
+            stock_obj.probation_test_trade = probation_obj
+            stock_list.append(stock_obj)
+    
+        length = len(stock_list)
+        return render_template('ai_probation_test.html', stock_list=stock_list,
+                               portfolio_profit=portfolio_profit, spy_profit=spy_profit,
+                               profit=usd(profit), length=length,probation_start_date=psd, probation_end_date=ped)
 
 # Simulated Trading
 @app.route('/sim_trading')
@@ -1389,7 +1481,14 @@ def ap_introduction():
 
 @app.route("/ap_european_pricing", methods=["GET", "POST"])
 def cal_european():
-    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0, "yparameter": "Value",
+    url_common = "https://cloud.iexapis.com/stable/stock/"
+    url = url_common + "AAPL" + "/quote?token=" + os.environ.get("IEX_API_KEY")
+    with urllib.request.urlopen(url) as req:
+        data = json.load(req)
+    a = float(data["latestPrice"])
+    strk = round(float(a-30),2)
+ 
+    input = {"spot": a, "strike": strk, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3, "yparameter": "Value",
              "xparameter": "Strike"}
     call = {}
     put = {}
@@ -1542,7 +1641,13 @@ def plot_european():
 
 @app.route("/ap_american_pricing", methods=["GET", "POST"])
 def cal_american():
-    input = {"spot": 0, "strike": 0, "day": 0, "rf": 0, "div": 0, "vol": 0}
+    url_common = "https://cloud.iexapis.com/stable/stock/"
+    url = url_common + "AAPL" + "/quote?token=" + os.environ.get("IEX_API_KEY")
+    with urllib.request.urlopen(url) as req:
+        data = json.load(req)
+    a = float(data["latestPrice"])
+    strk = round(float(a-25),2)
+    input = {"spot": a, "strike": strk, "day": 90, "rf": 0.02, "div": 0, "vol": 0.3}
     call = {}
     put = {}
     yparameter_lst = ["Value", "Delta", "Gamma", "Theta"]
@@ -1695,7 +1800,7 @@ def plot_american():
 @login_required
 def prcing_fixedratebond():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"face_value": 0, "coupon_rate": 0, "discount_rate": 0,
+    input = {"face_value": 1000, "coupon_rate": 0.06, "discount_rate": 0.04,
              "valuation_date": str(np.datetime64('today')), "issue_date": str(np.datetime64('today')),
              "maturity_date": str(np.datetime64('today')), "frequency": ""}
     bond = {}
@@ -1750,7 +1855,7 @@ def prcing_fixedratebond():
 @login_required
 def prcing_cds():
     frequency_list = ["Monthly", "Quarterly", "Twice a year", "Annually"]
-    input = {"notional": 0, "spread": 0, "recovery_rate": 0, "hazard_rate": 0, "discount_rate": 0,
+    input = {"notional": 1000, "spread": 0.02, "recovery_rate": 0.6, "hazard_rate": 0, "discount_rate": 0.04,
              "issue_date": str(np.datetime64('today')), "maturity_date": str(np.datetime64('today')), "frequency": ""}
     buyer = {}
     seller = {}
@@ -1821,7 +1926,7 @@ def prcing_cds():
 @app.route('/ap_fra', methods=['POST', 'GET'])
 @login_required
 def prcing_fra():
-    input = {"notional_value":0, "month_to_start":0, "month_to_termination":0, "fra_quote":0,
+    input = {"notional_value":1000, "month_to_start":3, "month_to_termination":6, "fra_quote":0,
              "valuation_date":str(np.datetime64('today'))}
     buyer = {}
     if request.method == 'POST':
@@ -1866,7 +1971,7 @@ def prcing_fra():
 @app.route('/ap_swap', methods=['POST', 'GET'])
 @login_required
 def prcing_swap():
-    input = {"notional_value":0, "frequency":0, "contract_period":0, "fixed_rate":0,
+    input = {"notional_value":1000, "frequency":3, "contract_period":2, "fixed_rate":0.05,
              "start_date":str(np.datetime64('today'))}
     payer = {}
     if request.method == 'POST':
@@ -2231,6 +2336,7 @@ def at_introduction():
     return render_template("at_introduction.html")
 
 
+
 @app.route("/at_analysis", methods=["GET", "POST"])
 def at_analysis():
     input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
@@ -2314,6 +2420,7 @@ def plot_at2():
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+
 
 @app.route('/risk_management', methods=["GET", "POST"])
 @login_required
@@ -2613,6 +2720,7 @@ def plot_hf(plot_id):
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+
 
 ##BEGIN{Stock Select}
 @app.route('/stockselect_introduction')
