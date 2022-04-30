@@ -240,7 +240,7 @@ class EODMarketData:
         :param category: a string, should be 'US'
         """
         column_names = ['symbol', 'pe_ratio', 'dividend_yield', 'beta', 'high_52weeks', 'low_52weeks', 'ma_50days',
-                        'ma_200days']
+                        'ma_200days', 'market_capitalization']
         def fundamental_data_helper(ticker_list):
             fundamental_data = []
             for ticker in ticker_list:
@@ -253,14 +253,14 @@ class EODMarketData:
                          data['ETF_Data']['Yield'],
                          data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
                          data['Technicals']['52WeekLow'],
-                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
+                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA'], 0])
                 else:
                     fundamental_data.append(
                         [ticker,
                          data['Highlights']['PERatio'], data['Highlights']['DividendYield'],
                          data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
                          data['Technicals']['52WeekLow'],
-                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA']])
+                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA'], data['Highlights']['MarketCapitalization']])
             fundamentals = pd.DataFrame(fundamental_data, columns=column_names)
             fundamentals.fillna(0, inplace=True)
             return fundamentals
