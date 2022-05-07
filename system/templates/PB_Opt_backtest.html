@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+Back_test
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/Predict_based_optmize">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_date_choose">Choose End Date</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_backtest">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3 style="text-align:center"><strong>Back Test</strong></h3>
+        <p></p>
+        <p>Stocks in the Portfolio:
+            {% for i in range(length) %}
+            {{  portfolio[i]  }}
+            {%endfor%}
+        </p>
+        <h5 style="text-align:center"> Portfolio cumulative daily Return vs. S&P 500 ETF(SPY):</h5>
+        <hr>
+        <img align="center" src="/plot/pre_opt_backtest_plot" alt="Image Placeholder" width="70%">
+        <hr>
+        <p></p>
+
+
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

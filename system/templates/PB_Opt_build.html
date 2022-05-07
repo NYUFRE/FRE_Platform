@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+Build_portfolio
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/Predict_based_optmize">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_date_choose">Choose End Date</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_backtest">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Portfolio</h3>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th style="text-align:center">Symbol</th>
+					<th style="text-align:center">Stock Name</th>
+					<th style="text-align:center">Sector</th>
+				</tr>
+			</thead>
+			<tbody>
+                {% for i in range(length) %}
+				<tr>
+					<td>{{portfolio[i][0]}}</td>
+					<td>{{portfolio[i][1]}}</td>
+					<td>{{portfolio[i][2]}}</td>
+				</tr>
+                {%endfor%}
+			</tbody>
+		</table>
+    </div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}

@@ -12,6 +12,7 @@ import threading
 import time
 import warnings
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from sys import platform
 import flask_sqlalchemy
 import matplotlib.pyplot as plt
@@ -66,6 +67,7 @@ from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 from system.hf_trading.hf_trading import hf_trading_data
 from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
+from system.predict_based_optimization.pre_port_opt import get_optimized_portfolio, opt_backtest
 
 from talib import abstract
 #import pdfkit
@@ -871,7 +873,6 @@ def ai_build_model():
 @app.route('/ai_back_test', methods=["GET", "POST"])
 @login_required
 def ai_back_test():
-    import datetime as dt
     if request.method == 'GET':
         bpsd = dt.date(2020, 1, 1).strftime('%Y-%m-%d')
         bped = dt.date(2020, 12, 31).strftime('%Y-%m-%d')
@@ -2937,6 +2938,90 @@ def technical_indicator_plot(test, ticker_strings):
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+
+##BEGIN{Prediction-based portfolio optimization}
+@app.route('/Predict_based_optmize')
+@login_required
+def optimization_portfolio():
+    return render_template("Predict_based_optmize.html")
+
+@app.route('/PB_Opt_date_choose', methods= ["GET","POST"])
+@login_required
+def pre_opt_choose():
+    if request.method == "POST":
+        data_end = request.form['end_date']
+        try:
+            data_end_date = datetime.strptime(data_end, '%Y-%m-%d').date()
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            return render_template('PB_Opt_date_choose.html', end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d'))
+        # Make sure that the ending date would be earlier than backtest starting date
+        if data_end_date > dt.date.today() + dt.timedelta(-90):
+            flash("Error: The end date should earlier than the start date of back-test period, which is three months before today.", 'error')
+            return render_template('PB_Opt_date_choose.html', end_date = data_end_date.strftime('%Y-%m-%d'))
+        
+        return pre_opt_build(data_end_date)
+        
+    else:
+        return render_template("PB_Opt_date_choose.html", end_date = dt.date(2020, 1, 1).strftime('%Y-%m-%d'))
+    
+@app.route('/PB_Opt_build')
+@login_required
+def pre_opt_build(end_date = None):
+    try:
+        start_date = end_date + relativedelta(years = -10)
+        global pb_portfolio
+        pb_portfolio, port_list = get_optimized_portfolio(start_date, end_date)
+        
+        length = len(port_list)
+
+        return render_template('PB_Opt_build.html', length=length, portfolio=port_list)
+
+    except ValueError:
+        flash('Error! There is something wrong about the database, please see the command for error!')
+        return render_template("Predict_based_optmize.html")
+
+
+@app.route('/PB_Opt_backtest')
+@login_required
+def pre_opt_back_test():
+    
+    if  len(pb_portfolio) == 0:
+        flash('Please click "Choose End Date" to select stocks before run the back test!')
+        return render_template("Predict_based_optmize.html")
+    else:
+        length = len(pb_portfolio)
+        return render_template('PB_Opt_backtest.html', length = length, portfolio = pb_portfolio)
+
+@app.route('/plot/pre_opt_backtest_plot')
+def pre_opt_backtest_plot():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+    df = opt_backtest(pb_portfolio)
+    axis.plot(list(df.iloc[:,0]), 'r-')
+    axis.plot(list(df.iloc[:,1]), 'b-')
+
+    axis.set(xlabel="Number of Trading Days",
+             ylabel="Cumulative Returns")
+
+    axis.text(0.2, 0.9, 'Red - Portfolio \nBlue - SPY',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+## END{Prediction-based portfolio optimization}
+
+
+
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]

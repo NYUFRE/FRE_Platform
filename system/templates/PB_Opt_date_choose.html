@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}
+Introduction
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="/Predict_based_optmize">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_date_choose">Choose End Date</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/PB_Opt_backtest">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Choose a End Date</strong></h3>
+        
+    <form action="/PB_Opt_date_choose" id="pre_opt_backtest" method="post">
+        <p>Assume the historical data used to build this model should cover a ten-year range. You only need to set the end date of this ten-year period. Also, the end date should earlier than the start date of back-test period, which is three months before today.</p>
+        <table>
+            <tr>
+                <td><p style="width: 500px; text-align: center;">End date of historical data:</p></td>
+                <td><input type="date" name="end_date" value={{ end_date }} style="width: 200px;" required="required"></td>
+            </tr>
+        </table>
+        <p><I>If the end date you choose is valid, after you click 'submit', the model will run over 2 hours to select stocks, please wait...</I></p>
+        <div style="height:100px; justify-content: center; margin-top: 5em;"><input style="margin-left: auto; margin-right: auto;" type="submit" value="submit"/></div>
+    </form>
+    <hr>
+</main>
+{% endblock %}
