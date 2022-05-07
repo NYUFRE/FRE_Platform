@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}
+pair_ai_introduction
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active " href="/pair_ai_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/pair_ai_building">Building Model</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Pairs Trading with Unsupervised Machine Learning</strong></h3>
+    <br>
+    <div align="center">
+        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+            <tbody>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+            <tr>
+                <td width="881" valign="top">
+                    <p>
+                    This project uses unsupervised machine learning package DBSCAN to find tradeable pairs for pairs trading. The work is based on “Pairs Trading with Machine Learning” by Jonathan Larkins.
+                    </p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Model Building: </strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> 1) Calculate the simple daily returns on S&P500 stocks with adjusted close price and use them as the major training source. Increase the complexity of training data by stacking on fundmanental information.</p>
+                    <p> 2) Use PCA to reduce the data dimensionality. </p>
+                    <p> 3) Use DBSCAN to find the clusters within training data, repeat the process with different parameter &epsilon until the most number of clusters can be found. </p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Back Testing</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Use the adjusted close price over selected time period to conduct pair trading on all possible pairs in each cluster. Calculate the annualized sharpe ratio for each pair and select the top 10 paris.</p>
+                    <p> <b>Pair Trading Logic:</b> </p>
+                    <p> 1) Price Ratios: r<sub>t</sub> = (stock 1 price) / (stock 2 price) </p>
+                    <p> 2) MA1<sub>t</sub> = Rolling mean of r with window1 (30 days)</p>
+                    <p> 3) MA2<sub>t</sub> = Rolling mean of r with window2 (5 days)</p>
+                    <p> 4) std<sub>t</sub> = Rolling standard deviation of r with window2</p>
+                    <p> 5) Z Score: Z<sub>t</sub> = (MA1 - MA2) / std </p>
+                    <p> 6) Open Trades:
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Open short position if Z<sub>t</sub> >= threshold, sell stock 1 and buy stock 2
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Open long position if Z<sub>t</sub> <= -threshold, buy stock 1 and sell stock 2</p>
+                    <p> 7) Close Trades:
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;• Close the open positions for each pair at market close</p>
+                </td>
+            </tr>
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>Probatioin Test:</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> Use the 10 best pairs in the back testing period and carry on the trading til today. Use SPY over the same period as the benchmark.</p>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <hr>
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

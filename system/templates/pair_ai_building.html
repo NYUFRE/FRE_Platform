@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}
+pair_ai_building
+{% endblock %}
+
+{% block content %}
+<style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+<body>
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/pair_ai_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/pair_ai_building">Building Model</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Pairs Selection with Unsupervised Learning</h3>
+    <div class="form-group">
+        <form action="/pair_ai_building" id="pair_ai_form" method="post">
+            <p style = "width:500px;" align="right"><b>Enter the dates and the fundamental information to include:</b>
+                </p>
+            <p style = "width:500px;" align="right">Training Start Date:
+                <input id="start_date" name="start_date" value = {{input["start_date"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Training End Date:
+                <input id="part_date" name="part_date" value = {{input["part_date"]}} type="text"/></p>
+            <p style = "width:500px;" align="right">Back Test End Date:
+                <input id="end_date" name="end_date" value = {{input["end_date"]}} type="text"/></p>
+
+            <p style = "width:500px;" align="right">Fundamental Information: <select name = "fund_cat" style = "width:200px;" multiple>
+                {%for fund_cat in fund_category%}
+                <option value = {{fund_cat}} selected>{{fund_cat}}</option>>
+                {% endfor %}
+            </select></p>
+
+            <input type="submit" value="Run Model"/>
+        </form>
+    </div>
+    
+    <h3>Cluster Search Result</h3>
+    <h5>Best Epsilon Value:{{best_epsilon}}<h5>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:left">Cluster Number</th>
+                <th style="text-align:left">Tickers</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for cluster in clusters.keys() %}
+            <tr>
+                <td style="text-align:left"> {{cluster}}</td>
+                <td style="text-align:left"> {{clusters[cluster]}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <h3>Backtest Best Pairs By Sharpe Ratio<h3>
+    <h5><h5>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:left">Stock1</th>
+                <th style="text-align:left">Stock2</th>
+                <th style="text-align:left">Out Sample Sharpe Ratio</th>
+                <th style="text-align:left">Out Sample Money Return</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for pair in best_df.keys() %}
+            <tr>
+                <td style="text-align:left"> {{best_df[pair]['stock1']}}</td>
+                <td style="text-align:left"> {{best_df[pair]['stock2']}}</td>
+                <td style="text-align:left"> {{best_df[pair]['sharpe ratio']}}</td>
+                <td style="text-align:left"> {{best_df[pair]['money return']}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Probation Test of Best Pairs<h3>
+    <h5>SPY Sharpe Ratio:{{spy_sharpe_prob}} SPY Money Return:{{spy_ret_prob}}<h5>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th style="text-align:left">Stock1</th>
+                <th style="text-align:left">Stock2</th>
+                <th style="text-align:left">Sharpe Ratio</th>
+                <th style="text-align:left">Money Return</th>
+                <th style="text-align:left">Wins</th>
+                <th style="text-align:left">Loses</th>
+                <th style="text-align:left">Total Trades</th>
+            </tr>
+            </thead>
+            <tobody>
+            {% for pair in prob_df.keys() %}
+            <tr>
+                <td style="text-align:left"> {{prob_df[pair]['stock1']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['stock2']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['sharpe ratio']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['money return']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['wins']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['loses']}}</td>
+                <td style="text-align:left"> {{prob_df[pair]['wins']+prob_df[pair]['loses']}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+</main>
+
+</body>
+
+{%endblock%}
