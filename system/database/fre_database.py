@@ -164,6 +164,7 @@ class FREDatabase:
                           Column('low_52weeks', Numeric),
                           Column('ma_50days', Numeric),
                           Column('ma_200days', Numeric),
+                          Column('market_capitalization', Numeric),
                           extend_existing=True)
 
         elif table_name == "spy" or table_name == "us10y" or table_name == "stocks" or table_name == "stocks_price" or \
