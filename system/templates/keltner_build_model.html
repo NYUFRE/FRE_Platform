@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/keltner_channel_strategy">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/keltner_build_model">Build Model</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+	<h3>Portfolio</h3>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th style="text-align:center">Symbol</th>
+					<th style="text-align:center">Name</th>
+					<th style="text-align:center">Sector</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for i in range(length) %}
+                <tr>
+                    <td>{{stock_list[i][0]}}</td>
+					<td>{{stock_list[i][1]}}</td>
+					<td>{{stock_list[i][2]}}</td>
+                </tr>
+                <tr>
+                </tr>
+				{%endfor%}
+            </tbody>
+		</table>
+    </div>
+    <p></p>
+    <div>
+        <h5 style="text-align:center">Backtest period start from: {{ start_date_test }}</h5>
+        <h5 style="text-align:center">Backtest period end at: {{ end_date_test }}</h5>
+    <p></p>
+    <p style="text-align:center"> Portfolio using strategy Cumulative Return:   ==>  {{ strategy_return }} %</p>
+    <p style="text-align:center"> Portfolio Buy&Hold Cumulative Return:   ==>  {{ bh_return }} %</p>
+    </div>
+    <p></p>
+    <p></p>
+    
+    <h3 style="text-align:center"><strong>Plot for Back Test</strong></h3>
+        <hr>
+        <img align="center" src="/plot/keltner_backtest_plot" alt="Image Placeholder" width="70%">
+        <hr>
+</main>
+
+{% endblock %}

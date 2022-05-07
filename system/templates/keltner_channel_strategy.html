@@ -1,0 +1,187 @@
+s{% extends "base.html" %}
+{% block content %}
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        // inlineMath: [ ['$','$'], ["\(","\)"] ],
+        inlineMath: [ ['$','$'], ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
+<script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu+Mono">
+
+<style>
+    th {
+        padding: 30px 0px 20px;
+    }
+    strong {
+        font-size: 18pt;
+    }
+</style>
+
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/keltner_channel_strategy">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/keltner_build_model">Build Model</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3 style="margin-bottom: 3em; font-family: Georgia, Serif;"><strong style="font-size: 32pt;;">Keltner Channel Auto-Trading Strategy</strong></h3>
+    <div align="center" style="margin-bottom: 5em;">
+        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+            <tbody>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                        Keltner Channel auto-trading strategy is a volatility-based strategy. By using average true range (ATR), this strategy can aid in determining the direction of a trend and providing trading signal. Keltner Channel is an envelope plotted at certain ATR level above and below the exponential moving average of the price. Because the distance of the bands is based on average true range, which demonstrate the volatility, they adjust to volatility swings in the underlying price.
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Stock Selection</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                    <p>
+                        Within S&P500 component pool, in each sector among the 11 sectors, select a stocks with highest 1-minute volatility over the last 21 trading days of the historical data part.
+                    </p>
+                    <p>
+                        <b>Reasons:</b>
+                    </p>
+                    <p>1. S&P 500 components are with large size, high liquidity.</p>
+                    <p>
+                    2. The volatility among minutes for 21 trading days intraday price data are checked for generating trading signals.</p>
+                    <p>
+                    3. Higher volatility may trigger signals more often, more signals can lead better test the efficacy of trading model.
+                    </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Model Description</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <b>Three Bands:</b>
+                        </p>
+                        <p>
+                            Keltner Channel is composed of three lines, the middle line, which is called Midband, and two lines, which are Upperband and Lowerband. The Midband is the exponential moving average
+                                (EMA) of the prices of underlying assets over the selected n_1 periods (typically 20 periods). The
+                                upper-band is set k times the average true range (ATR) over n_2 periods (typically 10 or 20
+                                periods) above the EMA, and the lower-band is set k times the ATR below the EMA.
+                        </p>
+                        <p>
+                            <b>Exponential Moving Average (EMA):</b>
+                        </p>
+                        <p>
+                            EMA, a type of weighted moving average(WMA) that weights more on the recent price data, is a indicator that tracks the price of an investment over time. Because EMA relies more to the latest prices obtained, the model is using exponential moving average instead of simple moving average.
+                        </p>
+                        <p>
+                            <b>Average True Range(ATR):</b>
+                        </p>
+                        <p>
+                            A stock's range is the difference between the high and low prices on a certain day. True range provides the information of how volatile a stock is. When the true range is large, it indicates that the price has high volatility; when the true range is small, it indicates that the price has low volatility.</p>
+                        <p>
+                            Average true range is taking the average of the true ranges of a period.
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Calculation Formula</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            <b>Three bands:</b>
+                        </p>
+                        <p>
+                            $$\mbox{Midband} = \mbox{EMA}(n_1)$$
+                        </p>
+                        <p>
+                            $$\mbox{Upperband} = \mbox{EMA}(n_1)+k \cdot \mbox{ATR}(n_2)$$
+                        </p>
+                        <p>
+                            $$\mbox{Upperband} = \mbox{EMA}(n_1)-k \cdot \mbox{ATR}(n_2)$$
+                        </p>
+                        <p>
+                            <b>EMA:</b>
+                        </p>
+                        <p>
+                            $$\mbox{EMA}_1(n_1) = \mbox{Price}_{Today} \cdot \frac{2}{n_1+1} + \mbox{SMA}_{yesterday}(n_1) \cdot (1-\frac{2}{n_1+1})$$
+                        </p>
+                        <p>
+                            $$\mbox{EMA}_2(n_1) = \mbox{Price}_{Today} \cdot \frac{2}{n_1+1} + \mbox{EMA}_{1}(n_1) \cdot (1-\frac{2}{n_1+1})$$
+                        </p>
+                        <p>$$\vdots$$ </p>
+                        <p>
+                            $$\mbox{EMA}_t(n_1) = \mbox{Price}_{Today} \cdot \frac{2}{n_1+1} + \mbox{EMA}_{t-1}(n_1) \cdot (1-\frac{2}{n_1+1})$$
+                        </p>
+                        <p>
+                            <b>TR & ATR:</b>
+                        </p>
+                        <p>
+                            $$\mbox{TR} = \mbox{max}(\mbox{High}_{Today}-\mbox{Low}_{Today}, \mbox{High}_{Today}-\mbox{Close}_{Yesterday}, \mbox{Close}_{Yesterday}-\mbox{Low}_{Today})$$
+                        </p>
+                        <p>
+                            $$\mbox{ATR}(n_2) = \frac{1}{n_2} \cdot \sum^{n_2}_{1} \mbox{TR}$$
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Trading Signal</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p>
+                            When the price goes above the Upperband, it is <b>SHORT</b> signal
+                        </p>
+                        <p>
+                            When the price goes below the Lowerband, it is <b>LONG</b> signal.
+                        </p>
+                        <p>
+                            When the price stays in the channel or goes back to the channel, <b>CLOSE TRADE</b>.
+                        </p>
+                    </td>
+                </tr>
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <strong>Back Test</strong>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                    <p>
+                        Use the intraday data of 5 trading days from today to back-test the model. Compare and plot the graph of the cumulative daily returns of the portfolio(the 11 stocks we chose before) using Keltner Channel auto-trading strategy and using buy-and-hold strategy.
+                    </p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+<br></br>
+<br></br>
+{% endblock %}

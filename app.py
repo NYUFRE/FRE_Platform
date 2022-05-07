@@ -66,10 +66,12 @@ from system.alpha_test.alpha_test import TALIB, orth, Test, alphatestdata
 from system.hf_trading.hf_trading import hf_trading_data
 from system.mep_strategy.mep import stock_collection, industry_description, generate_optimized_executor, generate_executor, stock_available, stock_backtest_executors, stock_probtest_executors
 from system.VaR.VaR_Calculator import VaR, set_risk_threshold, var_data
+from system.keltner_strategy.keltner import kelt_cha_sty
 
 from talib import abstract
-#import pdfkit
+import pdfkit
 import base64
+from base64 import b64encode
 import statsmodels.api as sm
 from sklearn import preprocessing
 from sklearn.linear_model import LinearRegression
@@ -1213,8 +1215,8 @@ def market_data_sp500():
     else:
         # update tables
         database.clear_table(table_list)
-        eod_market_data.populate_sp500_data('SPY', 'US')
-    select_stmt = """
+        eod_market_data.populate_sp500_data('SPY', 'US')       
+    select_stmt ="""
     SELECT symbol, name as company_name, sector, industry,
             printf("%.2f", weight) as weight
     FROM sp500 ORDER BY symbol ASC;
@@ -2336,7 +2338,6 @@ def at_introduction():
     return render_template("at_introduction.html")
 
 
-
 @app.route("/at_analysis", methods=["GET", "POST"])
 def at_analysis():
     input = {"AlphaName": 'NotSelected', "Timeperiod": 5}
@@ -2937,6 +2938,64 @@ def technical_indicator_plot(test, ticker_strings):
     response = make_response(output.getvalue())
     response.mimetype = 'image/png'
     return response
+
+## BEGIN{Keltner Channel Strategy}
+@app.route('/keltner_channel_strategy')
+@login_required
+def keltner_channel_strategy():
+    flash("When you click 'Build Model', it will take about 20 minutes to run, please be patient...")
+    return render_template("keltner_channel_strategy.html")
+
+@app.route('/keltner_build_model')
+@login_required
+def keltner_build_model():
+    #all the 79 in this part is because for the intraday data, there are 79 data a day
+    #make it a global variable for plotting use
+    global final_df
+    final_df = pd.DataFrame()
+    stock_table, length, strategy, buynhold = kelt_cha_sty()
+    #join the two dataframe by date and drop the missing value
+    final_df = pd.concat([strategy, buynhold], axis = 1)
+    final_df.dropna(axis = 0, how = 'any', inplace = True)
+    #pick out the start and end time of prediction
+    date_list = list(final_df.index)
+    sd = date_list[0]
+    ed = date_list[-1]
+    
+    st_ret = "{:.2f}".format(final_df.loc[date_list[-1]][0] * 100, 2)
+    bh_ret = "{:.2f}".format(final_df.loc[date_list[-1]][1] * 100, 2)
+    return render_template('keltner_build_model.html', stock_list=stock_table, 
+                           length=length, start_date_test=sd, end_date_test = ed, 
+                           strategy_return=st_ret , bh_return=bh_ret)
+
+@app.route('/plot/keltner_backtest_plot')
+def keltner_back_test_plot():
+    fig = Figure()
+    axis = fig.add_subplot(1, 1, 1)
+
+    axis.plot(list(final_df.iloc[:,0]), 'r-')
+    axis.plot(list(final_df.iloc[:,1]), 'b-')
+
+    axis.set(xlabel="Time Series of Intraday Data",
+             ylabel="Cumulative Returns",
+             title=f"Portfolio Cumulative Return using Strategy vs. using Buy and Hold")
+
+    axis.text(0.2, 0.9, 'Red - Strategy \nBlue - Buy and Hold',
+              verticalalignment='center',
+              horizontalalignment='center',
+              transform=axis.transAxes,
+              color='black', fontsize=10)
+
+    axis.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvas(fig)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+## END{Keltner Channel Strategy}
+
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
