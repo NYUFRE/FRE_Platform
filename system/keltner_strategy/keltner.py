@@ -30,9 +30,6 @@ def populate_to_df(start_date, end_date):
 def stock_select_highvol(data, lookback_window, n1, predict_days):
     selected_stock = []
     for sector in data:
-        #print(sector)
-        #print(data[sector])
-        #print(list(data[sector]))
         stk_std = pd.DataFrame(list(data[sector]))
         stk_std['std'] = 0.0
         for symbol in list(data[sector]):
@@ -208,6 +205,7 @@ def kelt_cha_sty():
     upper_days = 5
     lower_days = 3
     stk_list = stock_select_highvol(data, lb_wd,n1, predict_days)
+    print(stk_list)
     # Show stocks' information of the portfolio
     stock_table = []
     

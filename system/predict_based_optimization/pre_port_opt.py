@@ -77,16 +77,21 @@ def get_final_portfolio(data):
 
 def calc_portfolio_ret(portfolio, eod_market_data, start_date, end_date):
     df = pd.DataFrame()
+    remove_list = []
     for stk in portfolio:
         target = pd.DataFrame(eod_market_data.get_daily_data(stk, start_date, end_date,'US'))
-        stk_data = target.set_index('date')['adjusted_close']
-        df = pd.concat([df, pd.DataFrame(stk_data)], axis=1)
+        try:
+            stk_data = target.set_index('date')['adjusted_close']
+            df = pd.concat([df, pd.DataFrame(stk_data)], axis=1)
+        except:
+            remove_list.append(stk)
+            portfolio.remove(stk)
     df.dropna(axis = 0, how ='any', inplace = True)   
     ret_data = (np.log(df) - np.log(df.shift(1))).dropna()
     ret_data['row_sum'] = ret_data.sum(axis=1)
     ret_data['cum_ret'] = ret_data['row_sum'].cumsum()
-    port_ret = pd.DataFrame(ret_data['cum_ret'])/22
-    return port_ret
+    port_ret = pd.DataFrame(ret_data['cum_ret'])/len(portfolio)
+    return port_ret, portfolio, remove_list
 
 def calc_bench_ret(start, end, eod_market_data):
     spy_data = pd.DataFrame(eod_market_data.get_daily_data('SPY', start, end, 'US'))
@@ -142,12 +147,12 @@ def opt_backtest(portfolio):
     database = FREDatabase()
     eod_market_data = EODMarketData(os.environ.get("EOD_API_KEY"), database)
     
-    port_ret = calc_portfolio_ret(portfolio, eod_market_data, start, end)
+    port_ret, portfolio, remove_list = calc_portfolio_ret(portfolio, eod_market_data, start, end)
     bench_cum = calc_bench_ret(start, end, eod_market_data)
     df4plot = pd.concat([port_ret, bench_cum], axis=1)
     df4plot.dropna(axis = 0, how ='any', inplace = True)
     df4plot.columns = ['port_return', 'Benchmark_return']
 
     #df4plot.plot(y = ['port_return','Benchmark_return'])
-    return df4plot
+    return df4plot, portfolio, remove_list
 

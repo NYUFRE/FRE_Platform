@@ -3254,16 +3254,18 @@ def pre_opt_back_test():
         flash('Please click "Choose End Date" to select stocks before run the back test!')
         return render_template("Predict_based_optmize.html")
     else:
-        length = len(pb_portfolio)
-        return render_template('PB_Opt_backtest.html', length = length, portfolio = pb_portfolio)
+        global df_pb_opt
+        df_pb_opt, new_portfolio, remove_list = opt_backtest(pb_portfolio)
+        length = len(new_portfolio)
+        remove_len = len(remove_list)
+        return render_template('PB_Opt_backtest.html', length = length, portfolio = new_portfolio, rmlen = remove_len, removed = remove_list)
 
 @app.route('/plot/pre_opt_backtest_plot')
 def pre_opt_backtest_plot():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
-    df = opt_backtest(pb_portfolio)
-    axis.plot(list(df.iloc[:,0]), 'r-')
-    axis.plot(list(df.iloc[:,1]), 'b-')
+    axis.plot(list(df_pb_opt.iloc[:,0]), 'r-')
+    axis.plot(list(df_pb_opt.iloc[:,1]), 'b-')
 
     axis.set(xlabel="Number of Trading Days",
              ylabel="Cumulative Returns")

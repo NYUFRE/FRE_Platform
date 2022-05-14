@@ -27,6 +27,10 @@ Back_test
             {{  portfolio[i]  }}
             {%endfor%}
         </p>
+        <p>{% for i in range(rmlen) %}
+            {{  removed[i]  }} was removed from the portfolio built before, due to the data error.<br>
+            {%endfor%}
+        </p>
         <h5 style="text-align:center"> Portfolio cumulative daily Return vs. S&P 500 ETF(SPY):</h5>
         <hr>
         <img align="center" src="/plot/pre_opt_backtest_plot" alt="Image Placeholder" width="70%">
