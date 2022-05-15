@@ -61,15 +61,15 @@ Introduction
             <tr>
                 <td width="881" valign="top">
                     </p>
-                    <p> Define r_t as the stock return at time t, $\hat{r_t}$ as the predicted stock return at time t, $\varepsilon_t$ as the prediction error at time t. Therefore:</p>
+                    <p> Define ${r_t}$ as the stock return at time t, $\hat{r_t}$ as the predicted stock return at time t, $\varepsilon_t$ as the prediction error at time t. Therefore:</p>
                     <p> $$r_t = \hat{r_t} + \varepsilon_t$$ </p>
-                    <p> This portfolio will include 22 stocks (2 stocks from each of the eleven sectors of S&P 500). The expected return of the whole portfolio, $\hat{r_p}$ is </p>
-                    <p> $$\hat{r_p} = \sum^{22}_{i=1} \frac{1}{22} \hat{r_i}$$ </p>
+                    <p> This portfolio will include M stocks, and their weights are depicted as ${X_i}$. The expected return of the whole portfolio, $\hat{r_p}$ is </p>
+                    <p> $$\hat{r_p} = \sum^{M}_{i=1} {X_i} \hat{r_i}$$ </p>
                     <p> Model the portfolio risk as the variance of joint normal distribution of the linear combination of the participations and prediction errors of the stocks of the portfolio</p>
-                    <p> $$\hat{V} = \sum^{22}_{i=1} \sum^{22}_{j=1} \frac{1}{22} \frac{1}{22} \gamma_{\varepsilon_{ij}}$$ </p>
+                    <p> $$\hat{V} = \sum^{M}_{i=1} \sum^{M}_{j=1} {X_i} {X_j} \gamma_{\varepsilon_{ij}}$$ </p>
                     <p> where $\gamma_{\varepsilon_{ij}}$ is the covariance of the errors of the prediction of stocks i and j</p>
                     <p> The variance can also be written as </p>
-                    <p> $$\hat{V} = \sum^{22}_{i=1} (\frac{1}{22})^2 \sigma_{\varepsilon_{i}}^2 + \sum^{22}_{i=1} \sum^{22}_{j=1 \\ j\neq i} (\frac{1}{22})^2 \gamma_{\varepsilon_{ij}}$$</p>
+                    <p> $$\hat{V} = \sum^{M}_{i=1} ({X_i})^2 \sigma_{\varepsilon_{i}}^2 + \sum^{M}_{i=1} \sum^{M}_{j=1 \\ j\neq i} {X_i} {X_j} \gamma_{\varepsilon_{ij}}$$</p>
                     <p> In order to get this minimum portfolio risk, we have to calculate the variance of individual stock, $\hat{V}_{stock}$, and choose the top 2 least variance stocks in each of the 11 sectors to make the portfolio</p>
                     <p> $$\hat{V}_{stock} = \sigma_{\varepsilon_{p}}^2 + \sum^{N}_{p=1} \sum^{N}_{q=1 \\ q\neq p}\gamma_{\varepsilon_{pq}}$$ </p>
                     <p> where p and q are random stocks in the sector of chosen stock, and N is the number of stock in this sector</p>
