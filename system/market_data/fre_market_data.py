@@ -280,7 +280,12 @@ class EODMarketData:
             for sub_tickers in tickers_list:
                 futures.append(executor.submit(fundamental_data_helper, ticker_list=sub_tickers))
             for future in concurrent.futures.as_completed(futures):
-                result_df = result_df.append(future.result(), ignore_index=True)
+                # Future instances are created by Executor.submit()
+                # https://docs.python.org/3/library/concurrent.futures.html
+                # .result() -> Return the value returned by the call. 
+                # If the call hasn’t yet completed then this method will wait up to timeout seconds.
+                # result_df = result_df.append(future.result(), ignore_index=True) -> depreciated
+                result_df = pd.concat([result_df, future.result()], ignore_index=True, axis=0)
         result_df.to_sql("fundamentals", con=self.database.engine, if_exists='append', index=False)
 
     def populate_stocks_data_multi(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str,
