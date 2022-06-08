@@ -3302,7 +3302,7 @@ if __name__ == "__main__":
         client_config.client_socket.close()
         sys.exit(0)
 
-
+    # Demo students how to make change correctly
 
 
 
