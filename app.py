@@ -2660,14 +2660,7 @@ def risk_management():
         else database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
 
         # Calculate VAR and return value
-        portfolio = database.get_portfolio(session['user_id'])
-        prices = []
-        errors = []
-        for i in range(len(portfolio['symbol'])):
-            prices.append(0)
-            errors.append(0)
-            prices[i], errors[i] = iex_market_data.get_price(portfolio['symbol'][i])
-        port_var = VaR(int(params['confidence_level']), int(params['period']), prices)
+        port_var = VaR(int(params['confidence_level']), int(params['period']))
         if params['method'] == 'hist_sim':
             result['var'], result['es'], result['var_hist'] = port_var.historical_simulation_method()
         elif params['method'] == 'garch':
