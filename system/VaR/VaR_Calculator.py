@@ -18,15 +18,22 @@ pd.options.mode.chained_assignment = None  # default='warn'
 # Cache data for stock returns
 port_returns_data = dict()
 class VaR:
-    def __init__(self, confidence_level: int, days: int = 1) -> None:
+    def __init__(self, confidence_level: int, days: int = 1, prices: List[float] = []) -> None:
         self.confidence_level = confidence_level
         self.days = days
         self.portfolio = database.get_portfolio(session['user_id'])
         self.symbols = self.portfolio['symbol']
         self.shares = self.portfolio['shares']
+        if len(prices) > 0 :
+            for i in range(len(self.portfolio['symbol'])):
+                # Get the latest price for each holding stocks
+                self.portfolio['name'][i] = prices[i]['name']
+                self.portfolio['price'][i] = prices[i]['price']
+                self.portfolio['total'][i] = prices[i]['price'] * self.portfolio['shares'][i]
+            self.total = self.portfolio['total']
 
     @classmethod
-    def port_return(cls, symbols: List[str], shares: List[int], interval: int = 1) -> pd.DataFrame:
+    def port_return(cls, symbols: List[str], shares: List[int], values: List[float], interval: int = 1) -> pd.DataFrame:
         '''
         :param symbols: List of ticker
         :param shares:
@@ -63,10 +70,11 @@ class VaR:
 
         data.index = data['date']
         data = data[symbols].pct_change(periods=interval).dropna()
-        port_weight = [share / np.sum(shares) for share in shares]
+        total = np.sum(values)
+        if total == 0: total = 0.000000000001
+        port_weight = [value/total for value in values]
         data['port_returns'] = data.dot(port_weight)
         port_returns_data[tuple(symbols + shares)] = data[['port_returns']] # save result into cache
-
         return data[['port_returns']]
 
 
@@ -77,7 +85,7 @@ class VaR:
         :return: VaR, expected loss
         '''
         # Calculate portfolio return
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, self.total)
         if port_returns is None: return 0, 0, None
 
         # Calculate historical VaR (for plotting purpose)
@@ -102,9 +110,10 @@ class VaR:
         '''
         from arch.__future__ import reindexing
         # Calculate portfolio parameters( 1. returns; 2. mean return; 3. standard deviation)
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, self.total)
         if port_returns is None: return 0, 0, None
-
+        print(self.symbols, self.shares)
+        print(port_returns)
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
         ## Rescale for optimization
         port_returns['port_returns_rescaled'] = port_returns['port_returns'] * 100
@@ -150,7 +159,7 @@ class VaR:
         '''
 
         # Calculate portfolio return
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, self.total)
         if port_returns is None: return 0, 0, None
 
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
@@ -195,7 +204,7 @@ class VaR:
 
     def caviar_SAV(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, self.total)
         if port_returns is None: return 0, 0, None
 
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
@@ -241,7 +250,7 @@ class VaR:
 
     def caviar_AS(self, window: int = 1000) -> Tuple[float, float, pd.DataFrame]:
         # Calculate portfolio returns
-        port_returns = VaR.port_return(self.symbols, self.shares)
+        port_returns = VaR.port_return(self.symbols, self.shares, self.total)
         if port_returns is None: return 0, 0, None
 
         port_returns = port_returns[-window:] if window <= len(port_returns) else port_returns
