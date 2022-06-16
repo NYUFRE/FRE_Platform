@@ -53,19 +53,19 @@ git push -u origin feature/feature-name
 Create a Pull Request on Github
 
 ## Git Commit Convention
-### 1. General Format:
+### General Format:
 ```git
 <type>[path/scope]: <description>
 ```
 1. <>: required
 2. []: optional
-### 2. Types: 
+### Types: 
 1. fix: bug fixing
 2. feat: short for feature, standing for change of any feature in the app.
 3. ref: short for refactor, standing for change of the structure of project including add folder, change path, rename, etc.
 4. docs: changes of document, including files like README and needed comment in code
 5. test: anything related to test of code
-### 3. Examples:
+### Examples:
 1. Fix a bug realted to data downloading of an API from some ai trading system:
 ```git
 git commit -m "fix(system/ai_trading/API): fix a bug causing by wrong url format."
