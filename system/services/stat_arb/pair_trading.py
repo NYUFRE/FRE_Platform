@@ -60,7 +60,8 @@ def populate_stock_data_from_db(tickers: Collection[str], table_name: str, start
         select_stmt = f"""SELECT symbol, date, open, high, low, close, adjusted_close, volume FROM stocks
                       WHERE symbol = "{ticker}" AND date <= "{end_date}" AND date >= "{start_date}";"""
         symbol_df = database.execute_sql_statement(select_stmt)
-        stocks = stocks.append(symbol_df, ignore_index=True)
+        # stocks = stocks.append(symbol_df, ignore_index=True)
+        stocks = pd.concat([stocks, symbol_df], ignore_index=True, axis=0)
     stocks.to_sql(table_name, con=database.engine, if_exists='append', index=False)
 
 
@@ -316,7 +317,8 @@ def pair_trade_back_test(back_testing_start_date: str, back_testing_end_date: st
 
     trades_df = pd.DataFrame(columns=['qty1', 'qty2', 'profit_loss'])
     for key, value in stock_pair_map.items():
-        trades_df = trades_df.append(value.update_trades(), ignore_index=True)
+        # trades_df = trades_df.append(value.update_trades(), ignore_index=True)
+        trades_df = pd.concat([trades_df, value.update_trades()], ignore_index=True, axis=0)
         print(trades_df)
         np.set_printoptions(precision=2, floatmode='fixed')
         np.set_printoptions(suppress=True)
@@ -363,7 +365,8 @@ def pair_trade_probation_test(probation_testing_start_date: str, probation_testi
 
     trades_df = pd.DataFrame(columns=['qty1', 'qty2', 'profit_loss'])
     for key, value in stock_pair_map.items():
-        trades_df = trades_df.append(value.update_trades(), ignore_index=True)
+        # trades_df = trades_df.append(value.update_trades(), ignore_index=True)
+        trades_df = pd.concat([trades_df, value.update_trades()], ignore_index=True, axis=0)
         print(trades_df)
         np.set_printoptions(precision=2, floatmode='fixed')
         np.set_printoptions(suppress=True)
