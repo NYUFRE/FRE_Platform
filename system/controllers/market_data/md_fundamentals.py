@@ -9,6 +9,9 @@ from system import database, eod_market_data
 
 
 def md_fundamentals_service():
+    table_name = 'fundamentals'
+    if database.check_table_exists(table_name):
+        database.drop_table(table_name)
     table_list = ['fundamentals']
     database.create_table(table_list)
 

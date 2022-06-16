@@ -14,11 +14,13 @@ from system.services.ai_modeling.ga_portfolio_select import start_date
 def md_update_data_service():
     today = datetime.today().strftime('%Y-%m-%d')
     try:
-
         # fundamentals (use multi-threads,takes 30 seconnds)
+        table_name = 'fundamentals'
+        if database.check_table_exists(table_name):
+            database.drop_table(table_name)
         table_list = ['fundamentals']
         database.create_table(table_list)
-        database.clear_table(table_list)
+        # database.clear_table(table_list)
         tickers = database.get_sp500_symbols()
         tickers.append('SPY')
         eod_market_data.populate_fundamental_data(tickers, 'US')
