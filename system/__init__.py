@@ -1,8 +1,8 @@
 #################
 #### imports ####
 #################
- 
-from flask import Flask, render_template
+
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
@@ -11,12 +11,12 @@ from flask_mail import Mail
 import os
 from tempfile import mkdtemp
 
-from system.utility.helpers import usd
+from system.database.fre_database import FREDatabase
+from system.services.utility.helpers import usd
 from flask_session import Session
 
-from system.market_data.fre_market_data import IEXMarketData
-from system.market_data.fre_market_data import EODMarketData
-from system.database.fre_database import FREDatabase
+from system.services.market_data.fre_market_data import IEXMarketData
+from system.services.market_data.fre_market_data import EODMarketData
 
 
 ################
@@ -69,9 +69,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
- 
-from system.portfolio.models import User
- 
+from system.services.portfolio.models import User
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.filter(User.user_id == int(user_id)).first()
