@@ -117,6 +117,11 @@
 
             <div class="row">
                 {% block content %} {% endblock %}
+                <script type="text/javascript">
+                    document.getElementsByTagName("main")[0].id = "remove";
+                    document.getElementById("remove").classList.remove("offset-sm-3");
+                    document.getElementById("remove").classList.remove("offset-md-2");
+                </script>
             </div>
         </div>
 
