@@ -379,7 +379,6 @@ def update_market_data():
     """
     return md_update_data_service()
 
-
 # Pair Trading with AI
 @app.route('/pair_ai_introduction')
 @login_required
