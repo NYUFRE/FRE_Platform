@@ -52,6 +52,41 @@ git push -u origin feature/feature-name
 ```
 Create a Pull Request on Github
 
+## Git Commit Convention
+### General Format:
+```git
+<type>[path/scope]: <description>
+```
+1. <>: required
+2. []: optional
+### Types: 
+1. fix: bug fixing
+2. feat: short for feature, standing for change of any feature in the app.
+3. ref: short for refactor, standing for change of the structure of project including add folder, change path, rename, etc.
+4. docs: changes of document, including files like README and needed comment in code
+5. test: anything related to test of code
+### Examples:
+1. Fix a bug realted to data downloading of an API from some ai trading system:
+```git
+git commit -m "fix(system/ai_trading/API): fix a bug causing by wrong url format."
+```
+2. Add a new auto trading system:
+```git
+git commit -m "feat(system/auto_trading): new auto trading system published."
+```
+3. Rename the database file name:
+```git
+git commit -m "ref(instance/db): rename the database file from xxx.db to yyy.db."
+```
+4. Add conventional commit into the README:
+```git
+git commit -m "docs(README): add conventional commit details into README.
+```
+5. Add unit test to a new ai trading system:
+```git
+git commit -m "test(system/ai_trading): add unit test to ai_trading system."
+```
+
 ## Launch FRE Platform
 ### With Virtual Env
 After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
