@@ -17,13 +17,13 @@ import pandas_market_calendars as mcal
 
 import threading
 
+from system.services.sim_trading.network import PacketTypes, Packet
+from system.services.utility.config import trading_queue, ServerConfig
+
 sys.path.append('../')
 
-from system.utility.config import ServerConfig, trading_queue
-from system.sim_trading.network import PacketTypes, Packet
-
-from system.market_data.fre_market_data import EODMarketData
-from system.database.fre_database import FREDatabase
+from system import EODMarketData
+from system import FREDatabase
 from typing import Iterable, List, Dict
 from collections import defaultdict
 
