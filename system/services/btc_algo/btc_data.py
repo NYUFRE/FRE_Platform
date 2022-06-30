@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from pandas import DataFrame
+import pandas as pd
 
 from system import database, eod_market_data
 
@@ -68,7 +68,7 @@ class BTCData:
                 return True
 
     @staticmethod
-    def get_btc_data() -> DataFrame:
+    def get_btc_data() -> pd.DataFrame:
         """
         This method is used to get BTC data from database.
         :return: BTC data DataFrame.

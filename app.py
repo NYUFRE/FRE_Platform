@@ -5,6 +5,7 @@
 import sys
 import warnings
 import pandas as pd
+from flask import request
 from sqlalchemy.exc import SAWarning
 from system import app, database
 from system.controllers.ai_modeling.ai_back_test import ai_back_test_service
@@ -104,9 +105,9 @@ warnings.simplefilter(action='ignore', category=SAWarning)
 
 # test
 from system.controllers.btc_algo.btc_test import btc_test_service
-@app.route('/btc_test')
-def btc_test():
-    return btc_test_service()
+@app.route('/btc_test/<algorithm>', methods=['GET'])
+def btc_test(algorithm):
+    return btc_test_service(request, algorithm)
 
 
 @app.route('/register', methods=['GET', 'POST'])
