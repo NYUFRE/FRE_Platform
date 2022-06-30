@@ -102,6 +102,12 @@ from system.services.utility.helpers import login_required
 
 warnings.simplefilter(action='ignore', category=SAWarning)
 
+# test
+from system.controllers.btc_algo.btc_test import btc_test_service
+@app.route('/btc_test')
+def btc_test():
+    return btc_test_service()
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
