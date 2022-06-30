@@ -8,6 +8,11 @@ import scipy.signal
 class AlgorithmFactory:
     @staticmethod
     def create_algorithm(*args):
+        """
+        Creates an algorithm object based on the given parameters.
+        :param args: The parameters for the algorithm.
+        :return: The algorithm object.
+        """
         if args[0] == "Filter":
             return Filter(*args[1:])
         elif args[0] == "SMA":
@@ -27,6 +32,9 @@ class AlgorithmFactory:
 
 
 class AlgorithmInterface(metaclass=ABCMeta):
+    """
+    The interface for all algorithms.
+    """
     @abstractmethod
     def indicator(self, price_base):
         pass
@@ -38,15 +46,28 @@ class AlgorithmInterface(metaclass=ABCMeta):
 
 class Filter(AlgorithmInterface):
     def __init__(self, data, delta):
+        """
+        :param data: pandas.DataFrame
+        :param delta: float
+        """
         self.data = data
         self.delta = delta
 
     def indicator(self, price_base):
-        self.data["indicator"] = self.data[price_base] / self.data[price_base].shift(1) - 1
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # calculate basic filter with formula: (price_base - price_base[1]) / price_base[1]
+        self.data["indicator"] = self.data[price_base] / self.data[price_base].shift(1)
         self.data.fillna(0, inplace=True)
         return self.data
 
     def signal(self, timing):
+        # if no indicator, throw exception
+        if "indicator" not in self.data.columns:
+            raise Exception("No indicator calculated, please run indicator first")
+        # if indicator is not 0, subtract 1
+        self.data["indicator"] = self.data["indicator"].apply(lambda x: x - 1 if x != 0 else x)
         if timing == "immediate":
             # if indicator is greater than delta, set signal to 1
             self.data["signal"] = np.where(self.data["indicator"] > self.delta, 1, 0)
@@ -71,6 +92,10 @@ class SMA(AlgorithmInterface):
         self.period = period
 
     def indicator(self, price_base):
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # calculate basic SMA with formula: sum(price_base) / period
         self.data["indicator"] = self.data[price_base].rolling(self.period).mean()
         self.data.fillna(0, inplace=True)
         return self.data
@@ -85,6 +110,10 @@ class EMA(AlgorithmInterface):
         self.period = period
 
     def indicator(self, price_base):
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # calculate basic EMA with formula: (price_base[1] * (period - 1) + price_base * 2 / period) / (period + 1)
         self.data["indicator"] = self.data[price_base].ewm(span=self.period, adjust=False).mean()
         self.data.fillna(0, inplace=True)
         return self.data
@@ -101,8 +130,14 @@ class MACD(AlgorithmInterface):
         self.signal_period = signal_period
 
     def indicator(self, price_base):
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # calculate basic MACD with formula: EMA(short_period) - EMA(long_period)
+        # MACD signal with formula: EMA(signal_period)
+        # MACD histogram with formula: MACD - MACD signal
         macd = self.data[price_base].ewm(span=self.short_period, adjust=False).mean() - \
-               self.data[price_base].ewm(span=self.long_period, adjust=False).mean()
+                self.data[price_base].ewm(span=self.long_period, adjust=False).mean()
         signal = macd.ewm(span=self.signal_period, adjust=False).mean()
         self.data["indicator"] = macd - signal
         self.data.fillna(0, inplace=True)
@@ -118,6 +153,10 @@ class RSI(AlgorithmInterface):
         self.period = period
 
     def indicator(self, price_base):
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # calculate basic RSI with formula: 100 - 100 / (1 + sum(price_base[1] / price_base[period])
         delta = self.data[price_base].diff()
         up, down = delta.copy(), delta.copy()
         up[up < 0] = 0
@@ -139,11 +178,15 @@ class KalmanFilter(AlgorithmInterface):
         self.data = data
 
     def indicator(self, price_base):
+        # if price_base is not open or close, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base not found")
+        # initialize kalman filter
         x = np.array([self.data[price_base][0], [0]])
         P = np.full((2, 2), 2 ** 2)
         Q = np.full((2, 2), 1 ** 2)
         F = np.array([[1, 1],
-                      [0, 1]])
+                    [0, 1]])
         R = np.array([[0.5 ** 2]])
         H = np.array([[1, 0]])
 
