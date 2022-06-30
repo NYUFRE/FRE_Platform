@@ -105,7 +105,7 @@ warnings.simplefilter(action='ignore', category=SAWarning)
 
 # test
 from system.controllers.btc_algo.btc_test import btc_test_service
-@app.route('/btc_test/<algorithm>', methods=['GET'])
+@app.route('/btc_test/<algorithm>', methods=['GET', 'POST'])
 def btc_test(algorithm):
     return btc_test_service(request, algorithm)
 

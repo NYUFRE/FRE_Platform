@@ -1,11 +1,14 @@
+import json
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import pandas as pd
-import scipy.signal
 
 
 class AlgorithmFactory:
+    """
+    This class is used to create algorithm.
+    """
     @staticmethod
     def create_algorithm(*args):
         """
@@ -25,17 +28,22 @@ class AlgorithmFactory:
             return RSI(*args[1:])
         elif args[0] == "KalmanFilter":
             return KalmanFilter(*args[1:])
+        elif args[0] == "RNN":
+            return RNN(*args[1:])
         elif args[0] == "LSTM":
             return LSTM(*args[1:])
+        elif args[0] == "GRU":
+            return GRU(*args[1:])
+        elif args[0] == "Combination":
+            return Combination(*args[1:])
         else:
             raise Exception("Algorithm not found")
 
 
 class AlgorithmInterface(metaclass=ABCMeta):
     """
-    The interface for all algorithms.
+    This class is an interface for all algorithms.
     """
-
     @abstractmethod
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
@@ -58,7 +66,11 @@ class AlgorithmInterface(metaclass=ABCMeta):
         pass
 
 
+# Trend Strategy Algorithms
 class Filter(AlgorithmInterface):
+    """
+    Simple Filter Algorithm
+    """
     def __init__(self, data: pd.DataFrame, delta: float):
         """
         :param data: pandas.DataFrame
@@ -95,7 +107,7 @@ class Filter(AlgorithmInterface):
         # if indicator is greater than delta, set signal to 1
         self.data["signal"] = np.where(self.data["indicator"] > self.delta, 1, 0)
         # if indicator is less than negative delta, set signal to -1
-        self.data["signal"] = np.where(self.data["indicator"] < self.delta, -1, self.data["signal"])
+        self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
 
     def graph(self):
@@ -103,6 +115,9 @@ class Filter(AlgorithmInterface):
 
 
 class SMA(AlgorithmInterface):
+    """
+    Simple Moving Average Algorithm
+    """
     def __init__(self, data: pd.DataFrame, short_period: int, long_period: int, delta: float):
         """
         :param data: pandas.DataFrame
@@ -145,7 +160,7 @@ class SMA(AlgorithmInterface):
         # if indicator is greater than delta, set signal to 1
         self.data["signal"] = np.where(self.data["indicator"] > self.delta, 1, 0)
         # if indicator is less than negative delta, set signal to -1
-        self.data["signal"] = np.where(self.data["indicator"] < self.delta, -1, self.data["signal"])
+        self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
 
     def graph(self):
@@ -153,6 +168,9 @@ class SMA(AlgorithmInterface):
 
 
 class EMA(AlgorithmInterface):
+    """
+    Exponential Moving Average Algorithm
+    """
     def __init__(self, data: pd.DataFrame, short_period: int, long_period: int, delta: float):
         """
         :param data: pandas.DataFrame
@@ -195,14 +213,18 @@ class EMA(AlgorithmInterface):
         # if indicator is greater than delta, set signal to 1
         self.data["signal"] = np.where(self.data["indicator"] > self.delta, 1, 0)
         # if indicator is less than negative delta, set signal to -1
-        self.data["signal"] = np.where(self.data["indicator"] < self.delta, -1, self.data["signal"])
+        self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
 
     def graph(self):
         pass
 
 
+# Momentum Strategy Algorithms
 class MACD(AlgorithmInterface):
+    """
+    Moving Average Convergence/Divergence Algorithm
+    """
     def __init__(self, data: pd.DataFrame, short_period: int = 12, long_period: int = 26, signal_period: int = 9):
         """
         :param data: pandas.DataFrame
@@ -258,6 +280,9 @@ class MACD(AlgorithmInterface):
 
 
 class RSI(AlgorithmInterface):
+    """
+    Relative Strength Index Algorithm
+    """
     def __init__(self, data: pd.DataFrame, period: int, buy_threshold: int = 30, sell_threshold: int = 70, avg_type: str = "SMA"):
         """
         :param data: pandas.DataFrame
@@ -322,6 +347,9 @@ class RSI(AlgorithmInterface):
 
 
 class KalmanFilter(AlgorithmInterface):
+    """
+    Kalman Filter Algorithm
+    """
     def __init__(self, data: pd.DataFrame):
         """
         :param data: pandas.DataFrame
@@ -386,7 +414,11 @@ class KalmanFilter(AlgorithmInterface):
         pass
 
 
-class LSTM(AlgorithmInterface):
+# Machine Learning Strategy Algorithms
+class RNN(AlgorithmInterface):
+    """
+    RNN Algorithm
+    """
     def __init__(self, data: pd.DataFrame):
         """
         :param data: pandas.DataFrame
@@ -402,4 +434,124 @@ class LSTM(AlgorithmInterface):
         pass
 
     def signal(self) -> pd.DataFrame:
+        """
+        Calculates the signal based on the given timing.
+        Buy when RNN is under buy threshold and sell when RNN is over sell threshold.
+        :return: The DataFrame including signal column.
+        """
+        pass
+
+    def graph(self):
+        pass
+
+
+class LSTM(AlgorithmInterface):
+    """
+    LSTM Algorithm
+    """
+    def __init__(self, data: pd.DataFrame):
+        """
+        :param data: pandas.DataFrame
+        """
+        self.data = data
+
+    def indicator(self, price_base: str) -> pd.DataFrame:
+        """
+        Calculates the indicator based on the given price base.
+        :param price_base: The price base like open, close.
+        :return: The DataFrame including indicator column.
+        """
+        pass
+
+    def signal(self) -> pd.DataFrame:
+        pass
+
+    def graph(self):
+        pass
+
+
+class GRU(AlgorithmInterface):
+    """
+    GRU Algorithm
+    """
+    def __init__(self, data: pd.DataFrame):
+        """
+        :param data: pandas.DataFrame
+        """
+        self.data = data
+
+    def indicator(self, price_base: str) -> pd.DataFrame:
+        """
+        Calculates the indicator based on the given price base.
+        :param price_base: The price base like open, close.
+        :return: The DataFrame including indicator column.
+        """
+        pass
+
+    def signal(self) -> pd.DataFrame:
+        pass
+
+    def graph(self):
+        pass
+
+
+# Combination Strategy
+class Combination(AlgorithmInterface):
+    """
+    Combination Algorithm
+    """
+    def __init__(self, data: pd.DataFrame, json_dict: dict):
+        """
+        :param data: pandas.DataFrame
+        :param json_dict: The json dictionary of the combination strategy.
+        """
+        self.data = data.copy()
+        self.algorithms = {}
+        # parse the json parameters and create the algorithm objects
+        for algo, params in json_dict.items():
+            param_list = [algo, data.copy()]
+            for param in params:
+                param_list.append(param)
+            self.algorithms[algo] = AlgorithmFactory.create_algorithm(*param_list)
+
+    def indicator(self, price_base: str) -> pd.DataFrame:
+        """
+        Calculates the indicator based on the given price base.
+        :param price_base: The price base like open, close.
+        :return: The DataFrame including indicator column.
+        """
+        # calculate the indicator for each algorithm
+        indicator_list = [self.data]
+        for algo, algo_obj in self.algorithms.items():
+            indicator_list.append(algo_obj.indicator(price_base).rename(columns={"indicator": algo+"_indicator"})[algo+"_indicator"])
+        # merge the indicator columns
+        self.data = pd.concat(indicator_list, axis=1)
+        return self.data
+
+    def signal(self) -> pd.DataFrame:
+        """
+        Calculates the signal based on the given timing.
+        Act when all the algorithms have same strategy.
+        :return: The DataFrame including signal column.
+        """
+        # for each algorithm, check if they in self.data column and if not throw exception
+        for algo in self.algorithms.keys():
+            if algo+"_indicator" not in self.data.columns:
+                raise Exception("No indicator calculated for {}".format(algo))
+        # calculate the signal for each algorithm, if all have same signal, set signal for self.data to that signal
+        signal_list = [self.data]
+        signal_name_list = []
+        for algo, algo_obj in self.algorithms.items():
+            signal_list.append(algo_obj.signal().rename(columns={"signal": algo+"_signal"})[algo+"_signal"])
+            # store the signal name for later calculation
+            signal_name_list.append(algo+"_signal")
+        # merge the signal columns
+        self.data = pd.concat(signal_list, axis=1)
+        # if the sum of the row equals to the number of algorithms, set signal to sell
+        self.data["signal"] = np.where(self.data[signal_name_list].sum(axis=1) == len(self.algorithms.keys()), 1, 0)
+        # if the sum of the row equals to the minus number of algorithms, set signal to buy
+        self.data["signal"] = np.where(self.data[signal_name_list].sum(axis=1) == -len(self.algorithms.keys()), -1, self.data["signal"])
+        return self.data
+
+    def graph(self):
         pass
