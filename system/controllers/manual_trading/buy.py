@@ -19,8 +19,15 @@ def buy_service():
 
         if len(threshold_db):
             threshold_db = database.execute_sql_statement("SELECT * FROM risk_threshold").to_dict('r')[0]
-            ### Calculate VaR
-            port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']))
+            ### Calculate
+            portfolio = database.get_portfolio(session['user_id'])
+            prices = []
+            errors = []
+            for i in range(len(portfolio['symbol'])):
+                prices.append(0)
+                errors.append(0)
+                prices[i], errors[i] = iex_market_data.get_price(portfolio['symbol'][i])
+            port_var_obj = VaR(int(threshold_db['confidence_threshold']), int(threshold_db['period_threshold']), prices)
             port_var_value, _, _ = port_var_obj.caviar_AS()
             print(f"port_var {port_var_value} threshold {float(threshold_db['var_threshold'])}")
             if port_var_value < -float(threshold_db['var_threshold']):
