@@ -70,7 +70,30 @@ class BTCData:
                 return True
 
     @staticmethod
-    def get_btc_data(start_date: str, end_date: str) -> pd.DataFrame:
+    def get_btc_data_all(order: str = "DESC") -> pd.DataFrame:
+        """
+        This method is used to get all BTC data.
+        :param order: The order of the data.
+        :return: BTC data.
+        """
+        # if something goes wrong, throw exception
+        if not BTCData.populate_btc_data():
+            raise Exception("Error downloading BTC-USD data")
+        # get the data
+        try:
+            select_sql = """
+                        SELECT * FROM btc_data ORDER BY date {}
+                        """.format(order).replace("\n", "").strip()
+            print(select_sql)
+            data = database.execute_sql_statement(select_sql)
+            data.drop(columns=["symbol"], inplace=True)
+            return data
+        except Exception as e:
+            print("Error getting BTC-USD data: ", e)
+            raise Exception("Error getting BTC-USD data")
+
+    @staticmethod
+    def get_btc_data_range(start_date: str, end_date: str) -> pd.DataFrame:
         """
         This method is used to get BTC data from database.
         :param start_date: The start date to choose.
