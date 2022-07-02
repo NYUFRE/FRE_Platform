@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from keras import Sequential
 import keras.layers as layers
+from sklearn.preprocessing import MinMaxScaler
 
 
 class BTCAlgorithmFactory:
@@ -33,8 +34,6 @@ class BTCAlgorithmFactory:
             return RNN(*args[1:])
         elif args[0] == "LSTM":
             return LSTM(*args[1:])
-        elif args[0] == "GRU":
-            return GRU(*args[1:])
         elif args[0] == "Combination":
             return Combination(*args[1:])
         else:
@@ -420,11 +419,26 @@ class RNN(BTCAlgorithmInterface):
     """
     RNN Algorithm
     """
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2, epochs: int = 100, batch_size: int = 32,
+                 dropout: bool = False, dropout_rate: float = 0.5, loss_function: str = "mse", optimizer: str = "adam"):
         """
         :param data: pandas.DataFrame
+        :param train_test_ratio: float, the ratio of training data to test data.
+        :param epochs: int, the number of epochs.
+        :param batch_size: int, the batch size.
+        :param dropout: bool, whether to use dropout.
+        :param dropout_rate: float, the dropout rate.
+        :param loss_function: str, the loss function.
+        :param optimizer: str, the optimizer.
         """
         self.data = data
+        self.train_test_ratio = float(train_test_ratio)
+        self.epochs = int(epochs)
+        self.batch_size = int(batch_size)
+        self.dropout = bool(dropout)
+        self.dropout_rate = float(dropout_rate)
+        self.loss_function = loss_function
+        self.optimizer = optimizer
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
@@ -432,9 +446,7 @@ class RNN(BTCAlgorithmInterface):
         :param price_base: The price base like open, close.
         :return: The DataFrame including indicator column.
         """
-        # use keras to build simple RNN model
-        model = Sequential()
-        model.add(layers.SimpleRNN(units=1, input_shape=(1, 1)))
+        pass
 
     def signal(self) -> pd.DataFrame:
         """
@@ -452,36 +464,26 @@ class LSTM(BTCAlgorithmInterface):
     """
     LSTM Algorithm
     """
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2, epochs: int = 100, batch_size: int = 32,
+                 dropout: bool = False, dropout_rate: float = 0.5, loss_function: str = "mse", optimizer: str = "adam"):
         """
         :param data: pandas.DataFrame
+        :param train_test_ratio: float, the ratio of training data to test data.
+        :param epochs: int, the number of epochs.
+        :param batch_size: int, the batch size.
+        :param dropout: bool, whether to use dropout.
+        :param dropout_rate: float, the dropout rate.
+        :param loss_function: str, the loss function.
+        :param optimizer: str, the optimizer.
         """
         self.data = data
-
-    def indicator(self, price_base: str) -> pd.DataFrame:
-        """
-        Calculates the indicator based on the given price base.
-        :param price_base: The price base like open, close.
-        :return: The DataFrame including indicator column.
-        """
-        pass
-
-    def signal(self) -> pd.DataFrame:
-        pass
-
-    def graph(self):
-        pass
-
-
-class GRU(BTCAlgorithmInterface):
-    """
-    GRU Algorithm
-    """
-    def __init__(self, data: pd.DataFrame):
-        """
-        :param data: pandas.DataFrame
-        """
-        self.data = data
+        self.train_test_ratio = float(train_test_ratio)
+        self.epochs = int(epochs)
+        self.batch_size = int(batch_size)
+        self.dropout = bool(dropout)
+        self.dropout_rate = float(dropout_rate)
+        self.loss_function = loss_function
+        self.optimizer = optimizer
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
