@@ -15,4 +15,4 @@ def btc_test_service(request, algorithm):
     test = BTCAlgorithmFactory.create_algorithm(*param_list)
     print(test.indicator("close"))
     print(test.signal())
-    return render_template("ei_introduction.html")
+    return render_template("btc_introduction.html")

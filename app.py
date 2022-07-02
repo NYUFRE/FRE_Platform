@@ -105,7 +105,12 @@ warnings.simplefilter(action='ignore', category=SAWarning)
 
 # test
 from system.controllers.btc_algo.btc_test import btc_test_service
-@app.route('/btc_test/<algorithm>', methods=['GET', 'POST'])
+from flask import render_template
+@app.route('/btc_introduction')
+def btc_introduction():
+    return render_template('btc_introduction.html')
+
+@app.route('/btc_introduction/<algorithm>', methods=['GET', 'POST'])
 def btc_test(algorithm):
     return btc_test_service(request, algorithm)
 
