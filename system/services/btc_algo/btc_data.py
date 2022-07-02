@@ -70,9 +70,11 @@ class BTCData:
                 return True
 
     @staticmethod
-    def get_btc_data() -> pd.DataFrame:
+    def get_btc_data(start_date: str, end_date: str) -> pd.DataFrame:
         """
         This method is used to get BTC data from database.
+        :param start_date: The start date to choose.
+        :param end_date: The end date to choose.
         :return: BTC data DataFrame.
         """
         # if something goes wrong, throw exception
@@ -80,7 +82,10 @@ class BTCData:
             raise Exception("Error downloading BTC-USD data")
         try:
             # get the data from database, without symbol
-            select_sql = "SELECT date, open, high, low, close FROM btc_data"
+            select_sql = """
+                        SELECT date, open, high, low, close FROM btc_data where date between '{}' and '{}'
+                        """.format(start_date, end_date).replace("\n", "").strip()
+            print(select_sql)
             select_data = database.execute_sql_statement(select_sql)
             # set the index to date
             select_data.set_index("date", inplace=True)
