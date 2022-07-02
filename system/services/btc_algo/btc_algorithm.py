@@ -518,7 +518,18 @@ class GNU(BTCAlgorithmInterface):
         Buy when RNN is under buy threshold and sell when RNN is over sell threshold.
         :return: The DataFrame including signal column.
         """
-        pass
+        # if no indicator column, throw exception
+        if "indicator" not in self.data.columns:
+            raise Exception("No indicator calculated, please run indicator first")
+        # create a helper column to store the previous indicator value
+        self.data["prev_indicator"] = self.data["indicator"].shift(1)
+        # if indicator is positive and previous indicator is negative, set signal to 1
+        self.data["signal"] = np.where((self.data["indicator"] > 0) & (self.data["prev_indicator"] < 0), 1, 0)
+        # if indicator is negative and previous indicator is positive, set signal to -1
+        self.data["signal"] = np.where((self.data["indicator"] < 0) & (self.data["prev_indicator"] > 0), -1, self.data["signal"])
+        # drop the helper column
+        self.data.drop("prev_indicator", axis=1, inplace=True)
+        return self.data
 
 
 class LSTM(BTCAlgorithmInterface):
@@ -628,10 +639,27 @@ class LSTM(BTCAlgorithmInterface):
         predictions = sc.inverse_transform(predictions)
         # add prediction column to the data based on start date and end date
         self.data.loc[(date.fromisoformat(start_date) + timedelta(days=61)).strftime("%Y-%m-%d"):end_date, "indicator"] = predictions
+        # if indicator is not nan, set indicator to difference between price base column and indicator column
+        self.data.loc[self.data["indicator"].notna(), "indicator"] = self.data["indicator"] - self.data[price_base]
         return self.data
 
     def signal(self) -> pd.DataFrame:
-        pass
+        """
+        Calculates the signal based on the indicator.
+        :return: The DataFrame including signal column.
+        """
+        # if no indicator column, throw exception
+        if "indicator" not in self.data.columns:
+            raise Exception("No indicator calculated, please run indicator first")
+        # create a helper column to store the previous indicator value
+        self.data["prev_indicator"] = self.data["indicator"].shift(1)
+        # if indicator is positive and previous indicator is negative, set signal to 1
+        self.data["signal"] = np.where((self.data["indicator"] > 0) & (self.data["prev_indicator"] < 0), 1, 0)
+        # if indicator is negative and previous indicator is positive, set signal to -1
+        self.data["signal"] = np.where((self.data["indicator"] < 0) & (self.data["prev_indicator"] > 0), -1, self.data["signal"])
+        # drop the helper column
+        self.data.drop("prev_indicator", axis=1, inplace=True)
+        return self.data
 
 
 # Combination Strategy
