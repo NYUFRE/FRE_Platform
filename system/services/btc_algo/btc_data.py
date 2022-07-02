@@ -70,10 +70,9 @@ class BTCData:
                 return True
 
     @staticmethod
-    def get_btc_data_all(order: str = "DESC") -> pd.DataFrame:
+    def get_btc_data_all() -> pd.DataFrame:
         """
         This method is used to get all BTC data.
-        :param order: The order of the data.
         :return: BTC data.
         """
         # if something goes wrong, throw exception
@@ -82,8 +81,8 @@ class BTCData:
         # get the data
         try:
             select_sql = """
-                        SELECT * FROM btc_data ORDER BY date {}
-                        """.format(order).replace("\n", "").strip()
+                        SELECT * FROM btc_data ORDER BY date DESC
+                        """.replace("\n", "").strip()
             print(select_sql)
             data = database.execute_sql_statement(select_sql)
             data.drop(columns=["symbol"], inplace=True)
