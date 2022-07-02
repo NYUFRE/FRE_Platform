@@ -18,8 +18,10 @@ class BTCData:
         # get the last update time
         last_update_sql = "SELECT date FROM btc_data ORDER BY date DESC LIMIT 1"
         last_update = str(database.execute_sql_statement(last_update_sql).loc[0]["date"])
-        # compare the last update time with today
-        if last_update == date.today().strftime("%Y-%m-%d"):
+        # compare the last update time with yesterday because we cannot access today data
+        print("The last update time is: " + last_update)
+        print("The newest data time is: ", (date.today() - timedelta(days=1)).strftime("%Y-%m-%d"))
+        if last_update == (date.today() - timedelta(days=1)).strftime("%Y-%m-%d"):
             return False, last_update
         else:
             return True, last_update
