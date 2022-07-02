@@ -78,7 +78,7 @@ class BTCData:
             raise Exception("Error downloading BTC-USD data")
         try:
             # get the data from database, without symbol
-            select_sql = "SELECT date, open, high, low, close, adjusted_close, volume FROM btc_data"
+            select_sql = "SELECT date, open, high, low, close FROM btc_data"
             select_data = database.execute_sql_statement(select_sql)
             # set the index to date
             select_data.set_index("date", inplace=True)
