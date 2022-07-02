@@ -75,7 +75,7 @@ class Filter(BTCAlgorithmInterface):
     """
     Simple Filter Algorithm
     """
-    def __init__(self, data: pd.DataFrame, delta: float):
+    def __init__(self, data: pd.DataFrame, delta: float = 0.1):
         """
         :param data: pandas.DataFrame
         :param delta: float
@@ -119,7 +119,7 @@ class SMA(BTCAlgorithmInterface):
     """
     Simple Moving Average Algorithm
     """
-    def __init__(self, data: pd.DataFrame, short_period: int, long_period: int, delta: float):
+    def __init__(self, data: pd.DataFrame, short_period: int = 20, long_period: int = 50, delta: float = 0.1):
         """
         :param data: pandas.DataFrame
         :param short_period: int
@@ -169,7 +169,7 @@ class EMA(BTCAlgorithmInterface):
     """
     Exponential Moving Average Algorithm
     """
-    def __init__(self, data: pd.DataFrame, short_period: int, long_period: int, delta: float):
+    def __init__(self, data: pd.DataFrame, short_period: int = 20, long_period: int = 50, delta: float = 0.1):
         """
         :param data: pandas.DataFrame
         :param short_period: int
@@ -648,10 +648,10 @@ class Combination(BTCAlgorithmInterface):
         self.algorithms = {}
         # parse the json parameters and create the algorithm objects
         for algo, params in json_dict.items():
-            param_list = [algo, data.copy()]
-            for param in params:
-                param_list.append(param)
-            self.algorithms[algo] = BTCAlgorithmFactory.create_algorithm(*param_list)
+            param_dict = {"algorithm": algo, "data": data}
+            for param, param_value in params.items():
+                param_dict[param] = param_value
+            self.algorithms[algo] = BTCAlgorithmFactory.create_algorithm(**param_dict)
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
