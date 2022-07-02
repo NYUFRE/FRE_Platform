@@ -1,11 +1,12 @@
-import json
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import pandas as pd
+from keras import Sequential
+import keras.layers as layers
 
 
-class AlgorithmFactory:
+class BTCAlgorithmFactory:
     """
     This class is used to create algorithm.
     """
@@ -40,7 +41,7 @@ class AlgorithmFactory:
             raise Exception("Algorithm not found")
 
 
-class AlgorithmInterface(metaclass=ABCMeta):
+class BTCAlgorithmInterface(metaclass=ABCMeta):
     """
     This class is an interface for all algorithms.
     """
@@ -67,7 +68,7 @@ class AlgorithmInterface(metaclass=ABCMeta):
 
 
 # Trend Strategy Algorithms
-class Filter(AlgorithmInterface):
+class Filter(BTCAlgorithmInterface):
     """
     Simple Filter Algorithm
     """
@@ -114,7 +115,7 @@ class Filter(AlgorithmInterface):
         pass
 
 
-class SMA(AlgorithmInterface):
+class SMA(BTCAlgorithmInterface):
     """
     Simple Moving Average Algorithm
     """
@@ -167,7 +168,7 @@ class SMA(AlgorithmInterface):
         pass
 
 
-class EMA(AlgorithmInterface):
+class EMA(BTCAlgorithmInterface):
     """
     Exponential Moving Average Algorithm
     """
@@ -221,7 +222,7 @@ class EMA(AlgorithmInterface):
 
 
 # Momentum Strategy Algorithms
-class MACD(AlgorithmInterface):
+class MACD(BTCAlgorithmInterface):
     """
     Moving Average Convergence/Divergence Algorithm
     """
@@ -279,7 +280,7 @@ class MACD(AlgorithmInterface):
         pass
 
 
-class RSI(AlgorithmInterface):
+class RSI(BTCAlgorithmInterface):
     """
     Relative Strength Index Algorithm
     """
@@ -346,7 +347,7 @@ class RSI(AlgorithmInterface):
         pass
 
 
-class KalmanFilter(AlgorithmInterface):
+class KalmanFilter(BTCAlgorithmInterface):
     """
     Kalman Filter Algorithm
     """
@@ -415,7 +416,7 @@ class KalmanFilter(AlgorithmInterface):
 
 
 # Machine Learning Strategy Algorithms
-class RNN(AlgorithmInterface):
+class RNN(BTCAlgorithmInterface):
     """
     RNN Algorithm
     """
@@ -431,7 +432,9 @@ class RNN(AlgorithmInterface):
         :param price_base: The price base like open, close.
         :return: The DataFrame including indicator column.
         """
-        pass
+        # use keras to build simple RNN model
+        model = Sequential()
+        model.add(layers.SimpleRNN(units=1, input_shape=(1, 1)))
 
     def signal(self) -> pd.DataFrame:
         """
@@ -445,7 +448,7 @@ class RNN(AlgorithmInterface):
         pass
 
 
-class LSTM(AlgorithmInterface):
+class LSTM(BTCAlgorithmInterface):
     """
     LSTM Algorithm
     """
@@ -470,7 +473,7 @@ class LSTM(AlgorithmInterface):
         pass
 
 
-class GRU(AlgorithmInterface):
+class GRU(BTCAlgorithmInterface):
     """
     GRU Algorithm
     """
@@ -496,7 +499,7 @@ class GRU(AlgorithmInterface):
 
 
 # Combination Strategy
-class Combination(AlgorithmInterface):
+class Combination(BTCAlgorithmInterface):
     """
     Combination Algorithm
     """
@@ -512,7 +515,7 @@ class Combination(AlgorithmInterface):
             param_list = [algo, data.copy()]
             for param in params:
                 param_list.append(param)
-            self.algorithms[algo] = AlgorithmFactory.create_algorithm(*param_list)
+            self.algorithms[algo] = BTCAlgorithmFactory.create_algorithm(*param_list)
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
