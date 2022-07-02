@@ -1,9 +1,12 @@
+import time
 from abc import ABCMeta, abstractmethod
+from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
+from tensorflow import keras
 from keras import Sequential
-import keras.layers as layers
+from keras.layers import Dropout, Dense, GRU
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -12,30 +15,35 @@ class BTCAlgorithmFactory:
     This class is used to create algorithm.
     """
     @staticmethod
-    def create_algorithm(*args):
+    def create_algorithm(**kwargs):
         """
         Creates an algorithm object based on the given parameters.
-        :param args: The parameters for the algorithm.
+        :param kwargs: The parameters used to create the algorithm.
         :return: The algorithm object.
         """
-        if args[0] == "Filter":
-            return Filter(*args[1:])
-        elif args[0] == "SMA":
-            return SMA(*args[1:])
-        elif args[0] == "EMA":
-            return EMA(*args[1:])
-        elif args[0] == "MACD":
-            return MACD(*args[1:])
-        elif args[0] == "RSI":
-            return RSI(*args[1:])
-        elif args[0] == "KalmanFilter":
-            return KalmanFilter(*args[1:])
-        elif args[0] == "RNN":
-            return RNN(*args[1:])
-        elif args[0] == "LSTM":
-            return LSTM(*args[1:])
-        elif args[0] == "Combination":
-            return Combination(*args[1:])
+        # Get the algorithm name.
+        algorithm = kwargs.pop("algorithm", None)
+        if algorithm is None:
+            raise ValueError("The algorithm is not specified.")
+        # Create the algorithm object.
+        if algorithm == "Filter":
+            return Filter(**kwargs)
+        elif algorithm == "SMA":
+            return SMA(**kwargs)
+        elif algorithm == "EMA":
+            return EMA(**kwargs)
+        elif algorithm == "MACD":
+            return MACD(**kwargs)
+        elif algorithm == "RSI":
+            return RSI(**kwargs)
+        elif algorithm == "KalmanFilter":
+            return KalmanFilter(**kwargs)
+        elif algorithm == "GNU":
+            return GNU(**kwargs)
+        elif algorithm == "LSTM":
+            return LSTM(**kwargs)
+        elif algorithm == "Combination":
+            return Combination(**kwargs)
         else:
             raise Exception("Algorithm not found")
 
@@ -59,10 +67,6 @@ class BTCAlgorithmInterface(metaclass=ABCMeta):
         Calculates the signal based on the given timing.
         :return: The DataFrame including signal column.
         """
-        pass
-
-    @abstractmethod
-    def graph(self):
         pass
 
 
@@ -109,9 +113,6 @@ class Filter(BTCAlgorithmInterface):
         # if indicator is less than negative delta, set signal to -1
         self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
-
-    def graph(self):
-        pass
 
 
 class SMA(BTCAlgorithmInterface):
@@ -163,9 +164,6 @@ class SMA(BTCAlgorithmInterface):
         self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
 
-    def graph(self):
-        pass
-
 
 class EMA(BTCAlgorithmInterface):
     """
@@ -215,9 +213,6 @@ class EMA(BTCAlgorithmInterface):
         # if indicator is less than negative delta, set signal to -1
         self.data["signal"] = np.where(self.data["indicator"] < -self.delta, -1, self.data["signal"])
         return self.data
-
-    def graph(self):
-        pass
 
 
 # Momentum Strategy Algorithms
@@ -274,9 +269,6 @@ class MACD(BTCAlgorithmInterface):
         # drop the helper column
         self.data.drop("prev_indicator", axis=1, inplace=True)
         return self.data
-
-    def graph(self):
-        pass
 
 
 class RSI(BTCAlgorithmInterface):
@@ -341,9 +333,6 @@ class RSI(BTCAlgorithmInterface):
         # set first periods days signal to 0
         self.data["signal"].iloc[:self.period] = 0
         return self.data
-
-    def graph(self):
-        pass
 
 
 class KalmanFilter(BTCAlgorithmInterface):
@@ -410,22 +399,21 @@ class KalmanFilter(BTCAlgorithmInterface):
         self.data.drop("prev_indicator", axis=1, inplace=True)
         return self.data
 
-    def graph(self):
-        pass
-
 
 # Machine Learning Strategy Algorithms
-class RNN(BTCAlgorithmInterface):
+class GNU(BTCAlgorithmInterface):
     """
-    RNN Algorithm
+    GNU Algorithm
     """
-    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2, epochs: int = 100, batch_size: int = 32,
-                 dropout: bool = False, dropout_rate: float = 0.5, loss_function: str = "mse", optimizer: str = "adam"):
+    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2,
+                 epochs: int = 100, batch_size: int = 32, level: int = 5,
+                 dropout: bool = True, dropout_rate: float = 0.2, loss_function: str = "mse", optimizer: str = "adam"):
         """
         :param data: pandas.DataFrame
         :param train_test_ratio: float, the ratio of training data to test data.
         :param epochs: int, the number of epochs.
         :param batch_size: int, the batch size.
+        :param level: int, the level of the RNN.
         :param dropout: bool, whether to use dropout.
         :param dropout_rate: float, the dropout rate.
         :param loss_function: str, the loss function.
@@ -439,6 +427,7 @@ class RNN(BTCAlgorithmInterface):
         self.dropout_rate = float(dropout_rate)
         self.loss_function = loss_function
         self.optimizer = optimizer
+        self.level = int(level)
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
@@ -446,7 +435,82 @@ class RNN(BTCAlgorithmInterface):
         :param price_base: The price base like open, close.
         :return: The DataFrame including indicator column.
         """
-        pass
+        # if price base is not in the data, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base is not in the data")
+        # set keras random seed according to the current time
+        np.random.seed(int(time.time()))
+        # define start date and end date
+        start_date = self.data.index[int(len(self.data) * self.train_test_ratio)]
+        end_date = self.data.index[-1]
+        # get the train and test data
+        train_data = self.data.loc[:start_date, price_base].values
+        train_data = np.array(train_data).reshape(-1, 1)
+        test_data = self.data.loc[(date.fromisoformat(start_date) + timedelta(days=1)).strftime("%Y-%m-%d"):end_date, price_base].values
+        test_data = np.array(test_data).reshape(-1, 1)
+        # normalize the training data
+        sc = MinMaxScaler(feature_range=(0, 1))
+        sc_train_data = sc.fit_transform(train_data)
+        # convert the training data to the LSTM format
+        x_train = []
+        y_train = []
+        window = 60
+        for i in range(window, sc_train_data.shape[0]):
+            x_train.append(sc_train_data[i - window:i, 0])
+            y_train.append(sc_train_data[i, :])
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
+        x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+        # create the LSTM model
+        model = Sequential()
+        assert self.level >= 1
+        if self.level == 1:
+            model.add(GRU(units=50, return_sequences=False, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        elif self.level == 2:
+            model.add(GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(GRU(units=50, return_sequences=False))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        else:
+            model.add(GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            for i in range(self.level - 2):
+                model.add(GRU(units=50, return_sequences=True))
+                if self.dropout:
+                    model.add(Dropout(self.dropout_rate))
+            model.add(GRU(units=50, return_sequences=False))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        print(model.summary())
+        # compile the model
+        model.compile(loss=self.loss_function, optimizer=self.optimizer)
+        # fit the model
+        model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size)
+        # get the testing data ready
+        test_data = np.array(test_data).reshape(-1, 1)
+        sc_test_data = sc.transform(test_data)
+        x_test = []
+        for i in range(window, sc_test_data.shape[0]):
+            x_test.append(sc_test_data[i - window:i, 0])
+        x_test = np.array(x_test)
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+        # make the prediction
+        predictions = model.predict(x_test)
+        # inverse the normalization
+        predictions = sc.inverse_transform(predictions)
+        # add prediction column to the data based on start date and end date
+        self.data.loc[(date.fromisoformat(start_date) + timedelta(days=61)).strftime("%Y-%m-%d"):end_date, "indicator"] = predictions
+        # if indicator is not nan, set indicator to difference between price base column and indicator column
+        self.data.loc[self.data["indicator"].notna(), "indicator"] = self.data["indicator"] - self.data[price_base]
+        return self.data
 
     def signal(self) -> pd.DataFrame:
         """
@@ -456,21 +520,20 @@ class RNN(BTCAlgorithmInterface):
         """
         pass
 
-    def graph(self):
-        pass
-
 
 class LSTM(BTCAlgorithmInterface):
     """
     LSTM Algorithm
     """
-    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2, epochs: int = 100, batch_size: int = 32,
-                 dropout: bool = False, dropout_rate: float = 0.5, loss_function: str = "mse", optimizer: str = "adam"):
+    def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2,
+                 epochs: int = 100, batch_size: int = 32, level: int = 5,
+                 dropout: bool = True, dropout_rate: float = 0.2, loss_function: str = "mse", optimizer: str = "adam"):
         """
         :param data: pandas.DataFrame
         :param train_test_ratio: float, the ratio of training data to test data.
         :param epochs: int, the number of epochs.
         :param batch_size: int, the batch size.
+        :param level: int, the number of layers.
         :param dropout: bool, whether to use dropout.
         :param dropout_rate: float, the dropout rate.
         :param loss_function: str, the loss function.
@@ -484,6 +547,7 @@ class LSTM(BTCAlgorithmInterface):
         self.dropout_rate = float(dropout_rate)
         self.loss_function = loss_function
         self.optimizer = optimizer
+        self.level = int(level)
 
     def indicator(self, price_base: str) -> pd.DataFrame:
         """
@@ -491,12 +555,82 @@ class LSTM(BTCAlgorithmInterface):
         :param price_base: The price base like open, close.
         :return: The DataFrame including indicator column.
         """
-        pass
+        # if price base is not in the data, throw exception
+        if price_base not in self.data.columns:
+            raise Exception("Price base is not in the data")
+        # set keras random seed according to the current time
+        np.random.seed(int(time.time()))
+        # define start date and end date
+        start_date = self.data.index[int(len(self.data) * self.train_test_ratio)]
+        end_date = self.data.index[-1]
+        # get the train and test data
+        train_data = self.data.loc[:start_date, price_base].values
+        train_data = np.array(train_data).reshape(-1, 1)
+        test_data = self.data.loc[(date.fromisoformat(start_date) + timedelta(days=1)).strftime("%Y-%m-%d"):end_date, price_base].values
+        test_data = np.array(test_data).reshape(-1, 1)
+        # normalize the training data
+        sc = MinMaxScaler(feature_range=(0, 1))
+        sc_train_data = sc.fit_transform(train_data)
+        # convert the training data to the LSTM format
+        x_train = []
+        y_train = []
+        window = 60
+        for i in range(window, sc_train_data.shape[0]):
+            x_train.append(sc_train_data[i - window:i, 0])
+            y_train.append(sc_train_data[i, :])
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
+        x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+        # create the LSTM model
+        model = Sequential()
+        assert self.level >= 1
+        if self.level == 1:
+            model.add(keras.layers.LSTM(units=50, return_sequences=False, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        elif self.level == 2:
+            model.add(keras.layers.LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(keras.layers.LSTM(units=50, return_sequences=False))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        else:
+            model.add(keras.layers.LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            for i in range(self.level - 2):
+                model.add(keras.layers.LSTM(units=50, return_sequences=True))
+                if self.dropout:
+                    model.add(Dropout(self.dropout_rate))
+            model.add(keras.layers.LSTM(units=50, return_sequences=False))
+            if self.dropout:
+                model.add(Dropout(self.dropout_rate))
+            model.add(Dense(units=1))
+        print(model.summary())
+        # compile the model
+        model.compile(loss=self.loss_function, optimizer=self.optimizer)
+        # fit the model
+        model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size)
+        # get the testing data ready
+        test_data = np.array(test_data).reshape(-1, 1)
+        sc_test_data = sc.transform(test_data)
+        x_test = []
+        for i in range(window, sc_test_data.shape[0]):
+            x_test.append(sc_test_data[i - window:i, 0])
+        x_test = np.array(x_test)
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+        # make the prediction
+        predictions = model.predict(x_test)
+        # inverse the normalization
+        predictions = sc.inverse_transform(predictions)
+        # add prediction column to the data based on start date and end date
+        self.data.loc[(date.fromisoformat(start_date) + timedelta(days=61)).strftime("%Y-%m-%d"):end_date, "indicator"] = predictions
+        return self.data
 
     def signal(self) -> pd.DataFrame:
-        pass
-
-    def graph(self):
         pass
 
 
@@ -557,6 +691,3 @@ class Combination(BTCAlgorithmInterface):
         # if the sum of the row equals to the minus number of algorithms, set signal to buy
         self.data["signal"] = np.where(self.data[signal_name_list].sum(axis=1) == -len(self.algorithms.keys()), -1, self.data["signal"])
         return self.data
-
-    def graph(self):
-        pass
