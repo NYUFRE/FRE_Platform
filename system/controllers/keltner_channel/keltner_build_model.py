@@ -16,7 +16,7 @@ def keltner_build_model_service(global_param_list):
     # join the two dataframe by date and drop the missing value
     final_df = pd.concat([strategy, buynhold], axis=1)
     final_df.dropna(axis=0, how='any', inplace=True)
-    global_param_list[1] = final_df
+    global_param_list["final_df"] = final_df
     # pick out the start and end time of prediction
     date_list = list(final_df.index)
     sd = date_list[0]

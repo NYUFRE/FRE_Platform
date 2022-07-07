@@ -11,7 +11,7 @@ from system.services.stock_select.stock_select_back_test import extract_database
 
 
 def stockselect_back_test_service(global_param_list):
-    top_stocks_list = global_param_list[0]
+    top_stocks_list = global_param_list["top_stocks_list"]
     if len(top_stocks_list) == 0:
         flash('Please click on "select stock" before run the back test!')
         return render_template("stockselect_introduction.html")

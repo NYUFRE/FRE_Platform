@@ -104,15 +104,20 @@ from system.services.utility.helpers import login_required
 warnings.simplefilter(action='ignore', category=SAWarning)
 
 # test
-from system.controllers.btc_algo.btc_test import btc_test_service
-from flask import render_template
+from system.controllers.btc_algo.btc_build import btc_build_service
+from system.controllers.btc_algo.btc_backtest import btc_backtest_service
+from system.controllers.btc_algo.btc_introduction import btc_introduction_service
 @app.route('/btc_introduction')
 def btc_introduction():
-    return render_template('btc_introduction.html')
+    return btc_introduction_service()
 
-@app.route('/btc_introduction/<algorithm>', methods=['GET', 'POST'])
-def btc_test(algorithm):
-    return btc_test_service(request, algorithm)
+@app.route('/btc_build/<algorithm>', methods=['GET', 'POST'])
+def btc_build_algorithm(algorithm):
+    return btc_build_service(request, algorithm, global_param_list)
+
+@app.route('/btc_backtest')
+def btc_backtest():
+    return btc_backtest_service(request, global_param_list)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -672,7 +677,13 @@ if __name__ == "__main__":
 
     df_pb_opt = None
 
-    global_param_list = [top_stocks_list, final_df, pb_portfolio, df_pb_opt]
+    btc_data = None
+
+    global_param_list = {"top_stocks_list": top_stocks_list,
+                         "final_df": final_df,
+                         "pb_portfolio": pb_portfolio,
+                         "df_pb_opt": df_pb_opt,
+                         "btc_data": btc_data}
 
     try:
         app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

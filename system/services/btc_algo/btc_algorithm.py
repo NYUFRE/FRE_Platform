@@ -275,7 +275,7 @@ class RSI(BTCAlgorithmInterface):
     """
     Relative Strength Index Algorithm
     """
-    def __init__(self, data: pd.DataFrame, period: int, buy_threshold: int = 30, sell_threshold: int = 70, avg_type: str = "SMA"):
+    def __init__(self, data: pd.DataFrame, period: int = 14, buy_threshold: int = 30, sell_threshold: int = 70, avg_type: str = "SMA"):
         """
         :param data: pandas.DataFrame
         :param period: int

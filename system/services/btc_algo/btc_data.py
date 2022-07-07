@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import pandas as pd
+from sklearn.utils import deprecated
 
 from system import database, eod_market_data
 
@@ -10,7 +11,7 @@ class BTCData:
     This class is used to manipulate BTC data from database.
     """
     @staticmethod
-    def _need_update() -> tuple:
+    def __need_update() -> tuple:
         """
         This method is used to check if the data needs to be updated.
         :return: A tuple containing whether need to update or not, and time of the last update.
@@ -55,7 +56,7 @@ class BTCData:
         # if the database exists, check if the data needs to be updated
         else:
             # check if the data needs to be updated
-            need_update, last_update = BTCData._need_update()
+            need_update, last_update = BTCData.__need_update()
             if need_update:  # if the data needs to be updated
                 print("need update")
                 # get the last update time, and the start date is the last update time + 1 day
@@ -70,6 +71,7 @@ class BTCData:
                 return True
 
     @staticmethod
+    @deprecated
     def get_btc_data_all() -> pd.DataFrame:
         """
         This method is used to get all BTC data.

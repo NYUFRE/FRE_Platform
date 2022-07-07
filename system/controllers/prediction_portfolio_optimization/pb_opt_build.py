@@ -14,7 +14,7 @@ def pb_opt_build_service(end_date, global_param_list):
         start_date = end_date + relativedelta(years=-10)
         pb_portfolio, port_list = get_optimized_portfolio(start_date, end_date)
 
-        global_param_list[2] = pb_portfolio
+        global_param_list["pb_portfolio"] = pb_portfolio
 
         length = len(port_list)
 

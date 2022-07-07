@@ -13,7 +13,7 @@ def keltner_backtest_plot_service(global_param_list):
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
-    final_df = global_param_list[1]
+    final_df = global_param_list["final_df"]
 
     axis.plot(list(final_df.iloc[:, 0]), 'r-')
     axis.plot(list(final_df.iloc[:, 1]), 'b-')
