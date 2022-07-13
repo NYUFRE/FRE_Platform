@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from tensorflow import keras
 from keras import Sequential
-from keras.layers import Dropout, Dense, GRU
+from keras.layers import Dropout, Dense
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -38,8 +38,8 @@ class BTCAlgorithmFactory:
             return RSI(**kwargs)
         elif algorithm == "KalmanFilter":
             return KalmanFilter(**kwargs)
-        elif algorithm == "GNU":
-            return GNU(**kwargs)
+        elif algorithm == "GRU":
+            return GRU(**kwargs)
         elif algorithm == "LSTM":
             return LSTM(**kwargs)
         elif algorithm == "Combination":
@@ -401,9 +401,9 @@ class KalmanFilter(BTCAlgorithmInterface):
 
 
 # Machine Learning Strategy Algorithms
-class GNU(BTCAlgorithmInterface):
+class GRU(BTCAlgorithmInterface):
     """
-    GNU Algorithm
+    GRU Algorithm
     """
     def __init__(self, data: pd.DataFrame, train_test_ratio: float = 0.2,
                  epochs: int = 100, batch_size: int = 32, level: int = 5,
@@ -465,27 +465,27 @@ class GNU(BTCAlgorithmInterface):
         model = Sequential()
         assert self.level >= 1
         if self.level == 1:
-            model.add(GRU(units=50, return_sequences=False, input_shape=(x_train.shape[1], 1)))
+            model.add(keras.layers.GRU(units=50, return_sequences=False, input_shape=(x_train.shape[1], 1)))
             if self.dropout:
                 model.add(Dropout(self.dropout_rate))
             model.add(Dense(units=1))
         elif self.level == 2:
-            model.add(GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            model.add(keras.layers.GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
             if self.dropout:
                 model.add(Dropout(self.dropout_rate))
-            model.add(GRU(units=50, return_sequences=False))
+            model.add(keras.layers.GRU(units=50, return_sequences=False))
             if self.dropout:
                 model.add(Dropout(self.dropout_rate))
             model.add(Dense(units=1))
         else:
-            model.add(GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            model.add(keras.layers.GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
             if self.dropout:
                 model.add(Dropout(self.dropout_rate))
             for i in range(self.level - 2):
-                model.add(GRU(units=50, return_sequences=True))
+                model.add(keras.layers.GRU(units=50, return_sequences=True))
                 if self.dropout:
                     model.add(Dropout(self.dropout_rate))
-            model.add(GRU(units=50, return_sequences=False))
+            model.add(keras.layers.GRU(units=50, return_sequences=False))
             if self.dropout:
                 model.add(Dropout(self.dropout_rate))
             model.add(Dense(units=1))
