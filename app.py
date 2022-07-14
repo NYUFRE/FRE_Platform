@@ -573,7 +573,7 @@ def stockselect_build():
 @app.route("/stockselect_back_test")
 @login_required
 def stockselect_back_test():
-    return stockselect_back_test_service(global_param_list)
+    return stockselect_back_test_service(global_param_dict)
 
 
 # Technical Indicator Strategy
@@ -608,12 +608,12 @@ def keltner_channel_strategy():
 @app.route('/keltner_build_model')
 @login_required
 def keltner_build_model():
-    return keltner_build_model_service(global_param_list)
+    return keltner_build_model_service(global_param_dict)
 
 
 @app.route('/plot/keltner_backtest_plot')
 def keltner_back_test_plot():
-    return keltner_backtest_plot_service(global_param_list)
+    return keltner_backtest_plot_service(global_param_dict)
 
 
 # Prediction-based portfolio optimization
@@ -626,24 +626,24 @@ def optimization_portfolio():
 @app.route('/PB_Opt_date_choose', methods=["GET", "POST"])
 @login_required
 def pre_opt_choose():
-    return pb_opt_date_choose_service(global_param_list)
+    return pb_opt_date_choose_service(global_param_dict)
 
 
 @app.route('/PB_Opt_build')
 @login_required
 def pre_opt_build(end_date=None):
-    return pb_opt_build_service(end_date, global_param_list)
+    return pb_opt_build_service(end_date, global_param_dict)
 
 
 @app.route('/PB_Opt_backtest')
 @login_required
 def pre_opt_back_test():
-    return pb_opt_backtest_service(global_param_list)
+    return pb_opt_backtest_service(global_param_dict)
 
 
 @app.route('/plot/pre_opt_backtest_plot')
 def pre_opt_backtest_plot():
-    return pb_opt_backtest_plot_service()
+    return pb_opt_backtest_plot_service(global_param_dict)
 
 
 if __name__ == "__main__":
@@ -660,7 +660,13 @@ if __name__ == "__main__":
 
     df_pb_opt = None
 
-    global_param_list = [top_stocks_list, final_df, pb_portfolio, df_pb_opt]
+    btc_data = None
+
+    global_param_dict = {"top_stocks_list": top_stocks_list,
+                         "final_df": final_df,
+                         "pb_portfolio": pb_portfolio,
+                         "df_pb_opt": df_pb_opt,
+                         "btc_data": btc_data}
 
     try:
         app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

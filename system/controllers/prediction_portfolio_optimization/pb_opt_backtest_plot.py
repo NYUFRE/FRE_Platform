@@ -9,11 +9,11 @@ from sqlalchemy.exc import SAWarning
 warnings.simplefilter(action='ignore', category=SAWarning)
 
 
-def pb_opt_backtest_plot_service(global_param_list):
+def pb_opt_backtest_plot_service(global_param_dict):
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
-    df_pb_opt = global_param_list[3]
+    df_pb_opt = global_param_dict["df_pb_opt"]
 
     axis.plot(list(df_pb_opt.iloc[:, 0]), 'r-')
     axis.plot(list(df_pb_opt.iloc[:, 1]), 'b-')
