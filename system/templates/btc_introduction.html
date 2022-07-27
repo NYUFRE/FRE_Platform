@@ -63,18 +63,45 @@ btc_introduction
                 <tr>
 					<td width="881" valign="top">
 						<p>
-							<strong>Trend</strong> <br>
-                            <h5>Filter</h5>
-                            Filter or Filter Rule is a method that uses price change to determine the trend. <br>
-                            The idea is that once the price changes, it may change in next few days with same trend. For example,
-                            a 5% increase in price may let the investor think that the price will increase 10% in next days. <br>
-                            <h5>SMA / EMA</h5>
-                            Simple or Exponential Moving Average are methods that use moving average to predict the future price. <br>
-                            In this strategy, there are often two moving average lines. One is for the short period and the other
-                            is for the long period. The short period line is changing quickly while the long period line is on the opposite. <br>
-                            When the short period line cross above the long period line, this indicates a buy signal and if the short period line
-                            cross below the long period line, this indicates a sell signal. <br>
-                            <h5></h5>
+                        <strong>Trend</strong> <br>
+                        <h5>Filter</h5>
+                        Filter or Filter Rule is a method that uses price change to determine the trend. <br>
+                        The idea is that once the price changes, it may change in next few days with same trend. For example,
+                        a 5% increase in price may let the investor think that the price will increase 10% in next days. <br>
+                        <h5>SMA / EMA</h5>
+                        Simple or Exponential Moving Average are methods that use moving average to predict the future price. <br>
+                        In this strategy, there are often two moving average lines. One is for the short period and the other
+                        is for the long period. The short period line is changing quickly while the long period line is on the opposite. <br>
+                        When the short period line cross above the long period line, this indicates a buy signal and if the short period line
+                        cross below the long period line, this indicates a sell signal. <br>
+                        <strong>Momentum</strong> <br>
+                        <h5>MACD</h5>
+                        Moving Average Convergence Divergence(MACD) is a method that shows the relationship between two moving average and a signal line. <br>
+                        The MACD line is calculated as the difference of 12 period EMA and 26 period EMA. The signal line is calculated as the 9 period EMA of the MACD line.
+                        Then with the same idea of SMA and EMA trading strategy, we determine the buy and sell signal at crossover of MACD and signal line. <br>
+                        <h5>RSI</h5>
+                        Relative Strength Index(RSI) is a momentum indicator that measures the speed and magnitude of a price changes to evaluate overvalued or undervalued. <br>
+                        When RSI is over 70, it means the price is overbought and investor should sell. When RSI is under 30, it means the price is oversold and investor should buy. <br>
+                        <h5>Kalman Filter</h5>
+                        Kalman Filter is a method that makes prediction based on previous data. This method contains two stages,
+                        The first stage make prediction only based on previous price. The second stage will take the current
+                        price into consideration and update the prediction. <br>
+                        As for trading, when the kalman filter prediction line cross above the current price, it indicates a buy signal.
+                        When the kalman filter prediction line cross below the current price, it indicates a sell signal. <br>
+                        <strong>Artificial Intelligence</strong> <br>
+                        <h5>LSTM</h5>
+                        Long Short-term Memory(LSTM) is a deep learning model that is good for processing time series data. The idea of LSTM is to keep information
+                        in each cell, and add or remove state information based on the current input value. <br>
+                        The LSTM model contains three gates, one is the input gate, one is the forget gate, and one is the output gate.
+                        The cell will first go through forget gate which decides which information should be removed from the cell state.
+                        Then it will go through input gate which decides which information in the current input should be added to the cell state.
+                        Finally the output gate will decide which information should be output in the current step. <br>
+                        In trading, the LSTM model can generate prediction of price. We can use the crossover strategy based on prediction and current price. <br>
+                        <h5>GRU</h5>
+                        Gated Recurrent Unit(GRU) is a deep learning model that is very similar to LSTM which also uses gate to keep information. <br>
+                        However, the GRU does not have cell state, and it uses hidden state to maintain and transfer information.
+                        The GRU model contains two gates, which are update gate and reset gate. The reset gate decide how much past information should
+                        be removed from the hidden state. The update gate decides how much information should be added to the hidden state and pass to future cell. <br>
 						</p>
 					</td>
 				</tr>
@@ -88,7 +115,21 @@ btc_introduction
                 <tr>
 					<td width="881" valign="top">
 						<p>
-							This module focus on trading Bitcoin with common used algorithms.
+                            In the back testing part, The user has a chance to define parameters in order execution. We will discuss those options in this section: <br>
+                            <strong>Initial Capital: </strong>
+                            This is your initial money that you have to invest. <br>
+                            <strong>Execution Type: </strong>
+                            This parameter contains two options: once and multiple. Once means the investor will only execute one times if notice consecutive signal. For example, if
+                            the there are 5 buy signal before a sell signal, we only execute at the first time we notice the signal. Multiple means the investor will execute as long as
+                            there is signal. In previous example, we will buy 5 times until selling. <br>
+                            <strong>Execution Amount: </strong>
+                            This means how much each time you will execute. <br>
+                            <strong>Price Base: </strong>
+                            This means which price you want to use for execution. For example, if you use close, then your order will be executed based on the close price. <br>
+                            <strong>Position Type: </strong>
+                            This means which order you want to have. This includes three options: long, short and both. If you choose long,
+                            then you will ignore all short signal. If you choose short, the situation will be opposite. If you choose both,
+                            then you will execute both long and short signal. <br>
 						</p>
 					</td>
 				</tr>
