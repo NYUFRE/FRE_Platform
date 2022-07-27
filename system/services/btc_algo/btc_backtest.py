@@ -276,20 +276,20 @@ class BackTest:
             mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
             print(self.capital_list)
             print(self.profit_list)
-            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
+            return [self.transaction_times, self.initial_capital, round(self.end_capital, 1), annual_return, mdd]
         elif self.position_type == "short":
             self.__short_back_test(execution_data)
             annual_return = round(((sum(self.profit_list) / self.initial_capital) / len(self.data)) * 365 * 100, 2)
             mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
             print(self.capital_list)
             print(self.profit_list)
-            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
+            return [self.transaction_times, self.initial_capital, round(self.end_capital, 1), annual_return, mdd]
         elif self.position_type == "both":
             self.__both_back_test(execution_data)
             annual_return = round(((sum(self.profit_list) / self.initial_capital) / len(self.data)) * 365 * 100, 2)
             mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
             print(self.capital_list)
             print(self.profit_list)
-            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
+            return [self.transaction_times, self.initial_capital, round(self.end_capital, 1), annual_return, mdd]
         else:
             raise Exception("Position type is not supported.")
