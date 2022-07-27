@@ -667,18 +667,16 @@ class Combination(BTCAlgorithmInterface):
     """
     Combination Algorithm
     """
-    def __init__(self, data: pd.DataFrame, json_dict: dict):
+    def __init__(self, data: pd.DataFrame, method_list: list):
         """
         :param data: pandas.DataFrame
-        :param json_dict: The json dictionary of the combination strategy.
+        :param method_list: list of algorithms
         """
         self.data = data.copy()
         self.algorithms = {}
         # parse the json parameters and create the algorithm objects
-        for algo, params in json_dict.items():
+        for algo in method_list:
             param_dict = {"algorithm": algo, "data": data}
-            for param, param_value in params.items():
-                param_dict[param] = param_value
             self.algorithms[algo] = BTCAlgorithmFactory.create_algorithm(**param_dict)
 
     def indicator(self, price_base: str) -> pd.DataFrame:

@@ -1,12 +1,13 @@
 from datetime import date
 
+import flask
 from flask import render_template
 
 from system.services.btc_algo.btc_algorithm import BTCAlgorithmFactory
 from system.services.btc_algo.btc_data import BTCData
 
 
-def btc_build_service(request, algorithm, global_param_list):
+def btc_build_service(request: flask.request, algorithm: str, global_param_list: dict):
     """
     Builds the service for the BTC algorithm.
     :param request: The request object.
@@ -19,11 +20,12 @@ def btc_build_service(request, algorithm, global_param_list):
     end_date = date.today().strftime("%Y-%m-%d")
     price_base = None
     param_kw = {"algorithm": algorithm}
-    # if algorithm is gate, we enter the introduction page.
+    print(algorithm)
+    # if algorithm is none, we enter the introduction page.
     if algorithm == "gate":
-        return render_template('btc_build.html', gate=True)
+        return render_template('btc_build.html')
     # clean and get the data from the request.
-    if algorithm != "Combination":
+    else:
         for key in request.args.keys():
             if key == "start_date":
                 start_date = request.args.get(key)
@@ -31,30 +33,10 @@ def btc_build_service(request, algorithm, global_param_list):
                 end_date = request.args.get(key)
             elif key == "price_base":
                 price_base = request.args.get(key)
+            elif key == "method_list":
+                param_kw["method_list"] = request.args.getlist(key)
             else:
                 param_kw[key] = request.args.get(key)
-    else:
-        json_dict = request.get_json()
-        start_date_flag = False
-        end_date_flag = False
-        price_base_flag = False
-        for key, value in json_dict.items():
-            if key == "start_date":
-                start_date = value
-                start_date_flag = True
-            elif key == "end_date":
-                end_date = value
-                end_date_flag = True
-            elif key == "price_base":
-                price_base = value
-                price_base_flag = True
-        if start_date_flag:
-            del json_dict["start_date"]
-        if end_date_flag:
-            del json_dict["end_date"]
-        if price_base_flag:
-            del json_dict["price_base"]
-        param_kw["json_dict"] = json_dict
     # get data
     data = BTCData.get_btc_data_range(start_date, end_date)
     # build parameters
@@ -65,6 +47,7 @@ def btc_build_service(request, algorithm, global_param_list):
         indi_data = algo.indicator(price_base)
         signal_data = algo.signal()
         global_param_list["btc_data"] = signal_data
-        return render_template("btc_build.html", gate=False)
+        print(signal_data)
+        return render_template("btc_backtest.html")
     except Exception as e:
         return render_template("btc_build.html", error=e)

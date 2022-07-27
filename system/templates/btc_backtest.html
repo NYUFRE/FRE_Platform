@@ -18,23 +18,45 @@ btc_backtest
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3><strong>title</strong></h3>
-    <br>
-    <div align="center">
-        <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+    <div class="form">
+        <h3>Please enter basic info:</h3>
+        <form action="/btc_backtest" method="get">
+            <label style="width: 150px; display: inline-block; text-align: right">Initial Capital: </label>
+            <input type="text" name="initial_capital" placeholder="100000"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Execution Type: </label>
+            <input type="text" name="execution_type" placeholder="once or multiple"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Execution Amount: </label>
+            <input type="text" name="execution_amount" placeholder="10"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label>
+            <input type="text" name="price_base" placeholder="close"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Position Type: </label>
+            <input type="text" name="position_type" placeholder="both"> <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <div class="table">
+        <h3>Performance Table:</h3>
+        <table class="table table-striped">
+            <thead>
+				<tr>
+					<th style="text-align:center">Transaction Times</th>
+                    <th style="text-align:center">Initial Capital</th>
+                    <th style="text-align:center">End Capital</th>
+					<th style="text-align:center">Annual Return</th>
+					<th style="text-align:center">Maximum Drawdown</th>
+				</tr>
+			</thead>
             <tbody>
-            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
-            <tr>
-                <td width="881" valign="top">
-                    <p>
-                        body
-                    </p>
-                </td>
-            </tr>
+                <tr>
+                    <td>{{performance_list[0]}}</td>
+                    <td>{{performance_list[1]}}</td>
+                    <td>{{performance_list[2]}}</td>
+                    <td>{{performance_list[3]}}</td>
+                    <td>{{performance_list[4]}}</td>
+                </tr>
             </tbody>
         </table>
     </div>
-    <hr>
 </main>
 <br></br>
 <br></br>

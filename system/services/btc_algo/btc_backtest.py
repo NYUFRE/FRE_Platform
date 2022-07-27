@@ -160,7 +160,7 @@ class BackTest:
         else:
             raise Exception("Execution type is not supported.")
 
-    def __both_back_test(self, data) -> None:
+    def __both_back_test(self, data: pd.DataFrame) -> None:
         """
         Used to handle both position logic.
         :param data: The data to use.
@@ -264,16 +264,26 @@ class BackTest:
         else:
             raise Exception("Execution type is not supported.")
 
-    def back_test(self) -> None:
+    def back_test(self) -> list:
         """
         Used to back test.
+        :return: The performance matrix list.
         """
         execution_data = self.data.copy()[[self.price_base, "signal"]]
         if self.position_type == "long":
             self.__long_back_test(execution_data)
+            annual_return = round(((sum(self.profit_list) / self.initial_capital) / len(self.data)) * 365 * 100, 2)
+            mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
+            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
         elif self.position_type == "short":
             self.__short_back_test(execution_data)
+            annual_return = round(((sum(self.profit_list) / self.initial_capital) / len(self.data)) * 365 * 100, 2)
+            mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
+            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
         elif self.position_type == "both":
             self.__both_back_test(execution_data)
+            annual_return = round(((sum(self.profit_list) / self.initial_capital) / len(self.data)) * 365 * 100, 2)
+            mdd = round((min(self.capital_list) - max(self.capital_list)) / max(self.capital_list) * 100, 2)
+            return [self.transaction_times, self.initial_capital, self.end_capital, annual_return, mdd]
         else:
             raise Exception("Position type is not supported.")

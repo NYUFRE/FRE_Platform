@@ -29,6 +29,9 @@ from system.controllers.asset_pricing.plot.american_plot import american_plot_se
 from system.controllers.asset_pricing.plot.discount_plot import discount_plot_service
 from system.controllers.asset_pricing.plot.european_plot import european_plot_service
 from system.controllers.asset_pricing.plot.yield_plot import yield_plot_service
+from system.controllers.btc_algo.btc_backtest import btc_backtest_service
+from system.controllers.btc_algo.btc_build import btc_build_service
+from system.controllers.btc_algo.btc_introduction import btc_introduction_service
 from system.controllers.earning_impact.ei_analysis import ei_analysis_service
 from system.controllers.earning_impact.ei_introduction import ei_introduction_service
 from system.controllers.earning_impact.ei_plot import ei_plot_service
@@ -102,22 +105,6 @@ from system.services.sim_trading.client import client_config
 from system.services.utility.helpers import login_required
 
 warnings.simplefilter(action='ignore', category=SAWarning)
-
-# test
-from system.controllers.btc_algo.btc_build import btc_build_service
-from system.controllers.btc_algo.btc_backtest import btc_backtest_service
-from system.controllers.btc_algo.btc_introduction import btc_introduction_service
-@app.route('/btc_introduction')
-def btc_introduction():
-    return btc_introduction_service()
-
-@app.route('/btc_build/<algorithm>', methods=['GET', 'POST'])
-def btc_build_algorithm(algorithm):
-    return btc_build_service(request, algorithm, global_param_list)
-
-@app.route('/btc_backtest')
-def btc_backtest():
-    return btc_backtest_service(request, global_param_list)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -660,7 +647,33 @@ def pre_opt_back_test():
 
 @app.route('/plot/pre_opt_backtest_plot')
 def pre_opt_backtest_plot():
-    return pb_opt_backtest_plot_service()
+    return pb_opt_backtest_plot_service(global_param_list)
+
+
+# Bitcoin Algorithm Trading
+@app.route('/btc_introduction')
+def btc_introduction():
+    """
+    This function map to the first webpage and render the html file.
+    """
+    return btc_introduction_service()
+
+
+@app.route('/btc_build/<algorithm>')
+def btc_build_algorithm(algorithm):
+    """
+    This function map to the logic of build an algorithm model and generate signal data for later backtest.
+    :param algorithm: the algorithm name
+    """
+    return btc_build_service(request, algorithm, global_param_list)
+
+
+@app.route('/btc_backtest')
+def btc_backtest():
+    """
+    This function map to the logic of backtest and will generate relevant matrix and render the webpage.
+    """
+    return btc_backtest_service(request, global_param_list)
 
 
 if __name__ == "__main__":
