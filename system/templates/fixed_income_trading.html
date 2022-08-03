@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_trading
+{% endblock %}
+{% block content %}
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        // inlineMath: [ ['$','$'], ["\(","\)"] ],
+        inlineMath: [ ['$','$'], ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
+<script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu+Mono">
+
+<style>
+    th {
+        padding: 30px 0px 20px;
+    }
+    strong {
+        font-size: 18pt;
+    }
+</style>
+
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Fixed Income Trading</strong></h3>
+	<div align="center">
+		<table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
+			<tbody>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							This is a fixed income security inquiry and analysis system where a user can search bonds, build portfolios, retrieve advanced analysis data on a given security.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<strong>Search Bond</strong>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) List real-time active bond(s) satisfying user's need from market data provider EOD (must upgrade bundle for bond data).
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Show bond information including ones provided by EOD:
+                            <br>&nbsp;&nbsp;&nbsp;&nbsp;• Name, Coupon, Yield to Maturity, Maturity Date, Payment Frequency, and (Flat) Price
+							<br> and ones from analysis based on the information above:
+							<br>&nbsp;&nbsp;&nbsp;&nbsp;•, Full Price, Accrued Interest, Macaulay Duration, Modified Duration, and Convexity.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) Save the bond with a personalized alias.
+                            <br> By default, the bond will be saved with alias as its name.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Build Portfolio</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Build a hedged portfolio of longing/shorting a main bond of face value set by the user hedged by shorting/longing two other different bonds
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Regarding the property of portfolio hedging, the maturity data of the bonds selected must follow:
+							<br>&nbsp;&nbsp;&nbsp;&nbsp;• Hedged_bond_1 < Main_bond < Hedged_bond_2
+							<br>&nbsp;&nbsp;&nbsp;&nbsp;• Hedged_bond_2 < Main_bond < Hedged_bond_1
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							3) The hedging logic based on the rules:
+							<br> $$MV_{main} = MV_{hedged1}+MV_{hedged2}$$
+							<br> $$ModDur_{main} = \frac{MV_{hedged1} \cdot ModDur_{hedged1} + MV_{hedged2} \cdot ModDur_{hedged2}}{MV_{hedged1}+MV_{hedged2}}$$
+							<br> where MV stands for market value, and ModDur stands for modified duration.
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							4) Show the calculated parameters of the portfolio including actions, weights, market value, and face value
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							5) Save the portfolio with a personalized alias.
+                            <br> By default, the portfolio will be saved with combination of the aliases of bonds included.
+						</p>
+					</td>
+				</tr>
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Saved Securities</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							Recall the information of a saved bond or security
+						</p>
+					</td>
+				</tr>
+
+				<tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+					<th width="881" valign="top">
+						<p>
+							<strong>Yield Change Simulation</strong>
+						</p>
+					</th>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							1) Simulate changes on price of a bond or security if applying a quantified increase or decrease on the yield to maturity
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td width="881" valign="top">
+						<p>
+							2) Logic:
+							<br>The price change of a bond follows:
+							<br>$$\Delta{Price} = [-(\Delta{Yield}) \cdot ModDur+0.5(\Delta{Yield})^2(Convexity)](FullPrice)/100$$
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>
