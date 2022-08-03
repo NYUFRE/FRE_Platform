@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_saved
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Check Security:</h3>
+    <div class="form-group">
+        <form action="/saved_info" id="search" method="post">
+            <select id="alias" name="alias">
+                <option value="">--choose a saved bond--</option>
+                {% for bond in res %}
+                <option value="{{bond['alias']}}">{{bond['alias']}}({{bond['symbol']}})</option>
+                {% endfor %}
+            </select>
+
+            <p></p>
+            <p>OR</p>
+
+            <select id="alias_ptfl" name="alias_ptfl">
+                <option value="">--choose a saved portfolio--</option>
+                {% for ptfl in res_ptfl %}
+                <option value="{{ptfl['alias']}}">{{ptfl['alias']}}({{ptfl['mb']}}+{{ptfl['hb1']}}+{{ptfl['hb2']}})</option>
+                {% endfor %}
+            </select>
+            <p></p>
+            <input type="submit" value="Check"/>
+        </form>
+    </div>
+
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

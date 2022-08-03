@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_trading_saved
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Build Hedging Portfolio</h3>
+    <div class="form-group" align="center">
+        <form action="/fixed_income_ptfl_result" id="search" method="post">
+            <table>
+                <tr>
+                    <td>Action</td>
+                    <td>
+                        <select id="action" name="action">
+                            <option value="long">LONG</option>
+                            <option value="short">SHORT</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Main Bond</td>
+                    <td>
+                        <select id="mb" name="mb">
+                            <option value="">--choose a saved security--</option>
+                            {% for bond in res %}
+                            <option value="{{bond['alias']}}">{{bond['alias']}}({{bond['symbol']}})</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Face Value
+                    </td>
+                    <td>
+                        <input id="fv" name="fv" placeholder="face value" type="text"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Hedging Bond 1</td>
+                    <td><select id="hb1" name="hb1">
+                            <option value="">--choose a saved security--</option>
+                            {% for bond in res %}
+                            <option value="{{bond['alias']}}">{{bond['alias']}}({{bond['symbol']}})</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Hedging Bond 2</td>
+                    <td><select id="hb2" name="hb2">
+                            <option value="">--choose a saved security--</option>
+                            {% for bond in res %}
+                            <option value="{{bond['alias']}}">{{bond['alias']}}({{bond['symbol']}})</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="881" valign="top" colspan="2">
+                        <p>
+                            <br>Reminder: Maturity date of the bonds must follows:
+                            <br>Hedging Bond 1 < Main Bond < Hedging Bond 2
+                            <br>OR
+                            <br>Hedging Bond 2 < Main Bond < Hedging Bond 1
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <p></p>
+            <input type="submit" value="Build"/>
+        </form>
+    </div>
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

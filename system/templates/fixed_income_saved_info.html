@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_saved_info
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>{{alias}}</h3>
+    <div class="form-group" align="center">
+    <table>
+        {% for row in res %}
+        <tr>
+            {% for item in row %}
+            <td width = 200>{{item}}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

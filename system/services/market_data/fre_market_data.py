@@ -147,7 +147,48 @@ class EODMarketData:
         with urllib.request.urlopen(completeURL) as req:
             data = json.load(req)
             return data  
-        
+
+    def get_bond_list(self):
+        symbolURL = f"BOND?"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}exchange-symbol-list/{symbolURL}{apiKeyURL}&fmt=json"
+        print(completeURL)
+        with urllib.request.urlopen(completeURL) as req:
+            data = json.load(req)
+            return data
+
+    def get_bond_data(self, name: str) -> None:
+        id = self.database.get_bond_cusip(name)
+        symbolURL = f"{id}?"
+        apiKeyURL = f'api_token={self.api_token}'
+        completeURL = f"{self.url_common}bond-fundamentals/{symbolURL}&{apiKeyURL}"
+        print(completeURL)
+        with urllib.request.urlopen(completeURL) as req:
+            data = json.load(req)
+            print(data)
+            return data
+
+
+    def populate_bond_list(self) -> None:
+        """
+        Retrieve stock(s)'s daily historical data and store the data into a desired table.
+        :param tickers: a list of ticker(s)
+        :param table_name: a string of table name (only one table)
+        :param start_date: string ('%Y-%m-%d')
+        :param end_date: string ('%Y-%m-%d')
+        """
+        #colume_names = ['Code', 'Name', 'Country', 'Exchange', 'Currency', 'Type', 'Isin']
+
+        column_names = ['Code', 'Name']
+        bond_data = []
+        bonds = self.get_bond_list()
+        for bond_info in bonds:
+            bond_data.append(
+                [bond_info['Code'], bond_info['Name']]
+            )
+        bonds = pd.DataFrame(bond_data, columns=column_names)
+        bonds.to_sql('bond_list', con=self.database.engine, if_exists="append", index=False)
+
     def populate_stock_data(self, tickers: Collection[str], table_name: str, start_date: str, end_date: str, category: str = 'US',
                             action: str = 'append', output_file: TextIOWrapper = sys.stderr) -> None:
         """
@@ -163,7 +204,7 @@ class EODMarketData:
             stock = self.get_daily_data(ticker, start_date, end_date, category)
             for stock_data in stock:
                 price_data.append(
-                    [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'], \
+                    [ticker, stock_data['date'], stock_data['open'], stock_data['high'], stock_data['low'],
                      stock_data['close'], stock_data['adjusted_close'], stock_data['volume']])
         stocks = pd.DataFrame(price_data, columns=column_names)
         stocks.to_sql(table_name, con=self.database.engine, if_exists=action, index=False)
