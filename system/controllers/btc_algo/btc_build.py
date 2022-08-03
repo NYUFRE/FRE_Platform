@@ -1,7 +1,7 @@
 from datetime import date
 
 import flask
-from flask import render_template
+from flask import render_template, redirect, flash
 
 from system.services.btc_algo.btc_algorithm import BTCAlgorithmFactory
 from system.services.btc_algo.btc_data import BTCData
@@ -48,6 +48,8 @@ def btc_build_service(request: flask.request, algorithm: str, global_param_list:
         signal_data = algo.signal()
         global_param_list["btc_data"] = signal_data
         print(signal_data)
-        return render_template("btc_backtest.html")
+        message = "The algorithm: {} has been built successfully.".format(algorithm)
+        flash(message)
+        return redirect("/btc_backtest")
     except Exception as e:
         return render_template("btc_build.html", error=e)
