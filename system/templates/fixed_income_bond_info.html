@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_bond_info
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>{{name}}</h3>
+    <div class="form-group" align="center">
+    <table>
+        <tr>
+            <td width = 150>Name</td>
+            <td width = 300>{{info['Name']}}</td>
+        </tr>
+        <tr>
+            <td>Currency</td>
+            <td>{{info['Currency']}}</td>
+        </tr>
+        <tr>
+            <td>Coupon</td>
+            <td>{{info['Coupon']}}</td>
+        </tr>
+        <tr>
+            <td>Price</td>
+            <td>{{info['Price']}}</td>
+        </tr>
+        <tr>
+            <td>Maturity Date</td>
+            <td>{{info['Maturity_Date']}}</td>
+        </tr>
+        <tr>
+            <td>Yield To Maturity</td>
+            <td>{{info['YieldToMaturity']}}</td>
+        </tr>
+        <tr>
+            <td>Coupon Payment Frequency</td>
+            <td>{{info['IssueData']['CouponPaymentFrequency']}}</td>
+        </tr>
+        <tr>
+            <td>Issuer Country</td>
+            <td>{{info['IssueData']['IssuerCountry']}}</td>
+        </tr>
+        {% for item in anal %}
+        <tr>
+            <td>{{item[0]}}</td>
+            <td>{{item[1]}}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+    </div>
+
+    <form action="/bond_info" id="search" method="post" align="center">
+        Saved as
+        <input id="alias" name="alias" placeholder="{{name}}" type="text" width=12inch/>
+        <input id = "bond_name" name="bond_name" value="{{name}}" hidden/>
+        <input id="save" name="save" type="submit" value="Save"/>
+    </form>
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

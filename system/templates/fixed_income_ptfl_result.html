@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_trading_saved
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Hedged Portfolio</h3>
+    <table align='center'>
+        <tr>
+            <td width = 100>   </td>
+            <td width = 200>Main Bond</td>
+            <td width = 200>Hedging Bond 1</td>
+            <td width = 200>Hedging Bond 2</td>
+        </tr>
+        <tr>
+            <td>Alias</td>
+            <td>{{mb}}</td>
+            <td>{{hb[0]}}</td>
+            <td>{{hb[1]}}</td>
+        </tr>
+        <tr>
+            <td>Action</td>
+            <td>{{res['mb_action']}}</td>
+            <td>{{res['h_action']}}</td>
+            <td>{{res['h_action']}}</td>
+        </tr>
+        <tr>
+            <td>Weight</td>
+            <td>{{res['w0']}}</td>
+            <td>{{res['w1']}}</td>
+            <td>{{res['w2']}}</td>
+        </tr>
+        <tr>
+            <td>Full Price</td>
+            <td>{{res['mb_fullprice']}}</td>
+            <td>{{res['hb1_fullprice']}}</td>
+            <td>{{res['hb2_fullprice']}}</td>
+        </tr>
+        <tr>
+            <td>Market Value</td>
+            <td>{{res['mb_mv']}}</td>
+            <td>{{res['hb1_mv']}}</td>
+            <td>{{res['hb2_mv']}}</td>
+        </tr>
+        <tr>
+            <td>Face Value</td>
+            <td>{{res['mb_fv']}}</td>
+            <td>{{res['hb1_fv']}}</td>
+            <td>{{res['hb2_fv']}}</td>
+        </tr>
+    </table>
+    <p></p>
+    <div class="form-group">
+       <form action="/fixed_income_ptfl_result" id="search" method="post" align="center">
+        Saved as
+           <input id="alias" name="alias" placeholder="Portfolio Alias" type="text" width=12inch/>
+           <input id = "mb" name="mb" value="{{mb}}" hidden/>
+           <input id = "hb1" name="hb1" value="{{hb[0]}}" hidden/>
+           <input id = "hb2" name="hb2" value="{{hb[1]}}" hidden/>
+           <input id = "fv" name="fv" value="{{res['mb_fv']}}" hidden/>
+           <input id = "action" name="action" value="{{action}}" hidden/>
+           <input id="save" name="save" type="submit" value="Save"/>
+        </form>
+    </div>
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

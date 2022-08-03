@@ -24,6 +24,7 @@ class VaR:
         self.portfolio = database.get_portfolio(session['user_id'])
         self.symbols = self.portfolio['symbol']
         self.shares = self.portfolio['shares']
+        self.total = []
         if len(prices) > 0 :
             for i in range(len(self.portfolio['symbol'])):
                 # Get the latest price for each holding stocks

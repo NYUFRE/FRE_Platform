@@ -5,6 +5,7 @@ from sqlalchemy import Table, Column
 from typing import Collection, List, Dict, Union
 
 
+
 class FREDatabase:
     def __init__(self, database_uri='sqlite:///instance/fre_database.db'):
         self.engine = create_engine(database_uri)
@@ -225,6 +226,47 @@ class FREDatabase:
             table = Table(table_name, self.metadata,
                           Column('Placeholder', String(20)))
 
+        elif table_name == "saved_bond":
+            table = Table(table_name, self.metadata,
+                          Column('alias', String(20), primary_key=True, nullable=False),
+                          Column('symbol', String(20), primary_key=True, nullable=False),
+                          Column('coupon', Numeric, nullable=False),
+                          Column('ytm', Numeric, nullable=False),
+                          Column('fullprice', Numeric, nullable=False),
+                          Column('accruedinterest', Numeric, nullable=False),
+                          Column('flatprice', Numeric, nullable=False),
+                          Column('maturity_date', String(20), nullable=False),
+                          Column('frequency', String(20), nullable=False),
+                          Column('savedate', DATE, nullable=False),
+                          Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
+                          sqlite_autoincrement=True,
+                          extend_existing=True)
+
+        elif table_name == "saved_bond_ptfl":
+            table = Table(table_name, self.metadata,
+                          Column('alias', String(20), primary_key=True, nullable=False),
+                          Column('mb', String(20), ForeignKey('saved_bond.alias'), nullable=False),
+                          Column('hb1', String(20), ForeignKey('saved_bond.alias'), nullable=False),
+                          Column('hb2', String(20), ForeignKey('saved_bond.alias'), nullable=False),
+                          Column('w0', String(20), nullable=False),
+                          Column('w1', String(20), nullable=False),
+                          Column('w2', String(20), nullable=False),
+                          Column('mb_action',  String(20), nullable=False),
+                          Column('h_action', String(20), nullable=False),
+                          Column('mb_fullprice', Numeric, nullable=False),
+                          Column('hb1_fullprice', Numeric, nullable=False),
+                          Column('hb2_fullprice', Numeric, nullable=False),Column('mb_fullprice', Numeric, nullable=False),
+                          Column('mb_mv', Numeric, nullable=False),
+                          Column('hb1_mv', Numeric, nullable=False),
+                          Column('hb2_mv', Numeric, nullable=False),
+                          Column('mb_fv', Numeric, nullable=False),
+                          Column('hb1_fv', Numeric, nullable=False),
+                          Column('hb2_fv', Numeric, nullable=False),
+                          Column('savedate', DATE, nullable=False),
+                          Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False),
+                          sqlite_autoincrement=True,
+                          extend_existing=True)
+
         else:
             raise ValueError("Table name not known")
         return table
@@ -411,13 +453,71 @@ class FREDatabase:
             transactions['price'].append(row['price'])
             transactions['shares'].append(row['shares'])
             transactions['timestamp'].append(row['timestamp'])
-
         return transactions
+
+    def get_bonds_suggest(self, keyword: str, month: str, year: str):
+        result = self.engine.execute(f"SELECT DISTINCT Name from bond_list where Name LIKE '{keyword}%' AND Name LIKE '%{month}{year}' ORDER BY Name ASC")
+        data = result.fetchall()
+        bond_names = []
+        for row in data:
+            bond_names.append(row['Name'])
+        return bond_names
+
+    def get_bond_cusip(self, name: str):
+        result = self.engine.execute(f"SELECT Code from bond_list where Name = '{name}'")
+        data = result.fetchall()
+        return data[0]['Code']
+
+    def save_bond(self, uid, alias: str, symbol: str, coupon: float, ytm: float, fullprice: float,
+                  accruedinterest: float, flatprice: float, maturdate: str, freq: str, saveddate: str):
+        check_existed = self.engine.execute(f"SELECT alias from saved_bond where alias = '{alias}' AND user_id = {uid}")
+        data = check_existed.fetchall()
+        if data:
+            return True
+
+        self.engine.execute(f"INSERT INTO saved_bond (alias, symbol, coupon, ytm, fullprice, accruedinterest, flatprice, maturity_date, frequency, savedate, user_id) "
+                            f"VALUES ('{alias}', '{symbol}', {coupon}, {ytm}, {fullprice}, {accruedinterest}, {flatprice}, '{maturdate}', '{freq}', '{saveddate}', {uid})")
+        return False
+
+    def save_bond_ptfl(self, uid, alias: str, mb: str, hb1: str, hb2: str, w0: str, w1: str, w2: str,
+                       mb_action: str, h_action: str, mb_fullprice: float, hb1_fullprice: float, hb2_fullprice: float,
+                       mb_mv: float, hb1_mv: float, hb2_mv: float, mb_fv: float, hb1_fv: float, hb2_fv: float,
+                       saveddate: str):
+        check_existed = self.engine.execute(f"SELECT alias from saved_bond_ptfl where alias = '{alias}' AND user_id = {uid}")
+        data = check_existed.fetchall()
+        if data:
+            return True
+
+        self.engine.execute(f"INSERT INTO saved_bond_ptfl (alias, mb, hb1, hb2, w0, w1, w2, mb_action, h_action, mb_fullprice, hb1_fullprice, hb2_fullprice, mb_mv, hb1_mv, hb2_mv, mb_fv, hb1_fv, hb2_fv,savedate,user_id) "
+                            f"VALUES ('{alias}', '{mb}', '{hb1}', '{hb2}', '{w0}', '{w1}', '{w2}','{mb_action}', '{h_action}', {mb_fullprice}, {hb1_fullprice}, {hb2_fullprice}, {mb_mv}, {hb1_mv}, {hb2_mv},{mb_fv},{hb1_fv},{hb2_fv}, '{saveddate}', {uid})")
+        return False
+
+    def get_saved_bonds(self, uid):
+        result = self.engine.execute(f"SELECT alias, symbol from saved_bond where user_id = {uid} ORDER BY savedate DESC")
+        data = result.fetchall()
+        return data
+
+    def get_saved_bond_ptfls(self, uid):
+        result = self.engine.execute(f"SELECT alias, mb, hb1, hb2 from saved_bond_ptfl where user_id = {uid} ORDER BY savedate DESC")
+        data = result.fetchall()
+        return data
+
+    def get_bond_ptfl_via_alias(self, uid, alias: str):
+        result = self.engine.execute(f"SELECT * from saved_bond_ptfl where user_id = {uid} and alias = '{alias}'")
+        data = result.fetchall()[0]
+        return data
+
+
+    def get_bond_via_alias(self, uid, alias: str):
+        result = self.engine.execute(f"SELECT symbol, coupon, ytm, flatprice, maturity_date, frequency from saved_bond where alias = '{alias}' AND user_id = {uid}")
+        data = result.fetchall()[0]
+        return data['symbol'], data['coupon'], data['ytm'], data['flatprice'], data['maturity_date'], data['frequency'],
+
 
     def create_buy_transaction(self, uid, cash, symbol, shares, price, timestamp):
         """
         Record the buying transaction info into database
-        :param uid: user id
+        :param uid: user idß
         :param cash: new cash after buying
         :param symbol: stock ticker
         :param shares: shares to buy

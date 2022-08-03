@@ -35,6 +35,15 @@ from system.controllers.btc_algo.btc_introduction import btc_introduction_servic
 from system.controllers.earning_impact.ei_analysis import ei_analysis_service
 from system.controllers.earning_impact.ei_introduction import ei_introduction_service
 from system.controllers.earning_impact.ei_plot import ei_plot_service
+from system.controllers.fixed_income_trading.fixed_income_bond_info import fixed_income_bond_info_service
+from system.controllers.fixed_income_trading.fixed_income_ptfl_result import fixed_income_ptfl_result_service
+from system.controllers.fixed_income_trading.fixed_income_saved import fixed_income_saved_service
+from system.controllers.fixed_income_trading.fixed_income_saved_info import fixed_income_saved_info_service
+from system.controllers.fixed_income_trading.fixed_income_trading_intro import fixed_income_service
+from system.controllers.fixed_income_trading.fixed_income_trading_new import fixed_income_trading_new_service
+from system.controllers.fixed_income_trading.fixed_income_build_ptfl import fixed_income_build_ptfl_service
+from system.controllers.fixed_income_trading.fixed_income_yield_result import fixed_income_yield_sim_result_service
+from system.controllers.fixed_income_trading.fixed_income_yield_sim import fixed_income_yield_sim_setup_service
 from system.controllers.high_frequency_trading.hf_cleaning_data import hf_cleaning_data_service
 from system.controllers.high_frequency_trading.hf_id_plot import hf_id_plot_service
 from system.controllers.high_frequency_trading.hf_trading import hf_trading_service
@@ -389,11 +398,47 @@ def update_market_data():
 def pair_ai_introduction():
     return pair_ai_introduction_service()
 
-
 @app.route("/pair_ai_building", methods=["GET", "POST"])
 def pair_ai_building():
     return pair_ai_building_service()
 
+# Fixed Income Securities Trading
+@app.route('/fixed_income_trading')
+@login_required
+def fixed_income_trading():
+    return fixed_income_service()
+
+@app.route("/fixed_income_trading_new", methods=["GET", "POST"])
+def fixed_income_trading_new():
+    return fixed_income_trading_new_service()
+
+@app.route("/fixed_income_ptfl", methods=["GET", "POST"])
+def fixed_income_ptfl():
+    return fixed_income_build_ptfl_service()
+
+@app.route("/fixed_income_ptfl_result", methods=["GET", "POST"])
+def fixed_income_ptfl_result():
+    return fixed_income_ptfl_result_service()
+
+@app.route("/fixed_income_yield_curve", methods=["GET", "POST"])
+def fixed_income_yield_curve():
+    return fixed_income_yield_sim_setup_service()
+
+@app.route("/fixed_income_yield_curve_result", methods=["GET", "POST"])
+def fixed_income_yield_curve_result():
+    return fixed_income_yield_sim_result_service()
+
+@app.route("/fixed_income_saved", methods=["GET", "POST"])
+def fixed_income_saved():
+    return fixed_income_saved_service()
+
+@app.route("/saved_info", methods=["GET", "POST"])
+def fixed_income_saved_info():
+    return fixed_income_saved_info_service()
+
+@app.route("/bond_info", methods=["GET", "POST"])
+def fixed_income_bond_info():
+    return fixed_income_bond_info_service()
 
 # Asset Pricing
 @app.route('/ap_introduction')
@@ -577,7 +622,7 @@ def stockselect_build():
 @app.route("/stockselect_back_test")
 @login_required
 def stockselect_back_test():
-    return stockselect_back_test_service(global_param_list)
+    return stockselect_back_test_service(global_param_dict)
 
 
 # Technical Indicator Strategy
@@ -612,12 +657,12 @@ def keltner_channel_strategy():
 @app.route('/keltner_build_model')
 @login_required
 def keltner_build_model():
-    return keltner_build_model_service(global_param_list)
+    return keltner_build_model_service(global_param_dict)
 
 
 @app.route('/plot/keltner_backtest_plot')
 def keltner_back_test_plot():
-    return keltner_backtest_plot_service(global_param_list)
+    return keltner_backtest_plot_service(global_param_dict)
 
 
 # Prediction-based portfolio optimization
@@ -630,19 +675,19 @@ def optimization_portfolio():
 @app.route('/PB_Opt_date_choose', methods=["GET", "POST"])
 @login_required
 def pre_opt_choose():
-    return pb_opt_date_choose_service(global_param_list)
+    return pb_opt_date_choose_service(global_param_dict)
 
 
 @app.route('/PB_Opt_build')
 @login_required
 def pre_opt_build(end_date=None):
-    return pb_opt_build_service(end_date, global_param_list)
+    return pb_opt_build_service(end_date, global_param_dict)
 
 
 @app.route('/PB_Opt_backtest')
 @login_required
 def pre_opt_back_test():
-    return pb_opt_backtest_service(global_param_list)
+    return pb_opt_backtest_service(global_param_dict)
 
 
 @app.route('/plot/pre_opt_backtest_plot')
@@ -692,7 +737,7 @@ if __name__ == "__main__":
 
     btc_data = None
 
-    global_param_list = {"top_stocks_list": top_stocks_list,
+    global_param_dict = {"top_stocks_list": top_stocks_list,
                          "final_df": final_df,
                          "pb_portfolio": pb_portfolio,
                          "df_pb_opt": df_pb_opt,

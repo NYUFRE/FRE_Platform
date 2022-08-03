@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}
+fixed_income_trading_new
+{% endblock %}
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_trading">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active " href="/fixed_income_trading_new">Search Bond</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_ptfl">Build Portfolio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_saved">Saved Securities</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/fixed_income_yield_curve">Yield Change Simulator</a>
+        </li>
+    </ul>
+</nav>
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3>Search bond</h3>
+    <div class="form-group">
+        <form action="/fixed_income_trading_new" id="search" method="post">
+            <input id="symbol" name="symbol" placeholder="Bond Name" type="text"/>
+            Matures in:
+            <select id="month" name="month">
+                <option value="">--all--</option>
+                <option value="Jan">Jan</option>
+                <option value="Feb">Feb</option>
+                <option value="Mar">Mar</option>
+                <option value="Apr">Apr</option>
+                <option value="May">May</option>
+                <option value="Jun">Jun</option>
+                <option value="Jul">Jul</option>
+                <option value="Aug">Aug</option>
+                <option value="Sep">Sep</option>
+                <option value="Oct">Oct</option>
+                <option value="Nov">Nov</option>
+                <option value="Dec">Dec</option>
+            </select>
+            <input id="year" name="year" placeholder="Year" type="text"/>
+            <input type="submit" value="Search"/>
+        </form>
+    </div>
+
+    <form action="/bond_info" id="bond_info" method="post">
+        {% for name in res %}
+        <p>
+            <input id = "bond_name" name="bond_name" value="{{name}}" type="submit"/>
+        </p>
+        {% endfor %}
+    </form>
+
+
+</main>
+<br></br>
+<br></br>
+
+{% endblock %}
+<br></br>

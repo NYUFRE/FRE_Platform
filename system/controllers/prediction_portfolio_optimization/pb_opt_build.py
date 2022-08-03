@@ -9,12 +9,12 @@ warnings.simplefilter(action='ignore', category=SAWarning)
 from system.services.predict_based_optimization.pre_port_opt import get_optimized_portfolio
 
 
-def pb_opt_build_service(end_date, global_param_list):
+def pb_opt_build_service(end_date, global_param_dict):
     try:
         start_date = end_date + relativedelta(years=-10)
         pb_portfolio, port_list = get_optimized_portfolio(start_date, end_date)
 
-        global_param_list["pb_portfolio"] = pb_portfolio
+        global_param_dict["pb_portfolio"] = pb_portfolio
 
         length = len(port_list)
 
