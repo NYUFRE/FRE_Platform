@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}
+btc_build
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link " href="/btc_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/btc_build/gate">Build Algorithm</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/btc_backtest">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Build Your Algorithm</strong></h3>
+    <div class="showed">
+        Please select the method:
+        <select>
+            <option value="Filter">Filter</option>
+            <option value="SMA">SMA</option>
+            <option value="EMA">EMA</option>
+            <option value="MACD">MACD</option>
+            <option value="RSI">RSI</option>
+            <option value="KalmanFilter">KalmanFilter</option>
+            <option value="GRU">GRU</option>
+            <option value="LSTM">LSTM</option>
+            <option value="Combination">Combination</option>
+        </select>
+        <button class="select">Select</button>
+        <form class="main">
+        </form>
+    </div>
+
+    <script>
+        let btn = document.querySelector('.showed button.select');
+        btn.addEventListener('click', () => {
+            let value = document.querySelector('.showed select').value;
+            let form = document.querySelector('.showed form.main');
+            switch (value) {
+                case 'Filter':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Delta: </label> <input type="text" name="delta" value="0.1"> <br> <button class="submit">Submit</button>';
+                    let filterSubmit = document.querySelector('button.submit');
+                    filterSubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'SMA':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Delta: </label> <input type="text" name="delta" value="0.1"> <br> <label style="width: 150px; display: inline-block; text-align: right">Short Period: </label> <input type="text" name="short_period" value="20"> <br> <label style="width: 150px; display: inline-block; text-align: right">Long Period: </label> <input type="text" name="long_period" value="50"> <br> <button class="submit">Submit</button>';
+                    let SMASubmit = document.querySelector('button.submit');
+                    SMASubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'EMA':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Delta: </label> <input type="text" name="delta" value="0.1"> <br> <label style="width: 150px; display: inline-block; text-align: right">Short Period: </label> <input type="text" name="short_period" value="20"> <br> <label style="width: 150px; display: inline-block; text-align: right">Long Period: </label> <input type="text" name="long_period" value="50"> <br> <button class="submit">Submit</button>';
+                    let EMASubmit = document.querySelector('button.submit');
+                    EMASubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'MACD':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Short Period: </label> <input type="text" name="short_period" value="12"> <br> <label style="width: 150px; display: inline-block; text-align: right">Long Period: </label> <input type="text" name="long_period" value="26"> <br> <label style="width: 150px; display: inline-block; text-align: right">Signal Period: </label> <input type="text" name="signal_period" value="9"> <br> <button class="submit">Submit</button>';
+                    let MACDSubmit = document.querySelector('button.submit');
+                    MACDSubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'RSI':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Period: </label> <input type="text" name="period" value="14"> <br> <label style="width: 150px; display: inline-block; text-align: right">Buy Threshold: </label> <input type="text" name="buy_threshold" value="30"> <br> <label style="width: 150px; display: inline-block; text-align: right">Sell Threshold: </label> <input type="text" name="sell_threshold" value="70"> <br> <label style="width: 150px; display: inline-block; text-align: right">Average Type: </label> <input type="text" name="avg_type" value="SMA"> <br> <button class="submit">Submit</button>';
+                    let RSISubmit = document.querySelector('button.submit');
+                    RSISubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'KalmanFilter':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <button class="submit">Submit</button>';
+                    let KFSubmit = document.querySelector('button.submit');
+                    KFSubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'GRU':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Train Test Ratio: </label> <input type="text" name="train_test_ratio" value="0.2"> <br> <label style="width: 150px; display: inline-block; text-align: right">Epochs: </label> <input type="text" name="epochs" value="100"> <br> <label style="width: 150px; display: inline-block; text-align: right">Batch Size: </label> <input type="text" name="batch_size" value="32"> <br> <label style="width: 150px; display: inline-block; text-align: right">Number of Level: </label> <input type="text" name="level" value="5"> <br> <label style="width: 150px; display: inline-block; text-align: right">Dropout: </label> <input type="text" name="dropout" value="True"> <br> <label style="width: 150px; display: inline-block; text-align: right">Dropout Rate: </label> <input type="text" name="dropout_rate" value="0.2"> <br> <label style="width: 150px; display: inline-block; text-align: right">Loss Function: </label> <input type="text" name="loss_function" value="mse"> <br> <label style="width: 150px; display: inline-block; text-align: right">Optimizer: </label> <input type="text" name="optimizer" value="adam"> <br> <button class="submit">Submit</button>';
+                    let GRUSubmit = document.querySelector('button.submit');
+                    GRUSubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'LSTM':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close"> <br> <label style="width: 150px; display: inline-block; text-align: right">Train Test Ratio: </label> <input type="text" name="train_test_ratio" value="0.2"> <br> <label style="width: 150px; display: inline-block; text-align: right">Epochs: </label> <input type="text" name="epochs" value="100"> <br> <label style="width: 150px; display: inline-block; text-align: right">Batch Size: </label> <input type="text" name="batch_size" value="32"> <br> <label style="width: 150px; display: inline-block; text-align: right">Number of Level: </label> <input type="text" name="level" value="5"> <br> <label style="width: 150px; display: inline-block; text-align: right">Dropout: </label> <input type="text" name="dropout" value="True"> <br> <label style="width: 150px; display: inline-block; text-align: right">Dropout Rate: </label> <input type="text" name="dropout_rate" value="0.2"> <br> <label style="width: 150px; display: inline-block; text-align: right">Loss Function: </label> <input type="text" name="loss_function" value="mse"> <br> <label style="width: 150px; display: inline-block; text-align: right">Optimizer: </label> <input type="text" name="optimizer" value="adam"> <br> <button class="submit">Submit</button>';
+                    let LSTMSubmit = document.querySelector('button.submit');
+                    LSTMSubmit.addEventListener('click', () => {
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                case 'Combination':
+                    form.innerHTML = '<label style="width: 150px; display: inline-block; text-align: right">Start Date: </label> <input type="text" name="start_date" value="2020-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">End Date: </label> <input type="text" name="end_date" value="2022-01-01"> <br> <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label> <input type="text" name="price_base" value="close">';
+                    form.innerHTML += '<br> <button class="comboSubmit">Submit</button>';
+                    form.innerHTML += '<br> Algorithms: <input type="checkbox" name="method_list" value="Filter">Filter</input> \
+                                <input type="checkbox" name="method_list" value="SMA">SMA</input> \
+                                <input type="checkbox" name="method_list" value="EMA">EMA</input> \
+                                <input type="checkbox" name="method_list" value="MACD">MACD</input> \
+                                <input type="checkbox" name="method_list" value="RSI">RSI</input> \
+                                <input type="checkbox" name="method_list" value="KalmanFilter">KalmanFilter</input> \
+                                <input type="checkbox" name="method_list" value="GRU">GRU</input> \
+                                <input type="checkbox" name="method_list" value="LSTM">LSTM</input>';
+                    let comboSubmit = document.querySelector('button.comboSubmit');
+                    comboSubmit.addEventListener('click', () => {
+                        let form = document.querySelector('.showed form.main');
+                        console.log('submit');
+                        form.action = '/btc_build/' + value;
+                        form.method = 'get';
+                        form.submit();
+                    });
+                    break;
+                default:
+                    alert('Please select the method');
+                    break;
+            }
+        });
+    </script>
+</main>
+
+{% endblock %}

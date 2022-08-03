@@ -169,7 +169,7 @@ class FREDatabase:
                           extend_existing=True)
 
         elif table_name == "spy" or table_name == "us10y" or table_name == "stocks" or table_name == "stocks_price" or \
-                table_name == "stocks_price_current":
+                table_name == "stocks_price_current" or table_name == "btc_data":
             table = Table(table_name, self.metadata,
                           Column('symbol', String(20), primary_key=True, nullable=False),
                           Column('date', DATE, primary_key=True, nullable=False),

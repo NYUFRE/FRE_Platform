@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}
+btc_backtest
+{% endblock %}
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/btc_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/btc_build/gate">Build Algorithm</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/btc_backtest">Back Test</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <div class="form">
+        <h3>Please enter basic info:</h3>
+        <form action="/btc_backtest" method="get">
+            <label style="width: 150px; display: inline-block; text-align: right">Initial Capital: </label>
+            <input type="text" name="initial_capital" value="100000"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Execution Type: </label>
+            <input type="text" name="execution_type" value="once"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Execution Amount: </label>
+            <input type="text" name="execution_amount" value="10"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Price Base: </label>
+            <input type="text" name="price_base" value="close"> <br>
+            <label style="width: 150px; display: inline-block; text-align: right">Position Type: </label>
+            <input type="text" name="position_type" value="both"> <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    {% if time != "first" %}
+    <div class="table">
+        <h3>Performance Table:</h3>
+        <table class="table table-striped">
+            <thead>
+				<tr>
+					<th style="text-align:center">Transaction Times</th>
+                    <th style="text-align:center">Initial Capital</th>
+                    <th style="text-align:center">End Capital</th>
+					<th style="text-align:center">Annual Return</th>
+					<th style="text-align:center">Maximum Drawdown</th>
+				</tr>
+			</thead>
+            <tbody>
+                <tr>
+                    <td>{{performance_list[0]}}</td>
+                    <td>{{performance_list[1]}}</td>
+                    <td>{{performance_list[2]}}</td>
+                    <td>{{performance_list[3]}}</td>
+                    <td>{{performance_list[4]}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</main>
+
+{% endblock %}
