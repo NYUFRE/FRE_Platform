@@ -36,6 +36,7 @@ btc_backtest
             <button type="submit">Submit</button>
         </form>
     </div>
+    {% if time != "first" %}
     <div class="table">
         <h3>Performance Table:</h3>
         <table class="table table-striped">
@@ -59,6 +60,7 @@ btc_backtest
             </tbody>
         </table>
     </div>
+    {% endif %}
 </main>
 
 {% endblock %}

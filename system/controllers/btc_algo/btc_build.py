@@ -12,7 +12,7 @@ def btc_build_service(request: flask.request, algorithm: str, global_param_list:
     Builds the service for the BTC algorithm.
     :param request: The request object.
     :param algorithm: The algorithm to use.
-    :param global_param_list: The global parameter list.
+    :param global_param_list: The global parameter dict.
     :return: The template html.
     """
     # Get the data from the request.
@@ -46,7 +46,7 @@ def btc_build_service(request: flask.request, algorithm: str, global_param_list:
         algo = BTCAlgorithmFactory.create_algorithm(**param_kw)
         indi_data = algo.indicator(price_base)
         signal_data = algo.signal()
-        global_param_list["btc_data"] = signal_data
+        global_param_list["btc_data"] = {"signal_data": signal_data, "algorithm": algorithm, "first": True}
         print(signal_data)
         message = "The algorithm: {} has been built successfully.".format(algorithm)
         flash(message)
