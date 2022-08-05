@@ -692,7 +692,7 @@ def pre_opt_back_test():
 
 @app.route('/plot/pre_opt_backtest_plot')
 def pre_opt_backtest_plot():
-    return pb_opt_backtest_plot_service(global_param_list)
+    return pb_opt_backtest_plot_service(global_param_dict)
 
 
 # Bitcoin Algorithm Trading
@@ -710,7 +710,7 @@ def btc_build_algorithm(algorithm):
     This function map to the logic of build an algorithm model and generate signal data for later backtest.
     :param algorithm: the algorithm name
     """
-    return btc_build_service(request, algorithm, global_param_list)
+    return btc_build_service(request, algorithm, global_param_dict)
 
 
 @app.route('/btc_backtest')
@@ -718,7 +718,7 @@ def btc_backtest():
     """
     This function map to the logic of backtest and will generate relevant matrix and render the webpage.
     """
-    return btc_backtest_service(request, global_param_list)
+    return btc_backtest_service(request, global_param_dict)
 
 
 if __name__ == "__main__":
