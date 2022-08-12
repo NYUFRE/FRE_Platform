@@ -69,3 +69,5 @@ beautifulsoup4
 snscrape
 nltk
 emoji
+time
+re
