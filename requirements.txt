@@ -65,3 +65,7 @@ scikit-learn
 # BeautifulSoup for web crawling
 beautifulsoup4
 
+# twitter sentiment analysis
+snscrape
+nltk
+emoji

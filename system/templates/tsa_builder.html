@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}
+Builder
+{% endblock %}
+
+
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/tsa_introduction" >Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/tsa_builder" style="background-color:rgb(19, 128, 92);">Model Builder</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/tsa_viewer">Model Indicator Testing</a>
+        </li>
+    </ul>
+</nav>
+
+
+
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong> 🛠 Model Builder</strong></h3>
+    <br>
+    <p align = 'left' style="color: black;">
+        This tab is for you to download data build a model. We should firstly input some Parameters into the area below.
+        And then click the 'Build the Model'. The program will then fetch data from the input data range from twitter and do
+        the natural language processing automatically for us. And then it will use the selected machine learning model to 
+        train on the data and output trainning and testing result. <strong style="color: blue;">Follow the step by step guide below to build 
+        your own model. Have fun!! 😁  </strong> 
+    </p>
+    <div class="form-group">
+        
+        <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+            <tr>
+                <td width="881" >
+                    <p align = 'left' style="color: red;">
+                        ⭕️ Step 1: Let's first choose a MODE : 
+                    </p>
+                    <p align = 'left'>
+                        <strong> &nbsp &nbsp &nbsp &nbsp ◾️ Demo (defalut, recommended) :</strong> 
+                        will use the pre-existed data(2020-01-01 to 2022-07-01), so that you can just have a try and see :)
+                    </p>
+                    <p align = 'left'>
+                        <strong> &nbsp &nbsp &nbsp &nbsp ◾️ RealCase :</strong> 
+                        will start to download data from twitter. It takes a long time for downloading (about 1h~2h for a year date range).
+                        Therefore, if you just want to take a look at how this project works, 'Demo' MODE is highly recommended.<br>
+                        <i style="color: blue;">❗️ After loaded data, please run with RealCase MODE again to see the ML results </i> <br>
+                    </p>
+                    <p align = 'left' style="color: red;">
+                        ⭕️ Step 2: Then choose a Start Date and End Date : 
+                    </p>
+                    <p align = 'left'>
+                        <i style="color: blue;">❗️ Unavailable for Demo MODE </i> <br>
+                        <i style="color: blue;">❗️ Date range must be at least 365 days </i>
+                    </p>
+                    <p align = 'left'>
+                        <strong> &nbsp &nbsp &nbsp &nbsp ◾️ Start Date :</strong> (defalut : 2020-01-01)
+                        the start date of the data(tweets and stock data) to download
+                    </p>
+                    <p align = 'left'>
+                        <strong> &nbsp &nbsp &nbsp &nbsp ◾️ End Date  :</strong> (defalut : 2022-07-01)
+                        the end date of the data(tweets and stock data) to download
+                    </p>
+                    <p align = 'left' style="color: red;">
+                        ⭕️ Step 3: Last but not least, choose a machine learning model : 
+                    </p>
+                    <p align = 'left'>
+                        <strong> &nbsp &nbsp &nbsp &nbsp ◾️ Choose a Model :</strong> 
+                        (defalut : Support-Vector-Machine) Random Forest and Support Vector Machine models are recommended :)
+                    </p>
+                    
+                </td>
+            </tr>
+        </tr>
+        <form action="/tsa_builder" id="Builder" method="post">
+            
+            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <h5>
+                        <strong>Input Parameters</strong>
+                    </h5>
+                </th>
+            </tr>
+
+            <hr>
+
+            <p style = "width:500px;" align="right"  >Choose a MODE (demo?): 
+                <select name = "mode" action = '/' style = "width:200px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);">
+                    {%for mode in modes%}
+                        <option value = {{mode}} selected>{{mode}}</option>>
+                    {% endfor %}
+                </select>
+            </p>
+            <p style = "width:500px;"  align="right">Start Date:
+                <input id="startdate" name="startdate" placeholder="2020-01-01" value={{default_start}} type="text"  style = "width:200px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);"/>
+            </p>
+            <p style = "width:500px;"  align="right">Start Date:
+                <input id="enddate" name="enddate" placeholder="2022-07-01" value={{default_end}} type="text"  style = "width:200px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);"/>
+            </p>
+            <p style = "width:500px;" align="right"  >Choose a Model: 
+                <select name = "model" action = '/' style = "width:300px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);">
+                    {%for model in pulldownlist%}
+                        <option value = {{model}} selected>{{model}}</option>>
+                    {% endfor %}
+                </select>
+            </p>
+            
+            <input type="submit" value="Build the Model" align="margin-left" style="width:300px; background-color: rgb(9, 140, 176); color: aliceblue; " />
+            <hr>
+            
+        </form>
+    </div>
+
+    <br>
+    <br>
+    <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+        <th width="881" valign="top">
+            <h5>
+                <strong>Result: </strong>
+            </h5>
+        </th>
+    </tr>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th style="text-align:center">Model</th>
+                    <th style="text-align:center">Fbeta Score</th>
+                    <th style="text-align:center">F1 Score</th>
+                    <th style="text-align:center">Training Accuracy</th>
+                    <th style="text-align:center">Cross Validation Accuracy</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>{{mlres["model"]}}</td>
+                    <td>{{mlres["fbeta"]}}</td>
+                    <td>{{mlres["f1_score"]}}</td>
+                    <td>{{mlres["accuracy_train"]}}</td>
+                    <td>{{mlres["cross_val"]}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+
+    <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+        <th width="881" valign="top">
+            <h5>
+                <strong>ROC Curve: </strong>
+            </h5>
+        </th>
+    </tr>
+
+        <img src="/plot/tsa_plot_roc" alt="Image Placeholder" width="85%">
+    <hr>
+</main>
+<br></br>
+<br></br>
+
+
+{% endblock %}
+<br></br>

@@ -8,7 +8,7 @@ import platform
 common =  [
     "arch==5.1.0",
     "bcrypt==3.2.0",
-    "beautifulsoup4==4.10.0",  # BeautifulSoup for web crawling
+    "beautifulsoup4==4.10.0",  
     "blinker==1.4",
     "cachelib==0.1.1",
     "certifi==2020.6.20",
@@ -68,6 +68,10 @@ common =  [
     "yahoo_earnings_calendar==0.6.0",
     "yfinance==0.1.63",
     "tqdm==4.62.1",
+    "nltk==3.7",
+    "snscrape==0.4.3.20220106",
+    "emoji==2.0.0"
+
 ]
 
 windows = [
