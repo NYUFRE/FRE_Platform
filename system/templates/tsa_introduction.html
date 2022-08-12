@@ -15,55 +15,157 @@ Twitter Sentiment Analysis: Introduction
             <a class="nav-link" href="/tsa_builder">Model Builder</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/tsa_viewer">Viewer</a>
+            <a class="nav-link" href="/tsa_viewer">Model Indicator Testing</a>
         </li>
     </ul>
 </nav>
 
 <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
-    <h3><strong>Twitter Data Sentiment Analysis Project Introduction</strong></h3>
+    <h3><strong> 💬 Twitter Data Sentiment Analysis Project</strong></h3>
     <br>
     <div align="center">
         <table cellspacing="0" cellpadding="0" border="0" style="font-family:Georgia, Garamond, Serif;">
             <tbody>
             <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
-            <tr>
-                <td width="881" valign="top">
-                    <p>
-                        This is a placehoder fro introducing this module.
-                    </p>
-                </td>
-            </tr>
-            <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                <tr style="font-variant:small-caps;font-style:normal;color:black;font-size:20px;">
+                    <th width="881" valign="top">
+                        <p>
+                            <strong>Capstone Project</strong>
+                        </p>
+                    </th>
+                </tr>
+                <tr>
+                    <td width="881" valign="top">
+                        <p style="color: blue;"> Author : Deyang Fan</p>
+                        <p style="color: blue;"> Email  : derricfan@gmail.com</p>
+                        <p style="color: blue;"> Date   : August, 2022</p>
+                    </td>
+                </tr>
+            <tr style="font-style:normal;color:black;font-size:20px;">
                 <th width="881" valign="top">
                     <p>
-                        <strong>Title 1: </strong>
+                        <strong>1. Project Introduction</strong>
                     </p>
                 </th>
             </tr>
             <tr>
                 <td width="881" valign="top">
-                    <p> Calculate European option value and greeks using analytic(Black Scholes) pricing engine, and
-                        display graph of y-variable with respect to change in x-variable while holding other variables constant</p>
-                    <p> Note: </p>
-                    <p> 1) Assume constant risk free rate, dividend rate and volatility </p>
-                    <p> 2) Follow Actual/Actual day convention </p>
-                    <p> 3) Using NYSE calendar to determine trading day</p>
-                    <p> Input Parameter Definition: </p>
-                    <p> Spot Price: Current price of the underlying assets</p>
-                    <p> Strike Price: The set price at which the underlying assets can be bought or sold when option is exercised</p>
-                    <p> Day to Expiration: Number of days until the last day that the option is valid</p>
-                    <p> Risk Free Rate: The current risk-free rate or the rate to discount future cash flow</p>
-                    <p> Dividend Rate: Dollar dividend divided by underlying asset price</p>
-                    <p> Volatility: Estimate of the future volatility for the underlying asset </p>
-                    <p> X-axis Parameter: Parameter to display at X-axis</p>
-                    <p> git blablabla </p>
+                    <p> 
+                        In this project, the generally idea is to test a hypothesis from behavioral 
+                        finance that market movement is correlated with the market sentiments. 
+                    </p>
+                    <p>
+                        To do that, I firstly apply sentiment analysis on daily twitter post about a 
+                        particular stock, and then construct mood indicators through sentiment analysis. 
+                        To find the potential correlation between market sentiment and stock price, 
+                        I will then carry out correlation test between mood indicator and stock price movement 
+                        data (specifically, Microsoft). To explore further, I then utilize machine learning 
+                        model to predict the next day stock market movement by three sentiment’s indicators 
+                        (positive, negative, neutral) extracted from twitter. To test our results, 
+                        we will do cross validation method as well as other classification metrics to test the accuracy score of 
+                        the prediction. 
+                    </p>
+
                 </td>
             </tr>
+            <tr style="font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>2. Program Diagram</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p> 
+                        The project design is as the following. 
+                    </p>
+                    <img src="https://i.ibb.co/FY4NhBx/tsa-Dia.png" alt="Mountain" width="800" height="400">
+                    
+                </td>
+            </tr>
+            <tr style="font-style:normal;color:black;font-size:20px;">
+                <th width="881" valign="top">
+                    <p>
+                        <strong>3.	Model details and implementations</strong>
+                    </p>
+                </th>
+            </tr>
+            <tr>
+                <td width="881" valign="top">
+                    <p>
+                       <strong style="color: blue;">
+                        3.1	Twitter data fetching from Snscrap
+                       </strong> 
+                    </p>	
+                    <p> 
+                        To have access to twitter data, it normally requires a twitter API 
+                        authentication from twitter developer account. However, due to the policy 
+                        change, an end user (except for academic PhD thesis usage) will not be able 
+                        to access historical tweets from twitter API, and there is also a limit on 
+                        the number of tweets to which a user has access. Therefore, in this project 
+                        I will use a python package Snscrape, which is a scraper for social networking 
+                        services (SNS). It scrapes things like user profiles, hashtags, or searches 
+                        and returns the discovered items, e.g., the relevant posts. 
+                        Snscrape usage is also friendly and straight forward. It support searching 
+                        tweets, hashtags with a given date range. It will return all the discovered
+                         historical tweets within that date range. The function will also auto-parse 
+                         the json file from twitter website and return a pre-defined tweet object 
+                         containing all the information about discovered items. 
+
+                    </p>
+                    <p>
+                        <strong style="color: blue;">
+                        3.2	Text analysis using NLTK
+                        </strong> 
+                    </p>
+                    <p> 
+                        NLTK is a leading platform for building Python programs to work with natural 
+                        language processing tasks. It provides easy-to-use interfaces to over 50
+                        corpora and lexical resources such as WordNet, along with a suite of text 
+                        processing libraries for classification, tokenization, stemming, tagging, 
+                        parsing, and semantic reasoning, wrappers for industrial-strength NLP 
+                        libraries.
+                    </p>
+                    <p>
+                        <strong style="color: blue;">
+                        3.3	Detailed implementation
+                        </strong> 
+                    </p>
+                    <p>
+                        As illustrated in the above graph, I will firstly use Snscrape to search and 
+                        fetch historical tweets from Jan 1st, 2020 to Jan 1st 2022 with the keyword 
+                        such as $MSFT, # Microsoft, #Windows etc. Then collect them into one data 
+                        frame with fields including user id, content, timestamp etc. All the contents
+                        data will be load into NLTK module for natural language processing. The model 
+                        I am going to use for NPL sentiments analysis will be nltk.sentiment.vader 
+                        module. This model is a parsimonious rule-based model for sentiment analysis. 
+                        It will output a sentiment score (indicators) corresponding to each tweet 
+                        content. The score has three dimensions (positive, negative, neutral). 
+                    </p>
+                    <p>
+                        As for the machine learning part: Once I have the sentiment indicators ready, 
+                        I will use machine learning classifier model, such as Random Forest, SVM, 
+                        Logistic Regression, to fit the sentiment score at time T and stock price 
+                        movement at time T+1. Note here that MSFT price movement data is pre-processed
+                        to be valued 1 or -1 each day depending on its price movement direction 
+                        compared to the previous day. If at time t and price goes up, the value at 
+                        t will be 1, and vice versa. 
+                    </p>
+                    <p>
+                        In order to measure the ML prediction accuracy, a cross-validation accuracy 
+                        measure will be used. Since we have a binary classification problem, I will 
+                        also introduce a ROC curve to measure the classifier efficacy. 
+                    </p>
+                </td>
+            </tr>
+
             </tbody>
         </table>
     </div>
+
     <hr>
+
 </main>
 <br></br>
 <br></br>
