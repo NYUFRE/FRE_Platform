@@ -37,28 +37,28 @@ common =  [
     "korean-lunar-calendar==0.2.1",
     "MarkupSafe==1.1.1",
     "matplotlib==3.4.3",
-    "numpy==1.20.1",
-    "pandas==1.0.5",
+    # "numpy==1.20.1",
+    # "pandas==1.0.5",
     "pandas-market-calendars==1.6.1",
     "passlib==1.7.2",
     "patsy==0.5.1",
-    "Pillow==7.2.0",
+    # "Pillow==7.2.0",
     "plotly==4.14.3",
     "pycparser==2.20",
     "PyMeeus==0.3.7",
     "pyparsing==2.4.7",
-    "pyportfolioopt==1.4.2",
+    # "pyportfolioopt==1.4.2",
     "python-dateutil==2.8.1",
     "pytz==2020.1",
-    "QuantLib==1.22",
+    # "QuantLib==1.22",
     "requests==2.24.0",
     "retrying==1.3.3",
-    "scikit-learn==1.0.1",
-    "scipy==1.7.1",  # Previous scipy version: 1.5.2
+    # "scikit-learn==1.0.1",
+    # "scipy==1.7.1",  # Previous scipy version: 1.5.2
     "six==1.15.0",
     "SQLAlchemy==1.3.18",
-    "statsmodels==0.11.1",
-    "tensorflow==2.7.0",
+    # "statsmodels==0.11.1",
+    # "tensorflow==2.7.0",
     "texttable==1.6.2",
     "toolz==0.11.1",
     "trading-calendars==2.1.0",
@@ -67,7 +67,7 @@ common =  [
     "WTForms==2.3.3",
     "yahoo_earnings_calendar==0.6.0",
     "yfinance==0.1.63",
-    "tqdm==4.62.1",
+    "tqdm==4.62.1"
 ]
 
 windows = [
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
     if sys.version_info.minor == 9:
         sys.stderr.write("python3.9 is incompatible with certain packages. Please switch to a lower python3 version.\n")
-        sys.exit(1)
+        # sys.exit(1)
 
     install(common)
     host_platform = platform.system()

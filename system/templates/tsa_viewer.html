@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}
+Twitter Sentiment Analysis: Viewer
+{% endblock %}
+
+
+{% block content %}
+<nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
+    <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/tsa_introduction">Introduction</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/tsa_builder">Model Builder</a>
+        </li>
+        <li class="nav-item" >
+            <a class="nav-link active " href="/tsa_viewer" style="background-color:rgb(19, 128, 92);">Viewer</a>
+        </li>
+    </ul>
+</nav>
+
+<main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-5">
+    <h3><strong>Twitter Data Sentiment Analysis Project Introduction</strong></h3>
+    <br>
+    <div class="form-group">
+        <form action="/tsa_builder" id="Builder" method="post">
+            <p style = "width:500px;" align="right">
+                <b>1. Default stock price: Latest stock price of APPLE</b>
+            </p>
+            <p style = "width:500px;"  align="right">Spot Price:
+                <input id="spot" name="spot" placeholder="(int) spot price" value="1" type="text"/>
+            </p>
+            <p style = "width:500px;" align="right" style = "width:300px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);">Choose first curve: 
+                <select name = "pulldownlist" action = '/' style = "width:200px;">
+                    {%for curve in pdlist_curve1 %}
+                        <option value = {{curve}} selected>{{curve}}</option>>
+                    {% endfor %}
+                </select>
+            </p>
+            <p style = "width:500px;" align="right" style = "width:300px; background-color: rgb(201, 215, 223); color: rgb(0, 2, 4);">Choose second curve: 
+                <select name = "pulldownlist" action = '/' style = "width:200px;">
+                    {%for curve in pdlist_curve2 %}
+                        <option value = {{curve}} selected>{{curve}}</option>>
+                    {% endfor %}
+                </select>
+            </p>
+            <p style = "width:600px;" align="right">
+                Spot Price + 1 = {{spot}}
+            </p>
+            <input type="submit" value="Plot" style="width:200px; background-color: rgb(9, 140, 176); color: aliceblue; " />
+        </form>
+    </div>
+    <h3>Graph</h3>
+        <img src="/plot/tsa_plot_demo" alt="Image Placeholder" width="50%">
+    <hr>
+</main>
+<br></br>
+<br></br>
+{% endblock %}
+<br></br>

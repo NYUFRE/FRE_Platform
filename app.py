@@ -2,6 +2,7 @@
 #### imports ####
 #################
 
+from stat import SF_APPEND
 import sys
 import warnings
 import pandas as pd
@@ -98,6 +99,15 @@ from system.controllers.technical_indicator.technical_indicator_backtest import 
 from system.controllers.technical_indicator.technical_indicator_plot import technical_indicator_plot_service
 from system.controllers.technical_indicator.technical_indicator_probtest import technical_indicator_probtest_service
 from system.controllers.technical_indicator.technical_indicator_strategy import technical_indicator_strategy_service
+
+
+
+from system.controllers.twitter_sentiments_analysis.tsa_intro import tsa_introduction_service
+from system.controllers.twitter_sentiments_analysis.tsa_builder import tsa_builder_service
+from system.controllers.twitter_sentiments_analysis.tsa_viewer import tsa_viewer_service
+from system.controllers.twitter_sentiments_analysis.Plot.tsa_plot import tsa_plot_demo_service
+
+
 from system.controllers.user_service.admin_view_users import admin_view_users_service
 from system.controllers.user_service.confirm_token import confirm_email_service
 from system.controllers.user_service.email_change import email_change_service
@@ -348,7 +358,6 @@ def sim_model_info():
 @login_required
 def market_data_sp500():
     return md_sp500_service()
-
 
 @app.route('/md_sp500_sectors')
 @login_required
@@ -720,6 +729,30 @@ def btc_backtest():
     """
     return btc_backtest_service(request, global_param_dict)
 
+
+# Twitter Sentiment Analysis, in short: tsa, eg. tsa_introduction
+@app.route('/tsa_introduction')
+@login_required
+def tsa_introduction():
+    return tsa_introduction_service()   
+
+
+@app.route('/tsa_builder', methods=["GET", "POST"])
+@login_required
+def tsa_builder():
+    return tsa_builder_service()   
+
+
+@app.route('/tsa_viewer')
+@login_required
+def tsa_viewer():
+    return tsa_viewer_service() 
+
+# Plotting service 
+@app.route('/plot/tsa_plot_demo')
+@login_required
+def tsa_plot_demo():
+    return tsa_plot_demo_service()     
 
 if __name__ == "__main__":
     table_list = ["users", "portfolios", "spy", "transactions"]
