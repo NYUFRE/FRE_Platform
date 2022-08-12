@@ -2,7 +2,6 @@
 #### imports ####
 #################
 
-from stat import SF_APPEND
 import sys
 import warnings
 import pandas as pd
@@ -99,15 +98,10 @@ from system.controllers.technical_indicator.technical_indicator_backtest import 
 from system.controllers.technical_indicator.technical_indicator_plot import technical_indicator_plot_service
 from system.controllers.technical_indicator.technical_indicator_probtest import technical_indicator_probtest_service
 from system.controllers.technical_indicator.technical_indicator_strategy import technical_indicator_strategy_service
-
-
-
 from system.controllers.twitter_sentiments_analysis.tsa_intro import tsa_introduction_service
 from system.controllers.twitter_sentiments_analysis.tsa_builder import tsa_builder_service
 from system.controllers.twitter_sentiments_analysis.tsa_viewer import tsa_viewer_service
 from system.controllers.twitter_sentiments_analysis.Plot.tsa_plot import tsa_plot_roc_service, tsa_plot_lab_service
-
-
 from system.controllers.user_service.admin_view_users import admin_view_users_service
 from system.controllers.user_service.confirm_token import confirm_email_service
 from system.controllers.user_service.email_change import email_change_service
