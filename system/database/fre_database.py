@@ -456,7 +456,8 @@ class FREDatabase:
         return transactions
 
     def get_bonds_suggest(self, keyword: str, month: str, year: str):
-        result = self.engine.execute(f"SELECT DISTINCT Name from bond_list where Name LIKE '{keyword}%' AND Name LIKE '%{month}{year}' ORDER BY Name ASC")
+        result = self.engine.execute(f"SELECT DISTINCT Name from bond_list where Name LIKE '{keyword}%' "
+                                     f"AND Name LIKE '%{month}{year}' ORDER BY Name ASC")
         data = result.fetchall()
         bond_names = []
         for row in data:
