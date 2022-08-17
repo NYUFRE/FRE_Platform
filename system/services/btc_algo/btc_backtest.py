@@ -52,7 +52,7 @@ class BackTest:
                             self.long = self.execution_amount
                             self.buy_price = current_price
                             self.current_capital -= self.buy_price * self.long
-                            print("Buy: {} at price: {} on ".format(self.long, self.buy_price, self.data.index[i]))
+                            print("Buy: {} at price: {} on {}".format(self.long, self.buy_price, self.data.index[i]))
                 # if we have long position, we can sell.
                 else:
                     # if previous signal is -1 and we have long position, we can sell.
@@ -62,7 +62,7 @@ class BackTest:
                         self.profit_list.append((self.sell_price - self.buy_price) * self.long)
                         self.capital_list.append(self.current_capital)
                         self.transaction_times += 1
-                        print("Sell: {} at price: {} on ".format(self.long, self.sell_price, self.data.index[i]))
+                        print("Sell: {} at price: {} on {}".format(self.long, self.sell_price, self.data.index[i]))
                         # reset position and long position.
                         self.position = 0
                         self.long = 0
@@ -81,7 +81,7 @@ class BackTest:
                         self.long += self.execution_amount
                         self.buy_price = current_price
                         self.current_capital -= self.buy_price * self.execution_amount
-                        print("Buy: {} at price: {} on ".format(self.long, self.buy_price, self.data.index[i]))
+                        print("Buy: {} at price: {} on {}".format(self.long, self.buy_price, self.data.index[i]))
                 # once we have signal as -1, we will sell all long position.
                 elif prev_signal == -1 and self.long > 0:
                     self.sell_price = current_price
@@ -89,7 +89,7 @@ class BackTest:
                     self.profit_list.append((self.sell_price - self.buy_price) * self.long)
                     self.capital_list.append(self.current_capital)
                     self.transaction_times += 1
-                    print("Sell: {} at price: {} on ".format(self.long, self.sell_price, self.data.index[i]))
+                    print("Sell: {} at price: {} on {}".format(self.long, self.sell_price, self.data.index[i]))
                     # reset position and long position.
                     self.position = 0
                     self.long = 0
@@ -120,7 +120,7 @@ class BackTest:
                             self.short = self.execution_amount
                             self.sell_price = current_price
                             self.current_capital += self.sell_price * self.short
-                            print("Short: {} at price: {} on ".format(self.short, self.sell_price, self.data.index[i]))
+                            print("Short: {} at price: {} on {}".format(self.short, self.sell_price, self.data.index[i]))
                 # if we have short position, we can sell.
                 else:
                     # if previous signal is 1 and we have short position, we can sell.
@@ -130,7 +130,7 @@ class BackTest:
                         self.profit_list.append((self.sell_price - self.buy_price) * self.short)
                         self.capital_list.append(self.current_capital)
                         self.transaction_times += 1
-                        print("Buy back: {} at price: {} on ".format(self.short, self.buy_price, self.data.index[i]))
+                        print("Buy back: {} at price: {} on {}".format(self.short, self.buy_price, self.data.index[i]))
                         # reset position and short position.
                         self.position = 0
                         self.short = 0
@@ -149,7 +149,7 @@ class BackTest:
                         self.short += self.execution_amount
                         self.sell_price = current_price
                         self.current_capital += self.sell_price * self.execution_amount
-                        print("Short: {} at price: {} on ".format(self.short, self.sell_price, self.data.index[i]))
+                        print("Short: {} at price: {} on {}".format(self.short, self.sell_price, self.data.index[i]))
                 # once we have signal as 1, we will sell all short position.
                 elif prev_signal == 1 and self.short > 0:
                     self.buy_price = current_price
@@ -157,7 +157,7 @@ class BackTest:
                     self.profit_list.append((self.sell_price - self.buy_price) * self.short)
                     self.capital_list.append(self.current_capital)
                     self.transaction_times += 1
-                    print("Buy back: {} at price: {} on ".format(self.short, self.buy_price, self.data.index[i]))
+                    print("Buy back: {} at price: {} on {}".format(self.short, self.buy_price, self.data.index[i]))
                     # reset position and short position.
                     self.position = 0
                     self.short = 0
@@ -188,7 +188,7 @@ class BackTest:
                             self.long = self.execution_amount
                             self.buy_price = current_price
                             self.current_capital -= self.buy_price * self.long
-                            print("Long: {} at price: {} on ".format(self.long, self.buy_price, self.data.index[i]))
+                            print("Long: {} at price: {} on {}".format(self.long, self.buy_price, self.data.index[i]))
                     # if previous signal is -1 and we have no short position, we can buy.
                     elif prev_signal == -1 and self.short == 0:
                         # only if we have enough capital to buy price times amount, we can short.
@@ -197,7 +197,7 @@ class BackTest:
                             self.short = self.execution_amount
                             self.sell_price = current_price
                             self.current_capital += self.sell_price * self.short
-                            print("Short: {} at price: {} on ".format(self.short, self.sell_price, self.data.index[i]))
+                            print("Short: {} at price: {} on {}".format(self.short, self.sell_price, self.data.index[i]))
                 # if we have long position, we can sell.
                 else:
                     # if previous signal is -1 and we have long position, we can sell.
@@ -207,7 +207,7 @@ class BackTest:
                         self.profit_list.append((self.sell_price - self.buy_price) * self.long)
                         self.capital_list.append(self.current_capital)
                         self.transaction_times += 1
-                        print("Sell: {} at price: {} on ".format(self.long, self.sell_price, self.data.index[i]))
+                        print("Sell: {} at price: {} on {}".format(self.long, self.sell_price, self.data.index[i]))
                         # reset position and long position.
                         self.position = 0
                         self.long = 0
@@ -220,7 +220,7 @@ class BackTest:
                         self.profit_list.append((self.sell_price - self.buy_price) * self.short)
                         self.capital_list.append(self.current_capital)
                         self.transaction_times += 1
-                        print("Buy back: {} at price: {} on ".format(self.short, self.buy_price, self.data.index[i]))
+                        print("Buy back: {} at price: {} on {}".format(self.short, self.buy_price, self.data.index[i]))
                         # reset position and short position.
                         self.position = 0
                         self.short = 0
@@ -234,42 +234,42 @@ class BackTest:
                 current_price = data.iloc[i][self.price_base]
                 prev_signal = data.iloc[i - 1]["signal"]
                 # once we have signal as 1, we can buy until we don't have enough capital for one execution amount.
-                if prev_signal == 1:
+                if prev_signal == 1 and self.short == 0:
                     if self.current_capital >= current_price * self.execution_amount:
                         self.position = 1
                         self.long += self.execution_amount
                         self.buy_price = current_price
                         self.current_capital -= self.buy_price * self.execution_amount
-                        print("Long: {} at price: {} on ".format(self.long, self.buy_price, self.data.index[i]))
+                        print("Long: {} at price: {} on {}".format(self.long, self.buy_price, self.data.index[i]))
                 # once we have signal as -1, we will sell all long position.
-                elif prev_signal == -1 and self.long > 0:
+                elif prev_signal == -1 and self.long > 0 and self.short == 0:
                     self.sell_price = current_price
                     self.current_capital += self.sell_price * self.long
                     self.profit_list.append((self.sell_price - self.buy_price) * self.long)
                     self.capital_list.append(self.current_capital)
                     self.transaction_times += 1
-                    print("Sell: {} at price: {} on ".format(self.long, self.sell_price, self.data.index[i]))
+                    print("Sell: {} at price: {} on {}".format(self.long, self.sell_price, self.data.index[i]))
                     # reset position and long position.
                     self.position = 0
                     self.long = 0
                     self.buy_price = 0
                     self.sell_price = 0
                 # once we have signal as -1, we can short until we don't have enough capital for one execution amount.
-                elif prev_signal == -1:
+                elif prev_signal == -1 and self.long == 0:
                     if self.current_capital >= current_price * self.execution_amount:
                         self.position = 1
                         self.short += self.execution_amount
                         self.sell_price = current_price
                         self.current_capital += self.sell_price * self.execution_amount
-                        print("Short: {} at price: {} on ".format(self.short, self.sell_price, self.data.index[i]))
+                        print("Short: {} at price: {} on {}".format(self.short, self.sell_price, self.data.index[i]))
                 # if we have short position, we can buy back.
-                elif prev_signal == 1 and self.short > 0:
+                elif prev_signal == 1 and self.short > 0 and self.long == 0:
                     self.buy_price = current_price
                     self.current_capital -= self.buy_price * self.short
                     self.profit_list.append((self.sell_price - self.buy_price) * self.short)
                     self.capital_list.append(self.current_capital)
                     self.transaction_times += 1
-                    print("Buy back: {} at price: {} on ".format(self.short, self.buy_price, self.data.index[i]))
+                    print("Buy back: {} at price: {} on {}".format(self.short, self.buy_price, self.data.index[i]))
                     # reset position and short position.
                     self.position = 0
                     self.short = 0
