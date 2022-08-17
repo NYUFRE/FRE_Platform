@@ -27,7 +27,7 @@ fixed_income_saved
     <h3>Check Security:</h3>
     <div class="form-group">
         <form action="/saved_info" id="search" method="post">
-            <select id="alias" name="alias">
+            <select id="alias" name="alias" style="width: 800px;">
                 <option value="">--choose a saved bond--</option>
                 {% for bond in res %}
                 <option value="{{bond['alias']}}">{{bond['alias']}}({{bond['symbol']}})</option>
@@ -37,7 +37,7 @@ fixed_income_saved
             <p></p>
             <p>OR</p>
 
-            <select id="alias_ptfl" name="alias_ptfl">
+            <select id="alias_ptfl" name="alias_ptfl" style="width: 800px;">
                 <option value="">--choose a saved portfolio--</option>
                 {% for ptfl in res_ptfl %}
                 <option value="{{ptfl['alias']}}">{{ptfl['alias']}}({{ptfl['mb']}}+{{ptfl['hb1']}}+{{ptfl['hb2']}})</option>
