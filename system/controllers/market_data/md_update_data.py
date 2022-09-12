@@ -23,6 +23,7 @@ def previous_working_day(current_day, holidays=holidays.US()):
 
 def md_update_data_service():
     #today = datetime.today().strftime('%Y-%m-%d')
+    start_date = '2010-01-01'
     latest_weekday = previous_working_day(datetime.today()).strftime('%Y-%m-%d')
     try:
         # fundamentals (use multi-threads,takes 30 seconnds)
@@ -39,7 +40,7 @@ def md_update_data_service():
         # spy price data
         if database.check_table_empty('spy'):
             # if the table is empty, insert data from start date to today
-            eod_market_data.populate_stock_data(['spy'], "spy", start_date, today, 'US')
+            eod_market_data.populate_stock_data(['spy'], "spy", start_date, latest_weekday, 'US')
         else:
             # if the table is not empty, insert data from the last date in the existing table to today.
             select_stmt = 'SELECT date FROM spy ORDER BY date DESC limit 1'
