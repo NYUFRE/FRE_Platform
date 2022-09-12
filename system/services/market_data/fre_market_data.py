@@ -285,23 +285,35 @@ class EODMarketData:
         def fundamental_data_helper(ticker_list):
             fundamental_data = []
             for ticker in ticker_list:
+                pe_ratio = 0.0
+                stock_yield = 0.0
+                beta = 0.0
+                week_high_52 = 0.0
+                week_low_52 = 0.0
+                day_ma_50 = 0.0
+                day_ma_200 = 0.0
+                market_capitalization = 0
                 data = self.get_fundamental_data(ticker, category)
                 if ticker == 'SPY':
-                    fundamental_data.append(
-                        [ticker,
-                         data['ETF_Data']['Valuations_Growth']['Valuations_Rates_Portfolio'][
-                             'Price/Prospective Earnings'],
-                         data['ETF_Data']['Yield'],
-                         data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
-                         data['Technicals']['52WeekLow'],
-                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA'], 0])
+                    pe_ratio  = data['ETF_Data']['Valuations_Growth']['Valuations_Rates_Portfolio']['Price/Prospective Earnings']
+                    stock_yield = data['ETF_Data']['Yield']
+                    beta = data['Technicals']['Beta']
+                    week_high_52 = data['Technicals']['52WeekHigh']
+                    week_low_52 = data['Technicals']['52WeekLow']
+                    day_ma_50 = data['Technicals']['50DayMA']
+                    day_ma_200 = data['Technicals']['200DayMA']
                 else:
-                    fundamental_data.append(
-                        [ticker,
-                         data['Highlights']['PERatio'], data['Highlights']['DividendYield'],
-                         data['Technicals']['Beta'], data['Technicals']['52WeekHigh'],
-                         data['Technicals']['52WeekLow'],
-                         data['Technicals']['50DayMA'], data['Technicals']['200DayMA'], data['Highlights']['MarketCapitalization']])
+                    pe_ratio = data['Highlights']['PERatio']
+                    stock_yield = data['Highlights']['DividendYield']
+                    beta = data['Technicals']['Beta']
+                    week_high_52 = data['Technicals']['52WeekHigh']
+                    week_low_52 = data['Technicals']['52WeekLow']
+                    day_ma_50 = data['Technicals']['50DayMA']
+                    day_ma_200 = data['Technicals']['200DayMA']
+                    market_capitalization = data['Highlights']['MarketCapitalization']
+                fundamental_data.append(
+                    [ticker, pe_ratio, stock_yield, beta, week_high_52, week_low_52,
+                     day_ma_50, day_ma_200, market_capitalization])
             fundamentals = pd.DataFrame(fundamental_data, columns=column_names)
             fundamentals.fillna(0, inplace=True)
             return fundamentals
