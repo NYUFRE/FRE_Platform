@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 from io import TextIOWrapper
 from typing import Collection
 
-
 class IEXMarketData:
     def __init__(self, api_token: str):
         self.url_common = "https://cloud.iexapis.com/stable/stock/"
@@ -248,6 +247,9 @@ class EODMarketData:
         sp500_data = []
         sp500_holdings = data["ETF_Data"]["Holdings"]
         for holding in sp500_holdings.values():
+            # Skip stock L0T.F which is trade in German Exchange F, very low percentage of SPY
+            if holding["Exchange"] != "US":
+                continue
             symbol = holding["Code"]
             name = holding["Name"]
             sector = holding["Sector"]
