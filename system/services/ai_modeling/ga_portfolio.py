@@ -298,7 +298,9 @@ class GAPortfolio:
         """
         Sum of stock's yield * weight
         """
-        self.portfolio_yield = sum(self.fundamental_df['dividend_yield'] * self.fundamental_df['weight'])
+        dividend_array = np.array(self.fundamental_df['dividend_yield'].values, dtype='float32')
+        weight_array = np.array(self.fundamental_df['weight'].values, dtype='float32')
+        self.portfolio_yield = np.dot(dividend_array, weight_array)
 
     def calculate_beta_and_trend(self) -> None:
         """
@@ -311,9 +313,9 @@ class GAPortfolio:
 
 
     def calculate_score(self, spy: Stock) -> None:
-        spy_yield = spy.fundamental_df['dividend_yield'].iloc[0]
-        spy_beta = spy.fundamental_df['beta'].iloc[0]
-        spy_volatility = spy.volatility
+        spy_yield = float(spy.fundamental_df['dividend_yield'].iloc[0])
+        spy_beta = float(spy.fundamental_df['beta'].iloc[0])
+        spy_volatility = float(spy.volatility)
         self.score = (self.portfolio_yield - spy_yield) + (spy_beta - self.beta) + self.trend + \
                      self.volatility / spy_volatility + \
                      self.sharpe_ratio + self.treynor_measure + self.jensen_measure
