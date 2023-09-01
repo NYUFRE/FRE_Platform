@@ -70,7 +70,9 @@ common =  [
     "tqdm==4.62.1",
     "nltk==3.7",
     "snscrape==0.4.3.20220106",
-    "emoji==2.0.0"
+    "emoji==2.0.0",
+    "yfinance==0.2.28",
+    "PyAlgoTrade==0.20"
 
 ]
 
