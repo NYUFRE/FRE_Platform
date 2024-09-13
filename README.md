@@ -120,7 +120,7 @@ python app.py
 ```
 Stop the platform by Ctrl-C and deactivate the virtualenv
 ```
-.\venv\Script\deactivate.bat 
+.\venv\Scripts\deactivate.bat 
 ```
 ### With Docker
 Either build from source or pull from docker cloud repository.
