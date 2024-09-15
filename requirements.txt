@@ -59,7 +59,7 @@ yahoo_earnings_calendar
 yfinance
 tqdm
 #TA_Lib
-TA_Lib-0.4.24-cp39-cp39-win_amd64.whl
+TA_Lib-0.4.28-cp311-cp311-win_amd64.whl
 pyportfolioopt
 scikit-learn
 # BeautifulSoup for web crawling
