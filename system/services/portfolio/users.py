@@ -13,9 +13,10 @@ from system.services.portfolio.models import User
 
 def add_admin_user():
     try:
-        admin_user = User(email='FrePlatform@gmail.com', last_name='Admin', first_name='FrePlatform', plaintext_password='123456', role='admin', cash='0.0')
-        db.session.add(admin_user)
-        db.session.commit()
+        with app.app_context():
+            admin_user = User(email='FrePlatform@gmail.com', last_name='Admin', first_name='FrePlatform', plaintext_password='123456', role='admin', cash='0.0')
+            db.session.add(admin_user)
+            db.session.commit()
     except SQLAlchemyError:
         db.session.rollback()
 
