@@ -7,7 +7,7 @@ import yfinance as yfin
 import matplotlib.pyplot as plt
 import random
 from system import database
-yfin.pdr_override()
+#yfin.pdr_override()
 
 # Import earnings crawler
 from .earnings_crawler import *

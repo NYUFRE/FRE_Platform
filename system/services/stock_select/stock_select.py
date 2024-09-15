@@ -4,7 +4,7 @@ from keras.models import Sequential
 from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
-from keras.layers.core import Dense, Activation, Dropout
+from tensorflow.keras.layers import Dense, Activation, Dropout
 import pandas as pd
 
 top_stocks_res = []
