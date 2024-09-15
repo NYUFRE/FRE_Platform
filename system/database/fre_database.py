@@ -1,16 +1,14 @@
 import pandas as pd
 from sqlalchemy import ForeignKey, Integer, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, BOOLEAN
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, text
 from sqlalchemy import Table, Column
 from typing import Collection, List, Dict, Union
-
-
 
 class FREDatabase:
     def __init__(self, database_uri='sqlite:///instance/fre_database.db'):
         self.engine = create_engine(database_uri)
         self.conn = self.engine.connect()
-        self.conn.execute("PRAGMA foreign_keys = ON")
+        self.conn.execute(text("PRAGMA foreign_keys = ON"))
 
         self.metadata = MetaData()
         self.metadata.reflect(bind=self.engine)
@@ -286,7 +284,6 @@ class FREDatabase:
                 tbl = self._ddl(table_name)
                 tbl.create(self.engine)
 
-
     def clear_table(self, table_list):
         conn = self.engine.connect()
         for table_name in table_list:
@@ -295,8 +292,9 @@ class FREDatabase:
             conn.execute(delete_stmt)
 
     def drop_table(self, table_name):
-        sql_stmt = 'Drop Table if exists ' + table_name + ';'
-        self.engine.execute(sql_stmt)
+        sql_stmt = text('Drop Table if exists ' + table_name + ';')
+        with self.engine.connect() as conn:
+            conn.execute(sql_stmt)
 
     def check_table_exists(self, table_name: str) -> bool:
         if self.engine.has_table(table_name):
@@ -308,38 +306,42 @@ class FREDatabase:
         """
         Returns True if the table is empty, returns false if the table is not empty
         """
-        sql_stmt = f"SELECT COUNT(*) FROM {table_name};"
-        result_set = self.engine.execute(sql_stmt)
-        result = result_set.fetchone()
-        if result[0] == 0:
-            return True
-        else:
-            return False
+        sql_stmt = text("SELECT COUNT(*) FROM table_name;")
+        with self.engine.connect() as conn:
+            result_set = conn.execute(sql_stmt)
+            result = result_set.fetchone()
+            if result[0] == 0:
+                return True
+            else:
+                return False
 
     def execute_sql_statement(self, sql_stmt, change=False):
-        if change:
-            self.engine.execute(sql_stmt)
-        else:
-            result_set = self.engine.execute(sql_stmt)
-            result_df = pd.DataFrame(result_set.fetchall())
-            if not result_df.empty:
-                result_df.columns = result_set.keys()
-            return result_df
+        with self.engine.connect() as conn:
+            if change:
+                conn.execute(text(sql_stmt))
+            else:
+                result_set = conn.execute(text(sql_stmt))
+                result_df = pd.DataFrame(result_set.fetchall())
+                if not result_df.empty:
+                    result_df.columns = result_set.keys()
+                return result_df
 
     def get_sp500_symbols(self):
         symbols = []
-        result = self.engine.execute("SELECT symbol FROM sp500")
-        data = result.fetchall()
-        for i in range(len(data)):
-            symbols.append(data[i][0])
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT symbol FROM sp500"))
+            data = result.fetchall()
+            for i in range(len(data)):
+                symbols.append(data[i][0])
         return symbols
 
     def get_sp500_sectors(self):
         sectors = []
-        result = self.engine.execute("SELECT sector FROM sp500_sectors")
-        data = result.fetchall()
-        for i in range(len(data)):
-            sectors.append(data[i][0])
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT sector FROM sp500_sectors"))
+            data = result.fetchall()
+            for i in range(len(data)):
+                sectors.append(data[i][0])
         return sectors
 
     def get_sp500_symbol_map(self):
@@ -348,14 +350,15 @@ class FREDatabase:
         for sector in sectors:
             sp500_symbol_map[sector] = []
 
-        result = self.engine.execute("SELECT * FROM sp500")
-        data = result.fetchall()
-        for stock_data in data:
-            # An data quaility issue was found, a SP500 stock did not belong to any SP500 industry
-            # The issue is recorded as issue #126
-            # The fix is to check the sector for a stock before adding into map
-            if stock_data['sector'] in sectors:
-                sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT * FROM sp500"))
+            data = result.fetchall()
+            for stock_data in data:
+                # An data quality issue was found, a SP500 stock did not belong to any SP500 industry
+                # The issue is recorded as issue #126
+                # The fix is to check the sector for a stock before adding into map
+                if stock_data['sector'] in sectors:
+                    sp500_symbol_map[stock_data['sector']].append((stock_data['symbol'], stock_data['name']))
         return sp500_symbol_map
 
     def get_user(self, email_address: str, uid: int) -> Dict[str, Union[int, float, str]]:
@@ -363,13 +366,13 @@ class FREDatabase:
         user = {'user_id': '', 'cash': 0.0, 'last_name': '', 'first_name': '', 'email': ''}
 
         if len(email_address) > 0:
-            result = self.engine.execute(f"SELECT user_id, cash, last_name, first_name, email FROM users "
-                                         f"WHERE email = '{email_address}'")
-            data = result.fetchall()
+            with self.engine.connect() as conn:
+                result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE email = \"email_address\""))
+                data = result.fetchall()
         elif uid > 0:
-            result = self.engine.execute(f"SELECT user_id, cash, last_name, first_name, email FROM users "
-                                         f"WHERE user_id = {uid}")
-            data = result.fetchall()
+            with self.engine.connect() as conn:
+                result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = int(uid)"))
+                data = result.fetchall()
 
         # TODO! Improve the logic for getting users
         if len(data) > 0:
@@ -381,59 +384,57 @@ class FREDatabase:
 
         return user
 
-    def get_portfolio(self, uid: int, symbol: str = "") -> Dict[str, Union[List[float], List[str], str, float]]:
+    def get_portfolio(self, uid: int, symbol_: str = "") -> Dict[str, Union[List[float], List[str], str, float]]:
         """
         Get portfolio info or position info(if symbol is provided)
         :param uid: user id
-        :param symbol: stock symbol
+        :param symbol_: stock symbol
         :return: Portfolio (or symbol's position) info in a dictionary
         """
         data = []
         portfolio = {'email': '', 'cash': 0.0, 'symbol': [], 'name': [], 'shares': [],
                      'price': [], 'avg_cost': [], 'total': [], 'pnl': [], 'proportion': []}
 
-        result = self.engine.execute(f'SELECT user_id, cash, last_name, first_name, email FROM users '
-                                     f'WHERE user_id = {uid}')
-        data = result.fetchall()
-        if len(data) == 0:
-            return portfolio
-
-        email = data[0]["email"]
-        username = data[0]['first_name'] + ' ' + data[0]['last_name']
-        cash = float(data[0]["cash"])
-
-        # if symbol is provided, select the info on that stock position
-        if len(symbol) > 0:
-            result = self.engine.execute(f"SELECT symbol, shares, avg_cost FROM portfolios "
-                                         f"WHERE user_id = {uid} AND symbol = '{symbol}'")
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = 'uid'"))
             data = result.fetchall()
-        # if no symbol is provided, select the entire portfolio info
-        else:
-            result = self.engine.execute(f"SELECT symbol, shares, avg_cost FROM portfolios "
-                                         f"WHERE user_id = {uid}")
-            data = result.fetchall()
-        # no record: only cash
-        if len(data) == 0:
+            if len(data) == 0:
+                return portfolio
+
+            email = data[0]['email']
+            username = data[0]['first_name'] + ' ' + data[0]['last_name']
+            cash = float(data[0]['cash'])
+
+            # if symbol is provided, select the info on that stock position
+            if len(symbol_) > 0:
+                result = conn.execute(text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = uid AND symbol = symbol_"))
+                data = result.fetchall()
+            # if no symbol is provided, select the entire portfolio info
+            else:
+                result = conn.execute(text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = uid"))
+                data = result.fetchall()
+                # no record: only cash
+                if len(data) == 0:
+                    portfolio['cash'] = cash
+                    return portfolio
+
+                for row in data:
+                    portfolio['symbol'].append(row['symbol'])
+                    portfolio['shares'].append(row['shares'])
+                    portfolio['avg_cost'].append(row['avg_cost'])
+                    portfolio['name'].append('')
+                    portfolio['price'].append(0.0)
+                    portfolio['pnl'].append(0.0)
+                    portfolio['total'].append(0.0)
+                    portfolio['proportion'].append(0.0)
+
+            portfolio['email'] = email
+            portfolio['username'] = username
             portfolio['cash'] = cash
-            return portfolio
 
-        for row in data:
-            portfolio['symbol'].append(row['symbol'])
-            portfolio['shares'].append(row['shares'])
-            portfolio['avg_cost'].append(row['avg_cost'])
-            portfolio['name'].append('')
-            portfolio['price'].append(0.0)
-            portfolio['pnl'].append(0.0)
-            portfolio['total'].append(0.0)
-            portfolio['proportion'].append(0.0)
-
-        portfolio['email'] = email
-        portfolio['username'] = username
-        portfolio['cash'] = cash
-
-        print(portfolio['symbol'])
-        print('---')
-        print(portfolio['shares'])
+            print(portfolio['symbol'])
+            print('---')
+            print(portfolio['shares'])
 
         return portfolio
 
@@ -444,175 +445,179 @@ class FREDatabase:
         :return: Transaction info in a dictionary
         """
         transactions = {'symbol': [], 'price': [], 'shares': [], 'timestamp': []}
-
-        result = self.engine.execute(f"SELECT symbol, price, shares, timestamp FROM transactions "
-                                     f"WHERE user_id = {uid}")
-        data = result.fetchall()
-        for row in data:
-            transactions['symbol'].append(row['symbol'])
-            transactions['price'].append(row['price'])
-            transactions['shares'].append(row['shares'])
-            transactions['timestamp'].append(row['timestamp'])
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT symbol, price, shares, timestamp FROM transactions WHERE user_id = uid"))
+            data = result.fetchall()
+            for row in data:
+                transactions['symbol'].append(row['symbol'])
+                transactions['price'].append(row['price'])
+                transactions['shares'].append(row['shares'])
+                transactions['timestamp'].append(row['timestamp'])
         return transactions
 
     def get_bonds_suggest(self, keyword: str, month: str, year: str):
-        result = self.engine.execute(f"SELECT DISTINCT Name from bond_list where Name LIKE '{keyword}%' "
-                                     f"AND Name LIKE '%{month}{year}' ORDER BY Name ASC")
-        data = result.fetchall()
-        bond_names = []
-        for row in data:
-            bond_names.append(row['Name'])
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT DISTINCT Name from bond_list where Name LIKE 'keyword%' AND Name LIKE '%monthyear' ORDER BY Name ASC"))
+            data = result.fetchall()
+            bond_names = []
+            for row in data:
+                bond_names.append(row['Name'])
         return bond_names
 
     def get_bond_cusip(self, name: str):
-        result = self.engine.execute(f"SELECT Code from bond_list where Name = '{name}'")
-        data = result.fetchall()
-        return data[0]['Code']
+        with self.engine.connect() as conn:
+            result = conn.execute(text("SELECT Code from bond_list where Name = name"))
+            data = result.fetchall()
+            return data[0]['Code']
 
-    def save_bond(self, uid, alias: str, symbol: str, coupon: float, ytm: float, fullprice: float,
-                  accruedinterest: float, flatprice: float, maturdate: str, freq: str, saveddate: str):
-        check_existed = self.engine.execute(f"SELECT alias from saved_bond where alias = '{alias}' AND user_id = {uid}")
-        data = check_existed.fetchall()
-        if data:
-            return True
+    def save_bond(self, uid_, alias_: str, symbol_: str, coupon_: float, ytm_: float, fullprice_: float,
+                  accruedinterest_: float, flatprice_: float, maturdate_: str, freq_: str, saveddate_: str):
+        with self.engine.connect() as conn:
+            check_existed = conn.execute(text("SELECT alias from saved_bond where alias = alias_ AND user_id = uid_"))
+            data = check_existed.fetchall()
+            if data:
+                return True
 
-        self.engine.execute(f"INSERT INTO saved_bond (alias, symbol, coupon, ytm, fullprice, accruedinterest, flatprice, maturity_date, frequency, savedate, user_id) "
-                            f"VALUES ('{alias}', '{symbol}', {coupon}, {ytm}, {fullprice}, {accruedinterest}, {flatprice}, '{maturdate}', '{freq}', '{saveddate}', {uid})")
-        return False
+            conn.execute(text(f"INSERT INTO saved_bond (alias, symbol, coupon, ytm, fullprice, accruedinterest, flatprice, maturity_date, frequency, savedate, user_id) "
+                            f"VALUES (alias_, symbol_, coupon_, ytm_, fullprice_, accruedinterest_, flatprice_, maturdate_, freq_, saveddate_, uid_)"))
+            return False
 
-    def save_bond_ptfl(self, uid, alias: str, mb: str, hb1: str, hb2: str, w0: str, w1: str, w2: str,
-                       mb_action: str, h_action: str, mb_fullprice: float, hb1_fullprice: float, hb2_fullprice: float,
-                       mb_mv: float, hb1_mv: float, hb2_mv: float, mb_fv: float, hb1_fv: float, hb2_fv: float,
-                       saveddate: str):
-        check_existed = self.engine.execute(f"SELECT alias from saved_bond_ptfl where alias = '{alias}' AND user_id = {uid}")
-        data = check_existed.fetchall()
-        if data:
-            return True
+    def save_bond_ptfl(self, uid_, alias_: str, mb_: str, hb1_: str, hb2_: str, w0_: str, w1_: str, w2_: str,
+                       mb_action_: str, h_action_: str, mb_fullprice_: float, hb1_fullprice_: float, hb2_fullprice_: float,
+                       mb_mv_: float, hb1_mv_: float, hb2_mv_: float, mb_fv_: float, hb1_fv_: float, hb2_fv_: float,
+                       saveddate_: str):
+        with self.engine.connect() as conn:
+            check_existed = conn.execute(text(f"SELECT alias from saved_bond_ptfl where alias = alias_ AND user_id = uid_"))
+            data = check_existed.fetchall()
+            if data:
+                return True
 
-        self.engine.execute(f"INSERT INTO saved_bond_ptfl (alias, mb, hb1, hb2, w0, w1, w2, mb_action, h_action, mb_fullprice, hb1_fullprice, hb2_fullprice, mb_mv, hb1_mv, hb2_mv, mb_fv, hb1_fv, hb2_fv,savedate,user_id) "
-                            f"VALUES ('{alias}', '{mb}', '{hb1}', '{hb2}', '{w0}', '{w1}', '{w2}','{mb_action}', '{h_action}', {mb_fullprice}, {hb1_fullprice}, {hb2_fullprice}, {mb_mv}, {hb1_mv}, {hb2_mv},{mb_fv},{hb1_fv},{hb2_fv}, '{saveddate}', {uid})")
-        return False
+            conn.execute(text(f"INSERT INTO saved_bond_ptfl (alias, mb, hb1, hb2, w0, w1, w2, mb_action, h_action, mb_fullprice, hb1_fullprice, hb2_fullprice, mb_mv, hb1_mv, hb2_mv, mb_fv, hb1_fv, hb2_fv,savedate,user_id) "
+                            f"VALUES (alias_, mb_, hb1_, hb2_, w0_, w1_, w2_,mb_action_, h_action_, mb_fullprice_, hb1_fullprice_, hb2_fullprice_, mb_mv_, hb1_mv_, hb2_mv_,mb_fv_,hb1_fv_,hb2_fv_, saveddate_, uid_)"))
+            return False
 
     def get_saved_bonds(self, uid):
-        result = self.engine.execute(f"SELECT alias, symbol from saved_bond where user_id = {uid} ORDER BY savedate DESC")
-        data = result.fetchall()
-        return data
+        with self.engine.connect() as conn:
+            result = conn.execute(text(f"SELECT alias, symbol from saved_bond where user_id = uid ORDER BY savedate DESC"))
+            data = result.fetchall()
+            return data
 
     def get_saved_bond_ptfls(self, uid):
-        result = self.engine.execute(f"SELECT alias, mb, hb1, hb2 from saved_bond_ptfl where user_id = {uid} ORDER BY savedate DESC")
-        data = result.fetchall()
-        return data
+        with self.engine.connect() as conn:
+            result = conn.execute(text(f"SELECT alias, mb, hb1, hb2 from saved_bond_ptfl where user_id = uid ORDER BY savedate DESC"))
+            data = result.fetchall()
+            return data
 
-    def get_bond_ptfl_via_alias(self, uid, alias: str):
-        result = self.engine.execute(f"SELECT * from saved_bond_ptfl where user_id = {uid} and alias = '{alias}'")
-        data = result.fetchall()[0]
-        return data
+    def get_bond_ptfl_via_alias(self, uid, alias_: str):
+        with self.engine.connect() as conn:
+            result = conn.execute(text(f"SELECT * from saved_bond_ptfl where user_id = uid and alias = alias_"))
+            data = result.fetchall()[0]
+            return data
 
+    def get_bond_via_alias(self, uid, alias_: str):
+        with self.engine.connect() as conn:
+            result = conn.execute(text(f"SELECT symbol, coupon, ytm, flatprice, maturity_date, frequency from saved_bond where alias = alias_ AND user_id = uid"))
+            data = result.fetchall()[0]
+            return data['symbol'], data['coupon'], data['ytm'], data['flatprice'], data['maturity_date'], data['frequency'],
 
-    def get_bond_via_alias(self, uid, alias: str):
-        result = self.engine.execute(f"SELECT symbol, coupon, ytm, flatprice, maturity_date, frequency from saved_bond where alias = '{alias}' AND user_id = {uid}")
-        data = result.fetchall()[0]
-        return data['symbol'], data['coupon'], data['ytm'], data['flatprice'], data['maturity_date'], data['frequency'],
-
-
-    def create_buy_transaction(self, uid, cash, symbol, shares, price, timestamp):
+    def create_buy_transaction(self, uid_, cash_, symbol_, shares_, price_, timestamp_):
         """
         Record the buying transaction info into database
-        :param uid: user idß
-        :param cash: new cash after buying
-        :param symbol: stock ticker
-        :param shares: shares to buy
-        :param price: price to buy at
-        :param timestamp: when the transaction happens
+        :param uid_: user idß
+        :param cash_: new cash after buying
+        :param symbol_: stock ticker
+        :param shares_: shares to buy
+        :param price_: price to buy at
+        :param timestamp_: when the transaction happens
         :return: None
         """
         # Update the cash
-        self.engine.execute(f"UPDATE users SET cash = {cash} WHERE user_id = {uid}")
+        with self.engine.connect() as conn:
+            conn.execute(text(f"UPDATE users SET cash = cash_ WHERE user_id = uid_"))
 
         # Insert the buying record into transactions table
-        self.engine.execute(f"INSERT INTO transactions (symbol, price, shares, timestamp, user_id) "
-                            f"VALUES ('{symbol}', {price}, {shares}, '{timestamp}', {uid})")
+        self.engine.connect().execute(text(f"INSERT INTO transactions (symbol, price, shares, timestamp, user_id) "
+                            f"VALUES (symbol_, price_, shares_, timestamp_, uid_)"))
 
         # Check position and cost
-        result = self.engine.execute(f"SELECT shares, avg_cost FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+        result = self.engine.connect().execute(text(f"SELECT shares, avg_cost FROM portfolios WHERE user_id = uid_ AND symbol = symbol_"))
         data = result.fetchall()
         # When holding same stock
         if len(data) > 0:
             existing_shares = data[0]['shares']
             # Add new shares to the existing position
-            updated_shares = existing_shares + shares
+            updated_shares = existing_shares + shares_
             if updated_shares == 0:
-                self.engine.execute(f"DELETE FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+                self.engine.connect().execute(text(f"DELETE FROM portfolios WHERE user_id = uid_ AND symbol = symbol_"))
             else:
                 # calculate avg cost
                 existing_cost = data[0]['avg_cost']
-                updated_cost = (existing_cost * existing_shares + price * shares) / updated_shares
-                self.engine.execute(f"UPDATE portfolios SET shares = {updated_shares}, avg_cost = {updated_cost} "
-                                f"WHERE user_id = {uid} AND symbol = '{symbol}'")
+                updated_cost = (existing_cost * existing_shares + price_ * shares_) / updated_shares
+                self.engine.connect().execute(text(f"UPDATE portfolios SET shares = updated_shares, avg_cost = updated_cost WHERE user_id = uid_ AND symbol = symbol_"))
         # Without holding the stock
         else:
-            self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
-                                f"VALUES ({uid}, {shares}, '{symbol}',{price})")
+            self.engine.connect().execute(text(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
+                                f"VALUES (uid_, shares_, symbol_,price_)"))
 
-    def create_sell_transaction(self, uid, new_cash, symbol, shares, new_shares, price, timestamp):
+    def create_sell_transaction(self, uid_, new_cash_, symbol_, shares_, new_shares_, price_, timestamp_):
         """
         Record the selling transaction info into database.
-        :param uid: user id
-        :param new_cash: cash after selling
-        :param symbol: stock ticker
-        :param shares: shares holding after selling
-        :param new_shares: negative, shares to sell
-        :param price: price to sell at
-        :param timestamp: when the transaction happens
+        :param uid_: user id
+        :param new_cash_: cash after selling
+        :param symbol_: stock ticker
+        :param shares_: shares holding after selling
+        :param new_shares_: negative, shares to sell
+        :param price_: price to sell at
+        :param timestamp_: when the transaction happens
         :return: None
         """
         # Insert the selling record into transactions table
-        self.engine.execute(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
-                            f"VALUES ('{symbol}',{new_shares},{price},'{timestamp}',{uid})")
+        self.engine.connect().execute(text(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
+                            f"VALUES (symbol_,new_shares_,price_,timestamp_,uid_)"))
         # If selling all holding on certain stock, delete the record in portfolio and update the cash
-        if shares == 0:
-            self.engine.execute(f"DELETE FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
-            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+        if shares_ == 0:
+            self.engine.connect().execute(text(f"DELETE FROM portfolios WHERE user_id = uid_ AND symbol = symbol_"))
+            self.engine.connect().execute(text(f"UPDATE users SET cash = new_cash_ WHERE user_id = uid_"))
         # Still remain some holding position in the account, update the portfolios table also the cash
         else:
-            self.engine.execute(f"UPDATE portfolios set shares = {shares} WHERE user_id = {uid} AND symbol = '{symbol}'")
-            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+            self.engine.connect().execute(text(f"UPDATE portfolios set shares = shares_ WHERE user_id = uid_ AND symbol = symbol_"))
+            self.engine.connect().execute(text(f"UPDATE users SET cash = new_cash_ WHERE user_id = uid_"))
 
-    def create_short_transaction(self, uid, new_cash, symbol, shares, new_shares, price, timestamp):
+    def create_short_transaction(self, uid_, new_cash_, symbol_, shares_, new_shares_, price_, timestamp_):
         """
         Record the selling transaction info into database.
-        :param uid: user id
-        :param new_cash: cash after selling
-        :param symbol: stock ticker
-        :param shares: shares holding after selling
-        :param new_shares: negative, shares to sell
-        :param price: price to sell at
-        :param timestamp: when the transaction happens
+        :param uid_: user id
+        :param new_cash_: cash after selling
+        :param symbol_: stock ticker
+        :param shares_: shares holding after selling
+        :param new_shares_: negative, shares to sell
+        :param price_: price to sell at
+        :param timestamp_: when the transaction happens
         :return: None
         """
         # Insert the selling record into transactions table
-        self.engine.execute(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
-                            f"VALUES ('{symbol}',{new_shares},{price},'{timestamp}',{uid})")
+        self.engine.connect().execute(text(f"INSERT INTO transactions (symbol,shares,price,timestamp,user_id) "
+                            f"VALUES (symbol_,new_shares_,price_,timestamp_,uid_)"))
 
         # Check position and cost
-        result = self.engine.execute(
-            f"SELECT shares, avg_cost FROM portfolios WHERE user_id = {uid} AND symbol = '{symbol}'")
+        result = self.engine.connect().execute(
+            text(f"SELECT shares, avg_cost FROM portfolios WHERE user_id = uid_ AND symbol = symbol_"))
         data = result.fetchall()
         # When holding same stock
         if len(data) > 0:
             existing_shares = data[0]['shares']
             # calculate avg cost
             existing_cost = data[0]['avg_cost']
-            updated_cost = (existing_cost * existing_shares + price * new_shares) / shares
-            self.engine.execute(f"UPDATE portfolios SET shares = {shares}, avg_cost = {updated_cost} "
-                                f"WHERE user_id = {uid} AND symbol = '{symbol}'")
-            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+            updated_cost = (existing_cost * existing_shares + price_ * new_shares_) / shares_
+            self.engine.connect().execute(text(f"UPDATE portfolios SET shares = shares_, avg_cost = updated_cost "
+                                f"WHERE user_id = uid_ AND symbol = symbol_"))
+            self.engine.connect().execute(text(f"UPDATE users SET cash = new_cash_ WHERE user_id = uid_"))
         # Without holding the stock
         else:
-            self.engine.execute(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
-                                f"VALUES ({uid}, {shares}, '{symbol}',{price})")
-            self.engine.execute(f"UPDATE users SET cash = {new_cash} WHERE user_id = {uid}")
+            self.engine.connect().execute(text(f"INSERT INTO portfolios (user_id, shares, symbol, avg_cost) "
+                                f"VALUES (uid_, shares_, symbol_,price_)"))
+            self.engine.connect().execute(text(f"UPDATE users SET cash = new_cash_ WHERE user_id = uid_"))
 
     def create_earnings_calendar(self, symbol, date, surprise):
-        self.engine.execute(f"INSERT INTO earnings_calendar "
-                            f"VALUES ('{symbol}','{date}',{surprise})")
+        self.engine.connect().execute(text(f"INSERT INTO earnings_calendar "
+                            f"VALUES (symbol, date, surprise)"))
