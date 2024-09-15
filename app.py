@@ -758,7 +758,8 @@ if __name__ == "__main__":
     # global parameters
     top_stocks_list = []
     database.create_table(table_list)
-    add_admin_user()
+    with app.app_context():
+        add_admin_user()
 
     final_df = pd.DataFrame()
 
