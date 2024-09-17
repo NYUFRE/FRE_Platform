@@ -93,17 +93,14 @@ After clone the FRE_Platform repo from Github, create the virtualenv directory i
 (Run python -V to check the Python versions in your environment, does not use version 3.12 or higher as some packages such as trading-calendars have not updated to 3.12)
 ```
 py -3.11 -m venv venv
-
 ```
 Activate the virtual env
 ```
 .\venv\Scripts\activate
-
 ```
 If you are using MAC computer, using
 ```
 source venv/bin/activate
-
 ```
 Install the required packages
 ```
