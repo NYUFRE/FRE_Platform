@@ -90,8 +90,9 @@ git commit -m "test(system/ai_trading): add unit test to ai_trading system."
 ## Launch FRE Platform
 ### With Virtual Env
 After clone the FRE_Platform repo from Github, create the virtualenv directory in FRE_Platform
+(Run Python -V to check the Python versions in your environment, does not use version 3.12 or higher as some packages such as trading-calendars have not updated to 3.12)
 ```
-python -m venv venv
+py -3.11 -m venv venv
 
 You may need to use to python3 instead of python, please run python -V to verify your version before doing this.
 ```
@@ -104,7 +105,7 @@ If you are using MAC computer, using
 source venv/bin/activate
 
 ```
-Install the required packages (Run Python -V to check the Python version in your virtual env, version 3.8 or 3.9 is preferred)
+Install the required packages
 ```
 python install.py
 ```
