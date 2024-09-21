@@ -246,6 +246,8 @@ class EODMarketData:
         sp500_column_names = ['symbol', 'name', 'sector', 'industry', 'weight']
         sp500_data = []
         sp500_holdings = data["ETF_Data"]["Holdings"]
+        sp500_table_list = ["sp500", "sp500_sectors"]
+        self.database.clear_table(sp500_table_list)
         for holding in sp500_holdings.values():
             # Skip stock L0T.F which is trade in German Exchange F, very low percentage of SPY
             if holding["Exchange"] != "US":
@@ -269,8 +271,8 @@ class EODMarketData:
         sp500_sector_data = []
         for key, value in data["ETF_Data"]["Sector_Weights"].items():
             sector = key
-            equity_pct = float(value['Equity_%']) / 100
-            category_pct = float(value['Relative_to_Category']) / 100
+            equity_pct = float(value['Equity_%'])
+            category_pct = float(value['Relative_to_Category'])
             sp500_sector_data.append([sector, equity_pct, category_pct])
         sp500_sectors = pd.DataFrame(sp500_sector_data, columns=sp500_sector_column_names)
         sp500_sectors.to_sql("sp500_sectors", con=self.database.engine, if_exists='append', index=False)

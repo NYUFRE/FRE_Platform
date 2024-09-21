@@ -16,7 +16,7 @@ def pair_trade_back_test_service():
     back_testing_end_date = client_config.back_testing_end_date
     pair_trade_back_test(back_testing_start_date, back_testing_end_date)
 
-    select_stmt = "SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
+    select_stmt = f"SELECT symbol1, symbol2, sum(profit_loss) AS Profit, count(profit_loss) AS Total_Trades, \
                         sum(CASE WHEN profit_loss > 0 THEN 1 ELSE 0 END) AS Profit_Trades, \
                         sum(CASE WHEN profit_loss <0 THEN 1 ELSE 0 END) AS Loss_Trades FROM pair_trades  \
                         WHERE profit_loss <> 0 \

@@ -1,6 +1,6 @@
 import pandas as pd
 from sqlalchemy import ForeignKey, Integer, Numeric, Text, DATETIME, CHAR, String, DATE, VARCHAR, BLOB, BOOLEAN
-from sqlalchemy import create_engine, MetaData, text
+from sqlalchemy import create_engine, MetaData, text, inspect
 from sqlalchemy import Table, Column
 from typing import Collection, List, Dict, Union
 
@@ -290,6 +290,7 @@ class FREDatabase:
             table = self.metadata.tables[table_name]
             delete_stmt = table.delete()
             conn.execute(delete_stmt)
+            conn.commit()
 
     def drop_table(self, table_name):
         sql_stmt = text('Drop Table if exists ' + table_name + ';')
@@ -297,16 +298,15 @@ class FREDatabase:
             conn.execute(sql_stmt)
 
     def check_table_exists(self, table_name: str) -> bool:
-        if self.engine.has_table(table_name):
-            return True
-        else:
-            return False
+        ins = inspect(self.engine)
+        ret = ins.dialect.has_table(self.engine.connect(), table_name)
+        return ret
     
     def check_table_empty(self, table_name: str) -> bool:
         """
         Returns True if the table is empty, returns false if the table is not empty
         """
-        sql_stmt = text("SELECT COUNT(*) FROM table_name;")
+        sql_stmt = text(f'SELECT COUNT(*) FROM "{table_name}";')
         with self.engine.connect() as conn:
             result_set = conn.execute(sql_stmt)
             result = result_set.fetchone()
@@ -315,12 +315,13 @@ class FREDatabase:
             else:
                 return False
 
-    def execute_sql_statement(self, sql_stmt, change=False):
+    def execute_sql_statement(self, stmt, change=False):
         with self.engine.connect() as conn:
             if change:
-                conn.execute(text(sql_stmt))
+                conn.execute(stmt)
             else:
-                result_set = conn.execute(text(sql_stmt))
+                sql_stmt = text(stmt)
+                result_set = conn.execute(sql_stmt)
                 result_df = pd.DataFrame(result_set.fetchall())
                 if not result_df.empty:
                     result_df.columns = result_set.keys()
@@ -352,7 +353,7 @@ class FREDatabase:
 
         with self.engine.connect() as conn:
             result = conn.execute(text("SELECT * FROM sp500"))
-            data = result.fetchall()
+            data = result.mappings().all()  # The content of table formatted as list of dictionary
             for stock_data in data:
                 # An data quality issue was found, a SP500 stock did not belong to any SP500 industry
                 # The issue is recorded as issue #126
@@ -366,21 +367,25 @@ class FREDatabase:
         user = {'user_id': '', 'cash': 0.0, 'last_name': '', 'first_name': '', 'email': ''}
 
         if len(email_address) > 0:
+            value = {'email_address':email_address}
             with self.engine.connect() as conn:
-                result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE email = \"email_address\""))
+                stmt = text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE email = :email_address")
+                result = conn.execute(stmt, value)
                 data = result.fetchall()
         elif uid > 0:
             with self.engine.connect() as conn:
-                result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = int(uid)"))
+                value = {'uid': uid}
+                stmt = text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = :uid")
+                result = conn.execute(stmt, value)
                 data = result.fetchall()
 
         # TODO! Improve the logic for getting users
         if len(data) > 0:
-            user['user_id'] = data[0]['user_id']
-            user['cash'] = data[0]['cash']
-            user['last_name'] = data[0]['last_name']
-            user['first_name'] = data[0]['first_name']
-            user['email'] = data[0]['email']
+            user['user_id'] = data[0][0] # user_id
+            user['cash'] = data[0][1]  # cash'
+            user['last_name'] = data[0][2] # last_name
+            user['first_name'] = data[0][3] # first_name
+            user['email'] = data[0][4] # email_address
 
         return user
 
@@ -396,7 +401,9 @@ class FREDatabase:
                      'price': [], 'avg_cost': [], 'total': [], 'pnl': [], 'proportion': []}
 
         with self.engine.connect() as conn:
-            result = conn.execute(text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = 'uid'"))
+            value = {'uid': uid}
+            stmt = text("SELECT user_id, cash, last_name, first_name, email FROM users WHERE user_id = :uid")
+            result = conn.execute(stmt, value)
             data = result.fetchall()
             if len(data) == 0:
                 return portfolio
@@ -407,11 +414,15 @@ class FREDatabase:
 
             # if symbol is provided, select the info on that stock position
             if len(symbol_) > 0:
-                result = conn.execute(text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = uid AND symbol = symbol_"))
+                value = {'symbol_': symbol_, 'uid': uid}
+                stmt = text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = :uid AND symbol = :symbol_")
+                result = conn.execute(stmt, value)
                 data = result.fetchall()
             # if no symbol is provided, select the entire portfolio info
             else:
-                result = conn.execute(text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = uid"))
+                value = {'uid': uid}
+                stmt = text("SELECT symbol, shares, avg_cost FROM portfolios WHERE user_id = :uid")
+                result = conn.execute(stmt, value)
                 data = result.fetchall()
                 # no record: only cash
                 if len(data) == 0:
@@ -446,7 +457,9 @@ class FREDatabase:
         """
         transactions = {'symbol': [], 'price': [], 'shares': [], 'timestamp': []}
         with self.engine.connect() as conn:
-            result = conn.execute(text("SELECT symbol, price, shares, timestamp FROM transactions WHERE user_id = uid"))
+            value = {'uid': uid}
+            stmt = text("SELECT symbol, price, shares, timestamp FROM transactions WHERE user_id = :uid")
+            result = conn.execute(stmt, value)
             data = result.fetchall()
             for row in data:
                 transactions['symbol'].append(row['symbol'])
