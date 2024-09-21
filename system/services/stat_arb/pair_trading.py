@@ -175,7 +175,7 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     populate_stock_data_from_db(pairs['symbol1'].unique(), 'pair1_stocks', start_date, end_date)
     populate_stock_data_from_db(pairs['symbol2'].unique(), 'pair2_stocks', start_date, end_date)
 
-    select_stmt = "SELECT stock_pairs.symbol1 AS symbol1, stock_pairs.symbol2 AS symbol2, \
+    select_stmt = f"SELECT stock_pairs.symbol1 AS symbol1, stock_pairs.symbol2 AS symbol2, \
                  pair1_stocks.date AS date, pair1_stocks.open AS open1, pair1_stocks.close AS close1, \
                  pair2_stocks.open AS open2, pair2_stocks.close AS close2 \
                  FROM stock_pairs, pair1_stocks, pair2_stocks \
@@ -203,7 +203,12 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     pair_price_df_stdev = pair_price_df_updated.groupby(['symbol1', 'symbol2'])['close_spread'].std()
     pair_price_df_mean_stdev = pd.concat([pair_price_df_mean, pair_price_df_stdev], axis=1)
     pair_price_df_mean_stdev.columns = ['price_mean', 'volatility']
-    pair_price_df_mean_stdev.to_sql('tmp', con=database.engine, if_exists='replace')
+    pair_price_df_mean_stdev['profit_loss'] = 0.0
+    database.clear_table(['stock_pairs'])
+    pair_price_df_mean_stdev.to_sql('stock_pairs', con=database.engine, if_exists='append')
+    return ""
+    #pair_price_df_mean_stdev.to_sql('tmp', con=database.engine, if_exists='replace')
+    '''
     update_st = """
         Update stock_pairs set price_mean = (SELECT t.price_mean 
                                             FROM tmp t
@@ -223,6 +228,7 @@ def build_pair_trading_model(corr_threshold: float = 0.95, adf_threshold: float 
     database.execute_sql_statement(update_st, True)
     database.drop_table('tmp')
     return ""
+    '''
 
 class StockPair:
     def __init__(self, symbol1, symbol2, volatility, price_mean):
@@ -296,7 +302,7 @@ def pair_trade_back_test(back_testing_start_date: str, back_testing_end_date: st
         aKey = (row['symbol1'], row['symbol2'])
         stock_pair_map[aKey] = StockPair(row['symbol1'], row['symbol2'], row['price_mean'], row['volatility'])
 
-    select_stmt = "SELECT stock_pairs.symbol1 as symbol1, stock_pairs.symbol2 as symbol2, beta0, beta1_hedgeratio " \
+    select_stmt = f"SELECT stock_pairs.symbol1 as symbol1, stock_pairs.symbol2 as symbol2, beta0, beta1_hedgeratio " \
                   "FROM stock_pairs, pair_info " \
                   "WHERE pair_info.symbol1 = stock_pairs.symbol1 AND pair_info.symbol2 = stock_pairs.symbol2;"
     result_df = database.execute_sql_statement(select_stmt)

@@ -73,7 +73,7 @@ def pair_trade_build_model_param_service():
         client_config.back_testing_start_date = back_testing_start_date
         client_config.back_testing_end_date = back_testing_end_date
 
-        error = build_pair_trading_model(corr_threshold, adf_threshold,
+        error = build_pair_trading_model(float(corr_threshold), float(adf_threshold),
                                          sector, pair_trading_start_date,
                                          back_testing_start_date, pair_trading_end_date)
         if len(error) > 0:
@@ -81,7 +81,7 @@ def pair_trade_build_model_param_service():
             return render_template("pair_trade_build_model_param.html", sector_list=sector_list,
                                    done_pair_trade_model=client_config.done_pair_model)
 
-        select_stmt = "SELECT * FROM stock_pairs;"
+        select_stmt = f"SELECT * FROM stock_pairs;"
         result_df = database.execute_sql_statement(select_stmt)
         result_df['price_mean'] = result_df['price_mean'].map('{:.4f}'.format)
         result_df['volatility'] = result_df['volatility'].map('{:.4f}'.format)
@@ -90,7 +90,7 @@ def pair_trade_build_model_param_service():
         client_config.done_pair_model = "pointer-events:auto"
         return render_template("pair_trade_build_model.html", pair_list=list_of_pairs)
     else:
-        select_stmt = "SELECT DISTINCT sector FROM sp500;"
+        select_stmt = f"SELECT DISTINCT sector FROM sp500;"
         result_df = database.execute_sql_statement(select_stmt)
         sector_list = list(result_df['sector'])
         return render_template("pair_trade_build_model_param.html", sector_list=sector_list,

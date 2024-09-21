@@ -321,6 +321,7 @@ def build_ga_model(database) -> GAPortfolio:
                                                     open_date=open_date, open_price=0, close_date=close_date, close_price=0, shares=0,
                                                     profit_loss=0)
                 conn.execute(insert_stmt)
+                conn.commit()
             return best_portfolio
         else:
             max_score = best_portfolio.score
