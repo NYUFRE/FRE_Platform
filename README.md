@@ -110,7 +110,7 @@ or
 ```
 pip install -r requirements.txt
 ```
-Create the instance directory in FRE_Platform and load flask.cfg into the instance directory
+In the instance directory, copy or rename flask_template.cfg to flask.cfg. Enter secret_key and Web admin email information as instructed. Then replace the dummy entries for eod_api_key and iex_api_key with your all-in-one monthly subscriptions from Unicorn Data Services (eodhd.com) and IEX Cloud.
 
 Set PYTHONPATH pointing to your FRE_Platform such as
 ```
