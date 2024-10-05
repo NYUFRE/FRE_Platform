@@ -271,8 +271,8 @@ class EODMarketData:
         sp500_sector_data = []
         for key, value in data["ETF_Data"]["Sector_Weights"].items():
             sector = key
-            equity_pct = float(value['Equity_%'])
-            category_pct = float(value['Relative_to_Category'])
+            equity_pct = float(value['Equity_%'])/100
+            category_pct = float(value['Relative_to_Category'])/100
             sp500_sector_data.append([sector, equity_pct, category_pct])
         sp500_sectors = pd.DataFrame(sp500_sector_data, columns=sp500_sector_column_names)
         sp500_sectors.to_sql("sp500_sectors", con=self.database.engine, if_exists='append', index=False)

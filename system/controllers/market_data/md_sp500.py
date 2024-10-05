@@ -2,7 +2,7 @@ import warnings
 
 from flask import render_template
 from sqlalchemy.exc import SAWarning
-
+import pandas as pd
 warnings.simplefilter(action='ignore', category=SAWarning)
 
 from system import database, eod_market_data
@@ -19,10 +19,12 @@ def md_sp500_service():
         eod_market_data.populate_sp500_data('SPY', 'US')
     select_stmt = """
         SELECT symbol, name as company_name, sector, industry,
-                printf("%.2f", weight) as weight
+                printf("%.4f", weight) as weight
         FROM sp500 ORDER BY symbol ASC;
         """
     result_df = database.execute_sql_statement(select_stmt)
+    result_df['weight'] = pd.to_numeric(result_df['weight'])
+    #print(result_df['weight'].sum())
     result_df = result_df.transpose()
     list_of_stocks = [result_df[i] for i in result_df]
     return render_template("md_sp500.html", stock_list=list_of_stocks)
