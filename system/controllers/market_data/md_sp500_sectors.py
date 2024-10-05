@@ -2,7 +2,7 @@ import warnings
 
 from flask import render_template
 from sqlalchemy.exc import SAWarning
-
+import pandas as pd
 warnings.simplefilter(action='ignore', category=SAWarning)
 
 from system import database, eod_market_data
@@ -21,6 +21,12 @@ def md_sp500_sectors_service():
         FROM sp500_sectors ORDER BY sector ASC;
         """
     result_df = database.execute_sql_statement(select_stmt)
+    result_df['equity_pct'] = pd.to_numeric(result_df['equity_pct'])
+    result_df['category_pct'] = pd.to_numeric(result_df['category_pct'])
+    result_df.loc[:, 'equity_pct'] *= 100.00
+    result_df.loc[:, 'category_pct'] *= 100.00
+    result_df['equity_pct'] = result_df['equity_pct'].apply(lambda x: round(x, 4))
+    result_df['category_pct'] = result_df['category_pct'].apply(lambda x: round(x, 4))
     result_df = result_df.transpose()
     list_of_sectors = [result_df[i] for i in result_df]
     return render_template("md_sp500_sectors.html", sector_list=list_of_sectors)

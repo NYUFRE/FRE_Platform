@@ -9,7 +9,7 @@ import datetime as dt
 import holidays
 from system.services.ai_modeling.ga_portfolio import GAPortfolio
 from typing import Tuple
-
+from sqlalchemy import text
 fund = 1000000
 
 #database = FREDatabase()
@@ -91,7 +91,7 @@ def ga_probation_test(database, start, end) -> Tuple[GAPortfolio, float, int]:
             WHERE symbol = '{symbol}';
         """
         #print(update_stmt)
-        conn.execute(update_stmt)
+        conn.execute(text(update_stmt))
 
     # make SPY captical in spy table
     spy_select = f"""
